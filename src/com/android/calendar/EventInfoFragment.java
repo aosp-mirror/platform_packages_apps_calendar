@@ -839,7 +839,7 @@ public class EventInfoFragment extends DialogFragment implements OnCheckedChange
     @Override
     public void onDestroyView() {
         if (!mEventDeletionStarted) {
-            if (saveResponse() || saveReminders()) {
+            if (saveResponse() | saveReminders()) {
                 Toast.makeText(getActivity(), R.string.saving_event, Toast.LENGTH_SHORT).show();
             }
         }

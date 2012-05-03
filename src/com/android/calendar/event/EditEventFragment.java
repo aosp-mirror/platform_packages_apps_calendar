@@ -815,7 +815,7 @@ public class EditEventFragment extends Fragment implements EventHandler {
                 mEventBundle.start = mEvent.startTime.toMillis(true);
             }
             if (mEvent.endTime != null) {
-                mEventBundle.end = mEvent.startTime.toMillis(true);
+                mEventBundle.end = mEvent.endTime.toMillis(true);
             }
         }
         outState.putBoolean(BUNDLE_KEY_EDIT_ON_LAUNCH, mShowModifyDialogOnLaunch);
