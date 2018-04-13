@@ -28,7 +28,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
         colorpicker \
         android-opt-datetimepicker \
         android-opt-timezonepicker \
-        android-support-v4 \
+        androidx.legacy_legacy-support-v4 \
         calendar-common
 
 LOCAL_SDK_VERSION := current
