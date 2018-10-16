@@ -198,11 +198,6 @@ public class CalendarViewAdapter extends BaseAdapter {
                     weekDay.setVisibility(View.GONE);
                     date.setText(buildMonthYearDate());
                     break;
-                case ViewType.AGENDA:
-                    weekDay.setVisibility(View.VISIBLE);
-                    weekDay.setText(buildDayOfWeek());
-                    date.setText(buildFullDate());
-                    break;
                 default:
                     v = null;
                     break;
@@ -228,9 +223,6 @@ public class CalendarViewAdapter extends BaseAdapter {
                     break;
                 case ViewType.MONTH:
                     title.setText(mButtonNames [MONTH_BUTTON_INDEX]);
-                    break;
-                case ViewType.AGENDA:
-                    title.setText(mButtonNames [AGENDA_BUTTON_INDEX]);
                     break;
                 default:
                     v = null;
@@ -278,12 +270,6 @@ public class CalendarViewAdapter extends BaseAdapter {
                 viewType.setText(mButtonNames [MONTH_BUTTON_INDEX]);
                 if (mShowDate) {
                     date.setText(buildMonthDate());
-                }
-                break;
-            case AGENDA_BUTTON_INDEX:
-                viewType.setText(mButtonNames [AGENDA_BUTTON_INDEX]);
-                if (mShowDate) {
-                    date.setText(buildMonthDayDate());
                 }
                 break;
             default:
@@ -379,9 +365,8 @@ public class CalendarViewAdapter extends BaseAdapter {
                         | DateUtils.FORMAT_NO_MONTH_DAY, mTimeZone).toString();
         return date;
     }
+
     private String buildWeekDate() {
-
-
         // Calculate the start of the week, taking into account the "first day of the week"
         // setting.
 
@@ -422,4 +407,3 @@ public class CalendarViewAdapter extends BaseAdapter {
     }
 
 }
-

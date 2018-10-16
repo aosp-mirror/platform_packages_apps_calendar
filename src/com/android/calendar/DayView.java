@@ -112,7 +112,6 @@ public class DayView extends View implements View.OnCreateContextMenuListener,
     // duration to show the event clicked
     private static final int CLICK_DISPLAY_DURATION = 50;
 
-    private static final int MENU_AGENDA = 2;
     private static final int MENU_DAY = 3;
     private static final int MENU_EVENT_VIEW = 5;
     private static final int MENU_EVENT_CREATE = 6;
@@ -181,8 +180,6 @@ public class DayView extends View implements View.OnCreateContextMenuListener,
     private int[] mEarliestStartHour;    // indexed by the week day offset
     private boolean[] mHasAllDayEvent;   // indexed by the week day offset
     private String mEventCountTemplate;
-    private final CharSequence[] mLongPressItems;
-    private String mLongPressTitle;
     private Event mClickedEvent;           // The event the user clicked on
     private Event mSavedClickedEvent;
     private static int mOnDownDelay;
@@ -570,10 +567,7 @@ public class DayView extends View implements View.OnCreateContextMenuListener,
     protected Drawable mAcceptedOrTentativeEventBoxDrawable;
     private String mAmString;
     private String mPmString;
-    private final DeleteEventHelper mDeleteEventHelper;
     private static int sCounter = 0;
-
-    private final ContextMenuHandler mContextMenuHandler = new ContextMenuHandler();
 
     ScaleGestureDetector mScaleGestureDetector;
 
@@ -646,7 +640,6 @@ public class DayView extends View implements View.OnCreateContextMenuListener,
     private AccessibilityManager mAccessibilityMgr = null;
     private boolean mIsAccessibilityEnabled = false;
     private boolean mTouchExplorationEnabled = false;
-    private final String mCreateNewEventString;
     private final String mNewEventHintString;
 
     public DayView(Context context, CalendarController controller,
@@ -656,7 +649,6 @@ public class DayView extends View implements View.OnCreateContextMenuListener,
         initAccessibilityVariables();
 
         mResources = context.getResources();
-        mCreateNewEventString = mResources.getString(R.string.event_create);
         mNewEventHintString = mResources.getString(R.string.day_view_new_event_hint);
         mNumDays = numDays;
 
@@ -750,11 +742,6 @@ public class DayView extends View implements View.OnCreateContextMenuListener,
         mEventGeometry.setMinEventHeight(MIN_EVENT_HEIGHT);
         mEventGeometry.setHourGap(HOUR_GAP);
         mEventGeometry.setCellMargin(DAY_GAP);
-        mLongPressItems = new CharSequence[] {
-            mResources.getString(R.string.new_event_dialog_option)
-        };
-        mLongPressTitle = mResources.getString(R.string.new_event_dialog_label);
-        mDeleteEventHelper = new DeleteEventHelper(context, null, false /* don't exit when done */);
         mLastPopupEventID = INVALID_EVENT_ID;
         mController = controller;
         mViewSwitcher = viewSwitcher;
@@ -1407,59 +1394,11 @@ public class DayView extends View implements View.OnCreateContextMenuListener,
             // With track ball, if we selected a free slot, then create an event.
             // If we selected a specific event, switch to EventInfo view.
             if (trackBallSelection) {
-                if (selectedEvent == null) {
-                    // Switch to the EditEvent view
-                    long startMillis = getSelectedTimeInMillis();
-                    long endMillis = startMillis + DateUtils.HOUR_IN_MILLIS;
-                    long extraLong = 0;
-                    if (mSelectionAllday) {
-                        extraLong = CalendarController.EXTRA_CREATE_ALL_DAY;
-                    }
-                    mController.sendEventRelatedEventWithExtra(this, EventType.CREATE_EVENT, -1,
-                            startMillis, endMillis, -1, -1, extraLong, -1);
-                } else {
+                if (selectedEvent != null) {
                     if (mIsAccessibilityEnabled) {
                         mAccessibilityMgr.interrupt();
                     }
-                    // Switch to the EventInfo view
-                    mController.sendEventRelatedEvent(this, EventType.VIEW_EVENT, selectedEvent.id,
-                            selectedEvent.startMillis, selectedEvent.endMillis, 0, 0,
-                            getSelectedTimeInMillis());
                 }
-            } else {
-                // This was a touch selection.  If the touch selected a single
-                // unambiguous event, then view that event.  Otherwise go to
-                // Day/Agenda view.
-                if (mSelectedEvents.size() == 1) {
-                    if (mIsAccessibilityEnabled) {
-                        mAccessibilityMgr.interrupt();
-                    }
-                    mController.sendEventRelatedEvent(this, EventType.VIEW_EVENT, selectedEvent.id,
-                            selectedEvent.startMillis, selectedEvent.endMillis, 0, 0,
-                            getSelectedTimeInMillis());
-                }
-            }
-        } else {
-            // This is the Day view.
-            // If we selected a free slot, then create an event.
-            // If we selected an event, then go to the EventInfo view.
-            if (selectedEvent == null) {
-                // Switch to the EditEvent view
-                long startMillis = getSelectedTimeInMillis();
-                long endMillis = startMillis + DateUtils.HOUR_IN_MILLIS;
-                long extraLong = 0;
-                if (mSelectionAllday) {
-                    extraLong = CalendarController.EXTRA_CREATE_ALL_DAY;
-                }
-                mController.sendEventRelatedEventWithExtra(this, EventType.CREATE_EVENT, -1,
-                        startMillis, endMillis, -1, -1, extraLong, -1);
-            } else {
-                if (mIsAccessibilityEnabled) {
-                    mAccessibilityMgr.interrupt();
-                }
-                mController.sendEventRelatedEvent(this, EventType.VIEW_EVENT, selectedEvent.id,
-                        selectedEvent.startMillis, selectedEvent.endMillis, 0, 0,
-                        getSelectedTimeInMillis());
             }
         }
     }
@@ -1467,221 +1406,17 @@ public class DayView extends View implements View.OnCreateContextMenuListener,
     @Override
     public boolean onKeyUp(int keyCode, KeyEvent event) {
         mScrolling = false;
-        long duration = event.getEventTime() - event.getDownTime();
-
-        switch (keyCode) {
-            case KeyEvent.KEYCODE_DPAD_CENTER:
-                if (mSelectionMode == SELECTION_HIDDEN) {
-                    // Don't do anything unless the selection is visible.
-                    break;
-                }
-
-                if (mSelectionMode == SELECTION_PRESSED) {
-                    // This was the first press when there was nothing selected.
-                    // Change the selection from the "pressed" state to the
-                    // the "selected" state.  We treat short-press and
-                    // long-press the same here because nothing was selected.
-                    mSelectionMode = SELECTION_SELECTED;
-                    invalidate();
-                    break;
-                }
-
-                // Check the duration to determine if this was a short press
-                if (duration < ViewConfiguration.getLongPressTimeout()) {
-                    switchViews(true /* trackball */);
-                } else {
-                    mSelectionMode = SELECTION_LONGPRESS;
-                    invalidate();
-                    performLongClick();
-                }
-                break;
-//            case KeyEvent.KEYCODE_BACK:
-//                if (event.isTracking() && !event.isCanceled()) {
-//                    mPopup.dismiss();
-//                    mContext.finish();
-//                    return true;
-//                }
-//                break;
-        }
         return super.onKeyUp(keyCode, event);
     }
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if (mSelectionMode == SELECTION_HIDDEN) {
-            if (keyCode == KeyEvent.KEYCODE_ENTER || keyCode == KeyEvent.KEYCODE_DPAD_RIGHT
-                    || keyCode == KeyEvent.KEYCODE_DPAD_LEFT || keyCode == KeyEvent.KEYCODE_DPAD_UP
-                    || keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
-                // Display the selection box but don't move or select it
-                // on this key press.
-                mSelectionMode = SELECTION_SELECTED;
-                invalidate();
-                return true;
-            } else if (keyCode == KeyEvent.KEYCODE_DPAD_CENTER) {
-                // Display the selection box but don't select it
-                // on this key press.
-                mSelectionMode = SELECTION_PRESSED;
-                invalidate();
-                return true;
-            }
-        }
-
-        mSelectionMode = SELECTION_SELECTED;
-        mScrolling = false;
-        boolean redraw;
-        int selectionDay = mSelectionDay;
-
-        switch (keyCode) {
-            case KeyEvent.KEYCODE_DEL:
-                // Delete the selected event, if any
-                Event selectedEvent = mSelectedEvent;
-                if (selectedEvent == null) {
-                    return false;
-                }
-                mPopup.dismiss();
-                mLastPopupEventID = INVALID_EVENT_ID;
-
-                long begin = selectedEvent.startMillis;
-                long end = selectedEvent.endMillis;
-                long id = selectedEvent.id;
-                mDeleteEventHelper.delete(begin, end, id, -1);
-                return true;
-            case KeyEvent.KEYCODE_ENTER:
-                switchViews(true /* trackball or keyboard */);
-                return true;
-            case KeyEvent.KEYCODE_BACK:
-                if (event.getRepeatCount() == 0) {
-                    event.startTracking();
-                    return true;
-                }
-                return super.onKeyDown(keyCode, event);
-            case KeyEvent.KEYCODE_DPAD_LEFT:
-                if (mSelectedEvent != null) {
-                    setSelectedEvent(mSelectedEvent.nextLeft);
-                }
-                if (mSelectedEvent == null) {
-                    mLastPopupEventID = INVALID_EVENT_ID;
-                    selectionDay -= 1;
-                }
-                redraw = true;
-                break;
-
-            case KeyEvent.KEYCODE_DPAD_RIGHT:
-                if (mSelectedEvent != null) {
-                    setSelectedEvent(mSelectedEvent.nextRight);
-                }
-                if (mSelectedEvent == null) {
-                    mLastPopupEventID = INVALID_EVENT_ID;
-                    selectionDay += 1;
-                }
-                redraw = true;
-                break;
-
-            case KeyEvent.KEYCODE_DPAD_UP:
-                if (mSelectedEvent != null) {
-                    setSelectedEvent(mSelectedEvent.nextUp);
-                }
-                if (mSelectedEvent == null) {
-                    mLastPopupEventID = INVALID_EVENT_ID;
-                    if (!mSelectionAllday) {
-                        setSelectedHour(mSelectionHour - 1);
-                        adjustHourSelection();
-                        mSelectedEvents.clear();
-                        mComputeSelectedEvents = true;
-                    }
-                }
-                redraw = true;
-                break;
-
-            case KeyEvent.KEYCODE_DPAD_DOWN:
-                if (mSelectedEvent != null) {
-                    setSelectedEvent(mSelectedEvent.nextDown);
-                }
-                if (mSelectedEvent == null) {
-                    mLastPopupEventID = INVALID_EVENT_ID;
-                    if (mSelectionAllday) {
-                        mSelectionAllday = false;
-                    } else {
-                        setSelectedHour(mSelectionHour + 1);
-                        adjustHourSelection();
-                        mSelectedEvents.clear();
-                        mComputeSelectedEvents = true;
-                    }
-                }
-                redraw = true;
-                break;
-
-            default:
-                return super.onKeyDown(keyCode, event);
-        }
-
-        if ((selectionDay < mFirstJulianDay) || (selectionDay > mLastJulianDay)) {
-            DayView view = (DayView) mViewSwitcher.getNextView();
-            Time date = view.mBaseDate;
-            date.set(mBaseDate);
-            if (selectionDay < mFirstJulianDay) {
-                date.monthDay -= mNumDays;
-            } else {
-                date.monthDay += mNumDays;
-            }
-            date.normalize(true /* ignore isDst */);
-            view.setSelectedDay(selectionDay);
-
-            initView(view);
-
-            Time end = new Time(date);
-            end.monthDay += mNumDays - 1;
-            mController.sendEvent(this, EventType.GO_TO, date, end, -1, ViewType.CURRENT);
-            return true;
-        }
-        if (mSelectionDay != selectionDay) {
-            Time date = new Time(mBaseDate);
-            date.setJulianDay(selectionDay);
-            date.hour = mSelectionHour;
-            mController.sendEvent(this, EventType.GO_TO, date, date, -1, ViewType.CURRENT);
-        }
-        setSelectedDay(selectionDay);
-        mSelectedEvents.clear();
-        mComputeSelectedEvents = true;
-        mUpdateToast = true;
-
-        if (redraw) {
-            invalidate();
-            return true;
-        }
-
         return super.onKeyDown(keyCode, event);
     }
 
 
     @Override
     public boolean onHoverEvent(MotionEvent event) {
-        if (DEBUG) {
-            int action = event.getAction();
-            switch (action) {
-                case MotionEvent.ACTION_HOVER_ENTER:
-                    Log.e(TAG, "ACTION_HOVER_ENTER");
-                    break;
-                case MotionEvent.ACTION_HOVER_MOVE:
-                    Log.e(TAG, "ACTION_HOVER_MOVE");
-                    break;
-                case MotionEvent.ACTION_HOVER_EXIT:
-                    Log.e(TAG, "ACTION_HOVER_EXIT");
-                    break;
-                default:
-                    Log.e(TAG, "Unknown hover event action. " + event);
-            }
-        }
-
-        // Mouse also generates hover events
-        // Send accessibility events if accessibility and exploration are on.
-        if (!mTouchExplorationEnabled) {
-            return super.onHoverEvent(event);
-        }
-        if (event.getAction() != MotionEvent.ACTION_HOVER_EXIT) {
-            setSelectionFromPosition((int) event.getX(), (int) event.getY(), true);
-            invalidate();
-        }
         return true;
     }
 
@@ -1744,8 +1479,6 @@ public class DayView extends View implements View.OnCreateContextMenuListener,
                         }
                         appendEventAccessibilityString(b, mSelectedEventForAccessibility);
                     }
-                } else {
-                    b.append(mCreateNewEventString);
                 }
             }
 
@@ -2218,7 +1951,6 @@ public class DayView extends View implements View.OnCreateContextMenuListener,
         // Draw the fixed areas (that don't scroll) directly to the canvas.
         drawAfterScroll(canvas);
         if (mComputeSelectedEvents && mUpdateToast) {
-            updateEventDetails();
             mUpdateToast = false;
         }
         mComputeSelectedEvents = false;
@@ -2337,17 +2069,6 @@ public class DayView extends View implements View.OnCreateContextMenuListener,
                 p.setStyle(Style.FILL);
                 canvas.drawRect(r, p);
             }
-        }
-
-        if (mSelectionAllday && mSelectionMode != SELECTION_HIDDEN) {
-            // Draw the selection highlight on the selected all-day area
-            mRect.top = DAY_HEADER_HEIGHT + 1;
-            mRect.bottom = mRect.top + mAlldayHeight + ALLDAY_TOP_MARGIN - 2;
-            int daynum = mSelectionDay - mFirstJulianDay;
-            mRect.left = computeDayLeftPosition(daynum) + 1;
-            mRect.right = computeDayLeftPosition(daynum + 1);
-            p.setColor(mCalendarGridAreaSelected);
-            canvas.drawRect(mRect, p);
         }
     }
 
@@ -2480,52 +2201,6 @@ public class DayView extends View implements View.OnCreateContextMenuListener,
         }
         p.setAntiAlias(true);
         p.setAlpha(alpha);
-
-        drawSelectedRect(r, canvas, p);
-    }
-
-    private void drawSelectedRect(Rect r, Canvas canvas, Paint p) {
-        // Draw a highlight on the selected hour (if needed)
-        if (mSelectionMode != SELECTION_HIDDEN && !mSelectionAllday) {
-            int daynum = mSelectionDay - mFirstJulianDay;
-            r.top = mSelectionHour * (mCellHeight + HOUR_GAP);
-            r.bottom = r.top + mCellHeight + HOUR_GAP;
-            r.left = computeDayLeftPosition(daynum) + 1;
-            r.right = computeDayLeftPosition(daynum + 1) + 1;
-
-            saveSelectionPosition(r.left, r.top, r.right, r.bottom);
-
-            // Draw the highlight on the grid
-            p.setColor(mCalendarGridAreaSelected);
-            r.top += HOUR_GAP;
-            r.right -= DAY_GAP;
-            p.setAntiAlias(false);
-            canvas.drawRect(r, p);
-
-            // Draw a "new event hint" on top of the highlight
-            // For the week view, show a "+", for day view, show "+ New event"
-            p.setColor(mNewEventHintColor);
-            if (mNumDays > 1) {
-                p.setStrokeWidth(NEW_EVENT_WIDTH);
-                int width = r.right - r.left;
-                int midX = r.left + width / 2;
-                int midY = r.top + mCellHeight / 2;
-                int length = Math.min(mCellHeight, width) - NEW_EVENT_MARGIN * 2;
-                length = Math.min(length, NEW_EVENT_MAX_LENGTH);
-                int verticalPadding = (mCellHeight - length) / 2;
-                int horizontalPadding = (width - length) / 2;
-                canvas.drawLine(r.left + horizontalPadding, midY, r.right - horizontalPadding,
-                        midY, p);
-                canvas.drawLine(midX, r.top + verticalPadding, midX, r.bottom - verticalPadding, p);
-            } else {
-                p.setStyle(Paint.Style.FILL);
-                p.setTextSize(NEW_EVENT_HINT_FONT_SIZE);
-                p.setTextAlign(Paint.Align.LEFT);
-                p.setTypeface(Typeface.defaultFromStyle(Typeface.BOLD));
-                canvas.drawText(mNewEventHintString, r.left + EVENT_TEXT_LEFT_MARGIN,
-                        r.top + Math.abs(p.getFontMetrics().ascent) + EVENT_TEXT_TOP_MARGIN , p);
-            }
-        }
     }
 
     private void drawHours(Rect r, Canvas canvas, Paint p) {
@@ -2755,16 +2430,6 @@ public class DayView extends View implements View.OnCreateContextMenuListener,
         mPrevBox.right = (int) right;
         mPrevBox.top = (int) top;
         mPrevBox.bottom = (int) bottom;
-    }
-
-    private Rect getCurrentSelectionPosition() {
-        Rect box = new Rect();
-        box.top = mSelectionHour * (mCellHeight + HOUR_GAP);
-        box.bottom = box.top + mCellHeight + HOUR_GAP;
-        int daynum = mSelectionDay - mFirstJulianDay;
-        box.left = computeDayLeftPosition(daynum) + 1;
-        box.right = computeDayLeftPosition(daynum + 1);
-        return box;
     }
 
     private void setupTextRect(Rect r) {
@@ -3139,298 +2804,6 @@ public class DayView extends View implements View.OnCreateContextMenuListener,
                     - DAY_HEADER_HEIGHT - mAlldayHeight, false);
         }
         eventTextPaint.setAlpha(alpha);
-
-        if (date == mSelectionDay && !mSelectionAllday && isFocused()
-                && mSelectionMode != SELECTION_HIDDEN) {
-            computeNeighbors();
-        }
-    }
-
-    // Computes the "nearest" neighbor event in four directions (left, right,
-    // up, down) for each of the events in the mSelectedEvents array.
-    private void computeNeighbors() {
-        int len = mSelectedEvents.size();
-        if (len == 0 || mSelectedEvent != null) {
-            return;
-        }
-
-        // First, clear all the links
-        for (int ii = 0; ii < len; ii++) {
-            Event ev = mSelectedEvents.get(ii);
-            ev.nextUp = null;
-            ev.nextDown = null;
-            ev.nextLeft = null;
-            ev.nextRight = null;
-        }
-
-        Event startEvent = mSelectedEvents.get(0);
-        int startEventDistance1 = 100000; // any large number
-        int startEventDistance2 = 100000; // any large number
-        int prevLocation = FROM_NONE;
-        int prevTop;
-        int prevBottom;
-        int prevLeft;
-        int prevRight;
-        int prevCenter = 0;
-        Rect box = getCurrentSelectionPosition();
-        if (mPrevSelectedEvent != null) {
-            prevTop = (int) mPrevSelectedEvent.top;
-            prevBottom = (int) mPrevSelectedEvent.bottom;
-            prevLeft = (int) mPrevSelectedEvent.left;
-            prevRight = (int) mPrevSelectedEvent.right;
-            // Check if the previously selected event intersects the previous
-            // selection box. (The previously selected event may be from a
-            // much older selection box.)
-            if (prevTop >= mPrevBox.bottom || prevBottom <= mPrevBox.top
-                    || prevRight <= mPrevBox.left || prevLeft >= mPrevBox.right) {
-                mPrevSelectedEvent = null;
-                prevTop = mPrevBox.top;
-                prevBottom = mPrevBox.bottom;
-                prevLeft = mPrevBox.left;
-                prevRight = mPrevBox.right;
-            } else {
-                // Clip the top and bottom to the previous selection box.
-                if (prevTop < mPrevBox.top) {
-                    prevTop = mPrevBox.top;
-                }
-                if (prevBottom > mPrevBox.bottom) {
-                    prevBottom = mPrevBox.bottom;
-                }
-            }
-        } else {
-            // Just use the previously drawn selection box
-            prevTop = mPrevBox.top;
-            prevBottom = mPrevBox.bottom;
-            prevLeft = mPrevBox.left;
-            prevRight = mPrevBox.right;
-        }
-
-        // Figure out where we came from and compute the center of that area.
-        if (prevLeft >= box.right) {
-            // The previously selected event was to the right of us.
-            prevLocation = FROM_RIGHT;
-            prevCenter = (prevTop + prevBottom) / 2;
-        } else if (prevRight <= box.left) {
-            // The previously selected event was to the left of us.
-            prevLocation = FROM_LEFT;
-            prevCenter = (prevTop + prevBottom) / 2;
-        } else if (prevBottom <= box.top) {
-            // The previously selected event was above us.
-            prevLocation = FROM_ABOVE;
-            prevCenter = (prevLeft + prevRight) / 2;
-        } else if (prevTop >= box.bottom) {
-            // The previously selected event was below us.
-            prevLocation = FROM_BELOW;
-            prevCenter = (prevLeft + prevRight) / 2;
-        }
-
-        // For each event in the selected event list "mSelectedEvents", search
-        // all the other events in that list for the nearest neighbor in 4
-        // directions.
-        for (int ii = 0; ii < len; ii++) {
-            Event ev = mSelectedEvents.get(ii);
-
-            int startTime = ev.startTime;
-            int endTime = ev.endTime;
-            int left = (int) ev.left;
-            int right = (int) ev.right;
-            int top = (int) ev.top;
-            if (top < box.top) {
-                top = box.top;
-            }
-            int bottom = (int) ev.bottom;
-            if (bottom > box.bottom) {
-                bottom = box.bottom;
-            }
-//            if (false) {
-//                int flags = DateUtils.FORMAT_SHOW_TIME | DateUtils.FORMAT_ABBREV_ALL
-//                        | DateUtils.FORMAT_CAP_NOON_MIDNIGHT;
-//                if (DateFormat.is24HourFormat(mContext)) {
-//                    flags |= DateUtils.FORMAT_24HOUR;
-//                }
-//                String timeRange = DateUtils.formatDateRange(mContext, ev.startMillis,
-//                        ev.endMillis, flags);
-//                Log.i("Cal", "left: " + left + " right: " + right + " top: " + top + " bottom: "
-//                        + bottom + " ev: " + timeRange + " " + ev.title);
-//            }
-            int upDistanceMin = 10000; // any large number
-            int downDistanceMin = 10000; // any large number
-            int leftDistanceMin = 10000; // any large number
-            int rightDistanceMin = 10000; // any large number
-            Event upEvent = null;
-            Event downEvent = null;
-            Event leftEvent = null;
-            Event rightEvent = null;
-
-            // Pick the starting event closest to the previously selected event,
-            // if any. distance1 takes precedence over distance2.
-            int distance1 = 0;
-            int distance2 = 0;
-            if (prevLocation == FROM_ABOVE) {
-                if (left >= prevCenter) {
-                    distance1 = left - prevCenter;
-                } else if (right <= prevCenter) {
-                    distance1 = prevCenter - right;
-                }
-                distance2 = top - prevBottom;
-            } else if (prevLocation == FROM_BELOW) {
-                if (left >= prevCenter) {
-                    distance1 = left - prevCenter;
-                } else if (right <= prevCenter) {
-                    distance1 = prevCenter - right;
-                }
-                distance2 = prevTop - bottom;
-            } else if (prevLocation == FROM_LEFT) {
-                if (bottom <= prevCenter) {
-                    distance1 = prevCenter - bottom;
-                } else if (top >= prevCenter) {
-                    distance1 = top - prevCenter;
-                }
-                distance2 = left - prevRight;
-            } else if (prevLocation == FROM_RIGHT) {
-                if (bottom <= prevCenter) {
-                    distance1 = prevCenter - bottom;
-                } else if (top >= prevCenter) {
-                    distance1 = top - prevCenter;
-                }
-                distance2 = prevLeft - right;
-            }
-            if (distance1 < startEventDistance1
-                    || (distance1 == startEventDistance1 && distance2 < startEventDistance2)) {
-                startEvent = ev;
-                startEventDistance1 = distance1;
-                startEventDistance2 = distance2;
-            }
-
-            // For each neighbor, figure out if it is above or below or left
-            // or right of me and compute the distance.
-            for (int jj = 0; jj < len; jj++) {
-                if (jj == ii) {
-                    continue;
-                }
-                Event neighbor = mSelectedEvents.get(jj);
-                int neighborLeft = (int) neighbor.left;
-                int neighborRight = (int) neighbor.right;
-                if (neighbor.endTime <= startTime) {
-                    // This neighbor is entirely above me.
-                    // If we overlap the same column, then compute the distance.
-                    if (neighborLeft < right && neighborRight > left) {
-                        int distance = startTime - neighbor.endTime;
-                        if (distance < upDistanceMin) {
-                            upDistanceMin = distance;
-                            upEvent = neighbor;
-                        } else if (distance == upDistanceMin) {
-                            int center = (left + right) / 2;
-                            int currentDistance = 0;
-                            int currentLeft = (int) upEvent.left;
-                            int currentRight = (int) upEvent.right;
-                            if (currentRight <= center) {
-                                currentDistance = center - currentRight;
-                            } else if (currentLeft >= center) {
-                                currentDistance = currentLeft - center;
-                            }
-
-                            int neighborDistance = 0;
-                            if (neighborRight <= center) {
-                                neighborDistance = center - neighborRight;
-                            } else if (neighborLeft >= center) {
-                                neighborDistance = neighborLeft - center;
-                            }
-                            if (neighborDistance < currentDistance) {
-                                upDistanceMin = distance;
-                                upEvent = neighbor;
-                            }
-                        }
-                    }
-                } else if (neighbor.startTime >= endTime) {
-                    // This neighbor is entirely below me.
-                    // If we overlap the same column, then compute the distance.
-                    if (neighborLeft < right && neighborRight > left) {
-                        int distance = neighbor.startTime - endTime;
-                        if (distance < downDistanceMin) {
-                            downDistanceMin = distance;
-                            downEvent = neighbor;
-                        } else if (distance == downDistanceMin) {
-                            int center = (left + right) / 2;
-                            int currentDistance = 0;
-                            int currentLeft = (int) downEvent.left;
-                            int currentRight = (int) downEvent.right;
-                            if (currentRight <= center) {
-                                currentDistance = center - currentRight;
-                            } else if (currentLeft >= center) {
-                                currentDistance = currentLeft - center;
-                            }
-
-                            int neighborDistance = 0;
-                            if (neighborRight <= center) {
-                                neighborDistance = center - neighborRight;
-                            } else if (neighborLeft >= center) {
-                                neighborDistance = neighborLeft - center;
-                            }
-                            if (neighborDistance < currentDistance) {
-                                downDistanceMin = distance;
-                                downEvent = neighbor;
-                            }
-                        }
-                    }
-                }
-
-                if (neighborLeft >= right) {
-                    // This neighbor is entirely to the right of me.
-                    // Take the closest neighbor in the y direction.
-                    int center = (top + bottom) / 2;
-                    int distance = 0;
-                    int neighborBottom = (int) neighbor.bottom;
-                    int neighborTop = (int) neighbor.top;
-                    if (neighborBottom <= center) {
-                        distance = center - neighborBottom;
-                    } else if (neighborTop >= center) {
-                        distance = neighborTop - center;
-                    }
-                    if (distance < rightDistanceMin) {
-                        rightDistanceMin = distance;
-                        rightEvent = neighbor;
-                    } else if (distance == rightDistanceMin) {
-                        // Pick the closest in the x direction
-                        int neighborDistance = neighborLeft - right;
-                        int currentDistance = (int) rightEvent.left - right;
-                        if (neighborDistance < currentDistance) {
-                            rightDistanceMin = distance;
-                            rightEvent = neighbor;
-                        }
-                    }
-                } else if (neighborRight <= left) {
-                    // This neighbor is entirely to the left of me.
-                    // Take the closest neighbor in the y direction.
-                    int center = (top + bottom) / 2;
-                    int distance = 0;
-                    int neighborBottom = (int) neighbor.bottom;
-                    int neighborTop = (int) neighbor.top;
-                    if (neighborBottom <= center) {
-                        distance = center - neighborBottom;
-                    } else if (neighborTop >= center) {
-                        distance = neighborTop - center;
-                    }
-                    if (distance < leftDistanceMin) {
-                        leftDistanceMin = distance;
-                        leftEvent = neighbor;
-                    } else if (distance == leftDistanceMin) {
-                        // Pick the closest in the x direction
-                        int neighborDistance = left - neighborRight;
-                        int currentDistance = left - (int) leftEvent.right;
-                        if (neighborDistance < currentDistance) {
-                            leftDistanceMin = distance;
-                            leftEvent = neighbor;
-                        }
-                    }
-                }
-            }
-            ev.nextUp = upEvent;
-            ev.nextDown = downEvent;
-            ev.nextLeft = leftEvent;
-            ev.nextRight = rightEvent;
-        }
-        setSelectedEvent(startEvent);
     }
 
     private Rect drawEventRect(Event event, Canvas canvas, Paint p, Paint eventTextPaint,
@@ -3488,40 +2861,12 @@ public class DayView extends View implements View.OnCreateContextMenuListener,
         if (mSelectedEvent == event && mClickedEvent != null) {
             boolean paintIt = false;
             color = 0;
-            if (mSelectionMode == SELECTION_PRESSED) {
-                // Also, remember the last selected event that we drew
-                mPrevSelectedEvent = event;
-                color = mPressedColor;
-                paintIt = true;
-            } else if (mSelectionMode == SELECTION_SELECTED) {
-                // Also, remember the last selected event that we drew
-                mPrevSelectedEvent = event;
-                color = mPressedColor;
-                paintIt = true;
-            }
-
             if (paintIt) {
                 p.setColor(color);
                 canvas.drawRect(r, p);
             }
             p.setAntiAlias(true);
         }
-
-        // Draw cal color square border
-        // r.top = (int) event.top + CALENDAR_COLOR_SQUARE_V_OFFSET;
-        // r.left = (int) event.left + CALENDAR_COLOR_SQUARE_H_OFFSET;
-        // r.bottom = r.top + CALENDAR_COLOR_SQUARE_SIZE + 1;
-        // r.right = r.left + CALENDAR_COLOR_SQUARE_SIZE + 1;
-        // p.setColor(0xFFFFFFFF);
-        // canvas.drawRect(r, p);
-
-        // Draw cal color
-        // r.top++;
-        // r.left++;
-        // r.bottom--;
-        // r.right--;
-        // p.setColor(event.color);
-        // canvas.drawRect(r, p);
 
         // Setup rect for drawEventText which follows
         r.top = (int) event.top + EVENT_RECT_TOP_MARGIN;
@@ -3598,84 +2943,6 @@ public class DayView extends View implements View.OnCreateContextMenuListener,
         canvas.clipRect(rect);
         eventLayout.draw(canvas);
         canvas.restore();
-    }
-
-    // This is to replace p.setStyle(Style.STROKE); canvas.drawRect() since it
-    // doesn't work well with hardware acceleration
-//    private void drawEmptyRect(Canvas canvas, Rect r, int color) {
-//        int linesIndex = 0;
-//        mLines[linesIndex++] = r.left;
-//        mLines[linesIndex++] = r.top;
-//        mLines[linesIndex++] = r.right;
-//        mLines[linesIndex++] = r.top;
-//
-//        mLines[linesIndex++] = r.left;
-//        mLines[linesIndex++] = r.bottom;
-//        mLines[linesIndex++] = r.right;
-//        mLines[linesIndex++] = r.bottom;
-//
-//        mLines[linesIndex++] = r.left;
-//        mLines[linesIndex++] = r.top;
-//        mLines[linesIndex++] = r.left;
-//        mLines[linesIndex++] = r.bottom;
-//
-//        mLines[linesIndex++] = r.right;
-//        mLines[linesIndex++] = r.top;
-//        mLines[linesIndex++] = r.right;
-//        mLines[linesIndex++] = r.bottom;
-//        mPaint.setColor(color);
-//        canvas.drawLines(mLines, 0, linesIndex, mPaint);
-//    }
-
-    private void updateEventDetails() {
-        if (mSelectedEvent == null || mSelectionMode == SELECTION_HIDDEN
-                || mSelectionMode == SELECTION_LONGPRESS) {
-            mPopup.dismiss();
-            return;
-        }
-        if (mLastPopupEventID == mSelectedEvent.id) {
-            return;
-        }
-
-        mLastPopupEventID = mSelectedEvent.id;
-
-        // Remove any outstanding callbacks to dismiss the popup.
-        mHandler.removeCallbacks(mDismissPopup);
-
-        Event event = mSelectedEvent;
-        TextView titleView = (TextView) mPopupView.findViewById(R.id.event_title);
-        titleView.setText(event.title);
-
-        ImageView imageView = (ImageView) mPopupView.findViewById(R.id.reminder_icon);
-        imageView.setVisibility(event.hasAlarm ? View.VISIBLE : View.GONE);
-
-        imageView = (ImageView) mPopupView.findViewById(R.id.repeat_icon);
-        imageView.setVisibility(event.isRepeating ? View.VISIBLE : View.GONE);
-
-        int flags;
-        if (event.allDay) {
-            flags = DateUtils.FORMAT_UTC | DateUtils.FORMAT_SHOW_DATE
-                    | DateUtils.FORMAT_SHOW_WEEKDAY | DateUtils.FORMAT_ABBREV_ALL;
-        } else {
-            flags = DateUtils.FORMAT_SHOW_TIME | DateUtils.FORMAT_SHOW_DATE
-                    | DateUtils.FORMAT_SHOW_WEEKDAY | DateUtils.FORMAT_ABBREV_ALL
-                    | DateUtils.FORMAT_CAP_NOON_MIDNIGHT;
-        }
-        if (DateFormat.is24HourFormat(mContext)) {
-            flags |= DateUtils.FORMAT_24HOUR;
-        }
-        String timeRange = Utils.formatDateRange(mContext, event.startMillis, event.endMillis,
-                flags);
-        TextView timeView = (TextView) mPopupView.findViewById(R.id.time);
-        timeView.setText(timeRange);
-
-        TextView whereView = (TextView) mPopupView.findViewById(R.id.where);
-        final boolean empty = TextUtils.isEmpty(event.location);
-        whereView.setVisibility(empty ? View.GONE : View.VISIBLE);
-        if (!empty) whereView.setText(event.location);
-
-        mPopup.showAtLocation(this, Gravity.BOTTOM | Gravity.LEFT, mHoursWidth, 5);
-        mHandler.postDelayed(mDismissPopup, POPUP_DISMISS_DELAY);
     }
 
     // The following routines are called from the parent activity when certain
@@ -3891,18 +3158,7 @@ public class DayView extends View implements View.OnCreateContextMenuListener,
         boolean pressedSelected = (hasSelection || mTouchExplorationEnabled)
                 && selectedDay == mSelectionDay && selectedHour == mSelectionHour;
 
-        if (pressedSelected && mSavedClickedEvent == null) {
-            // If the tap is on an already selected hour slot, then create a new
-            // event
-            long extraLong = 0;
-            if (mSelectionAllday) {
-                extraLong = CalendarController.EXTRA_CREATE_ALL_DAY;
-            }
-            mSelectionMode = SELECTION_SELECTED;
-            mController.sendEventRelatedEventWithExtra(this, EventType.CREATE_EVENT, -1,
-                    getSelectedTimeInMillis(), 0, (int) ev.getRawX(), (int) ev.getRawY(),
-                    extraLong, -1);
-        } else if (mSelectedEvent != null) {
+        if (mSelectedEvent != null) {
             // If the tap is on an event, launch the "View event" view
             if (mIsAccessibilityEnabled) {
                 mAccessibilityMgr.interrupt();
@@ -3925,19 +3181,6 @@ public class DayView extends View implements View.OnCreateContextMenuListener,
             } else {
                 this.post(mClearClick);
             }
-        } else {
-            // Select time
-            Time startTime = new Time(mBaseDate);
-            startTime.setJulianDay(mSelectionDay);
-            startTime.hour = mSelectionHour;
-            startTime.normalize(true /* ignore isDst */);
-
-            Time endTime = new Time(startTime);
-            endTime.hour++;
-
-            mSelectionMode = SELECTION_SELECTED;
-            mController.sendEvent(this, EventType.GO_TO, startTime, endTime, -1, ViewType.CURRENT,
-                    CalendarController.EXTRA_GOTO_TIME, null, null);
         }
         invalidate();
     }
@@ -3962,7 +3205,6 @@ public class DayView extends View implements View.OnCreateContextMenuListener,
             return;
         }
 
-        mSelectionMode = SELECTION_LONGPRESS;
         invalidate();
         performLongClick();
     }
@@ -4341,7 +3583,6 @@ public class DayView extends View implements View.OnCreateContextMenuListener,
         // we never get onKeyUp() for the long-press. So check for it here
         // and change the selection to the long-press state.
         if (mSelectionMode != SELECTION_LONGPRESS) {
-            mSelectionMode = SELECTION_LONGPRESS;
             invalidate();
         }
 
@@ -4352,189 +3593,7 @@ public class DayView extends View implements View.OnCreateContextMenuListener,
         final String title = Utils.formatDateRange(mContext, startMillis, startMillis, flags);
         menu.setHeaderTitle(title);
 
-        int numSelectedEvents = mSelectedEvents.size();
-        if (mNumDays == 1) {
-            // Day view.
-
-            // If there is a selected event, then allow it to be viewed and
-            // edited.
-            if (numSelectedEvents >= 1) {
-                item = menu.add(0, MENU_EVENT_VIEW, 0, R.string.event_view);
-                item.setOnMenuItemClickListener(mContextMenuHandler);
-                item.setIcon(android.R.drawable.ic_menu_info_details);
-
-                int accessLevel = getEventAccessLevel(mContext, mSelectedEvent);
-                if (accessLevel == ACCESS_LEVEL_EDIT) {
-                    item = menu.add(0, MENU_EVENT_EDIT, 0, R.string.event_edit);
-                    item.setOnMenuItemClickListener(mContextMenuHandler);
-                    item.setIcon(android.R.drawable.ic_menu_edit);
-                    item.setAlphabeticShortcut('e');
-                }
-
-                if (accessLevel >= ACCESS_LEVEL_DELETE) {
-                    item = menu.add(0, MENU_EVENT_DELETE, 0, R.string.event_delete);
-                    item.setOnMenuItemClickListener(mContextMenuHandler);
-                    item.setIcon(android.R.drawable.ic_menu_delete);
-                }
-
-                item = menu.add(0, MENU_EVENT_CREATE, 0, R.string.event_create);
-                item.setOnMenuItemClickListener(mContextMenuHandler);
-                item.setIcon(android.R.drawable.ic_menu_add);
-                item.setAlphabeticShortcut('n');
-            } else {
-                // Otherwise, if the user long-pressed on a blank hour, allow
-                // them to create an event. They can also do this by tapping.
-                item = menu.add(0, MENU_EVENT_CREATE, 0, R.string.event_create);
-                item.setOnMenuItemClickListener(mContextMenuHandler);
-                item.setIcon(android.R.drawable.ic_menu_add);
-                item.setAlphabeticShortcut('n');
-            }
-        } else {
-            // Week view.
-
-            // If there is a selected event, then allow it to be viewed and
-            // edited.
-            if (numSelectedEvents >= 1) {
-                item = menu.add(0, MENU_EVENT_VIEW, 0, R.string.event_view);
-                item.setOnMenuItemClickListener(mContextMenuHandler);
-                item.setIcon(android.R.drawable.ic_menu_info_details);
-
-                int accessLevel = getEventAccessLevel(mContext, mSelectedEvent);
-                if (accessLevel == ACCESS_LEVEL_EDIT) {
-                    item = menu.add(0, MENU_EVENT_EDIT, 0, R.string.event_edit);
-                    item.setOnMenuItemClickListener(mContextMenuHandler);
-                    item.setIcon(android.R.drawable.ic_menu_edit);
-                    item.setAlphabeticShortcut('e');
-                }
-
-                if (accessLevel >= ACCESS_LEVEL_DELETE) {
-                    item = menu.add(0, MENU_EVENT_DELETE, 0, R.string.event_delete);
-                    item.setOnMenuItemClickListener(mContextMenuHandler);
-                    item.setIcon(android.R.drawable.ic_menu_delete);
-                }
-            }
-
-            item = menu.add(0, MENU_EVENT_CREATE, 0, R.string.event_create);
-            item.setOnMenuItemClickListener(mContextMenuHandler);
-            item.setIcon(android.R.drawable.ic_menu_add);
-            item.setAlphabeticShortcut('n');
-
-            item = menu.add(0, MENU_DAY, 0, R.string.show_day_view);
-            item.setOnMenuItemClickListener(mContextMenuHandler);
-            item.setIcon(android.R.drawable.ic_menu_day);
-            item.setAlphabeticShortcut('d');
-        }
-
         mPopup.dismiss();
-    }
-
-    private class ContextMenuHandler implements MenuItem.OnMenuItemClickListener {
-
-        public boolean onMenuItemClick(MenuItem item) {
-            switch (item.getItemId()) {
-                case MENU_EVENT_VIEW: {
-                    if (mSelectedEvent != null) {
-                        mController.sendEventRelatedEvent(this, EventType.VIEW_EVENT_DETAILS,
-                                mSelectedEvent.id, mSelectedEvent.startMillis,
-                                mSelectedEvent.endMillis, 0, 0, -1);
-                    }
-                    break;
-                }
-                case MENU_EVENT_EDIT: {
-                    if (mSelectedEvent != null) {
-                        mController.sendEventRelatedEvent(this, EventType.EDIT_EVENT,
-                                mSelectedEvent.id, mSelectedEvent.startMillis,
-                                mSelectedEvent.endMillis, 0, 0, -1);
-                    }
-                    break;
-                }
-                case MENU_DAY: {
-                    mController.sendEvent(this, EventType.GO_TO, getSelectedTime(), null, -1,
-                            ViewType.DAY);
-                    break;
-                }
-                case MENU_AGENDA: {
-                    mController.sendEvent(this, EventType.GO_TO, getSelectedTime(), null, -1,
-                            ViewType.AGENDA);
-                    break;
-                }
-                case MENU_EVENT_CREATE: {
-                    long startMillis = getSelectedTimeInMillis();
-                    long endMillis = startMillis + DateUtils.HOUR_IN_MILLIS;
-                    mController.sendEventRelatedEvent(this, EventType.CREATE_EVENT, -1,
-                            startMillis, endMillis, 0, 0, -1);
-                    break;
-                }
-                case MENU_EVENT_DELETE: {
-                    if (mSelectedEvent != null) {
-                        Event selectedEvent = mSelectedEvent;
-                        long begin = selectedEvent.startMillis;
-                        long end = selectedEvent.endMillis;
-                        long id = selectedEvent.id;
-                        mController.sendEventRelatedEvent(this, EventType.DELETE_EVENT, id, begin,
-                                end, 0, 0, -1);
-                    }
-                    break;
-                }
-                default: {
-                    return false;
-                }
-            }
-            return true;
-        }
-    }
-
-    private static int getEventAccessLevel(Context context, Event e) {
-        ContentResolver cr = context.getContentResolver();
-
-        int accessLevel = Calendars.CAL_ACCESS_NONE;
-
-        // Get the calendar id for this event
-        Cursor cursor = cr.query(ContentUris.withAppendedId(Events.CONTENT_URI, e.id),
-                new String[] { Events.CALENDAR_ID },
-                null /* selection */,
-                null /* selectionArgs */,
-                null /* sort */);
-
-        if (cursor == null) {
-            return ACCESS_LEVEL_NONE;
-        }
-
-        if (cursor.getCount() == 0) {
-            cursor.close();
-            return ACCESS_LEVEL_NONE;
-        }
-
-        cursor.moveToFirst();
-        long calId = cursor.getLong(0);
-        cursor.close();
-
-        Uri uri = Calendars.CONTENT_URI;
-        String where = String.format(CALENDARS_WHERE, calId);
-        cursor = cr.query(uri, CALENDARS_PROJECTION, where, null, null);
-
-        String calendarOwnerAccount = null;
-        if (cursor != null) {
-            cursor.moveToFirst();
-            accessLevel = cursor.getInt(CALENDARS_INDEX_ACCESS_LEVEL);
-            calendarOwnerAccount = cursor.getString(CALENDARS_INDEX_OWNER_ACCOUNT);
-            cursor.close();
-        }
-
-        if (accessLevel < Calendars.CAL_ACCESS_CONTRIBUTOR) {
-            return ACCESS_LEVEL_NONE;
-        }
-
-        if (e.guestsCanModify) {
-            return ACCESS_LEVEL_EDIT;
-        }
-
-        if (!TextUtils.isEmpty(calendarOwnerAccount)
-                && calendarOwnerAccount.equalsIgnoreCase(e.organizer)) {
-            return ACCESS_LEVEL_EDIT;
-        }
-
-        return ACCESS_LEVEL_DELETE;
     }
 
     /**
@@ -4598,20 +3657,6 @@ public class DayView extends View implements View.OnCreateContextMenuListener,
 
         findSelectedEvent(x, y);
 
-//        Log.i("Cal", "setSelectionFromPosition( " + x + ", " + y + " ) day: " + day + " hour: "
-//                + mSelectionHour + " mFirstCell: " + mFirstCell + " mFirstHourOffset: "
-//                + mFirstHourOffset);
-//        if (mSelectedEvent != null) {
-//            Log.i("Cal", "  num events: " + mSelectedEvents.size() + " event: "
-//                    + mSelectedEvent.title);
-//            for (Event ev : mSelectedEvents) {
-//                int flags = DateUtils.FORMAT_SHOW_TIME | DateUtils.FORMAT_ABBREV_ALL
-//                        | DateUtils.FORMAT_CAP_NOON_MIDNIGHT;
-//                String timeRange = formatDateRange(mContext, ev.startMillis, ev.endMillis, flags);
-//
-//                Log.i("Cal", "  " + timeRange + " " + ev.title);
-//            }
-//        }
         sendAccessibilityEventAsNeeded(true);
 
         // Restore old values
@@ -4945,30 +3990,6 @@ public class DayView extends View implements View.OnCreateContextMenuListener,
 
     @Override
     public boolean onLongClick(View v) {
-        int flags = DateUtils.FORMAT_SHOW_WEEKDAY;
-        long time = getSelectedTimeInMillis();
-        if (!mSelectionAllday) {
-            flags |= DateUtils.FORMAT_SHOW_TIME;
-        }
-        if (DateFormat.is24HourFormat(mContext)) {
-            flags |= DateUtils.FORMAT_24HOUR;
-        }
-        mLongPressTitle = Utils.formatDateRange(mContext, time, time, flags);
-        new AlertDialog.Builder(mContext).setTitle(mLongPressTitle)
-                .setItems(mLongPressItems, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        if (which == 0) {
-                            long extraLong = 0;
-                            if (mSelectionAllday) {
-                                extraLong = CalendarController.EXTRA_CREATE_ALL_DAY;
-                            }
-                            mController.sendEventRelatedEventWithExtra(this,
-                                    EventType.CREATE_EVENT, -1, getSelectedTimeInMillis(), 0, -1,
-                                    -1, extraLong, -1);
-                        }
-                    }
-                }).show().setCanceledOnTouchOutside(true);
         return true;
     }
 

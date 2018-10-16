@@ -24,8 +24,6 @@ import static android.provider.CalendarContract.Attendees.ATTENDEE_STATUS;
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.app.Activity;
-import android.app.SearchManager;
-import android.app.SearchableInfo;
 import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.ContentUris;
@@ -39,9 +37,6 @@ import android.provider.CalendarContract.Events;
 import android.text.format.Time;
 import android.util.Log;
 import android.util.Pair;
-
-import com.android.calendar.event.EditEventActivity;
-import com.android.calendar.selectcalendars.SelectVisibleCalendarsActivity;
 
 import java.lang.ref.WeakReference;
 import java.util.Iterator;
@@ -98,8 +93,6 @@ public class CalendarController {
      * One of the event types that are sent to or from the controller
      */
     public interface EventType {
-        final long CREATE_EVENT = 1L;
-
         // Simple view of an event
         final long VIEW_EVENT = 1L << 1;
 
@@ -109,24 +102,14 @@ public class CalendarController {
         // full detail view in edit mode
         final long EDIT_EVENT = 1L << 3;
 
-        final long DELETE_EVENT = 1L << 4;
-
         final long GO_TO = 1L << 5;
-
-        final long LAUNCH_SETTINGS = 1L << 6;
 
         final long EVENTS_CHANGED = 1L << 7;
 
-        final long SEARCH = 1L << 8;
-
-        // User has pressed the home key
         final long USER_HOME = 1L << 9;
 
         // date range has changed, update the title
         final long UPDATE_TITLE = 1L << 10;
-
-        // select which calendars to display
-        final long LAUNCH_SELECT_VISIBLE_CALENDARS = 1L << 11;
     }
 
     /**
@@ -177,9 +160,6 @@ public class CalendarController {
          * Attendees.ATTENDEE_STATUS_DECLINED, or Attendees.ATTENDEE_STATUS_TENTATIVE.
          * To signal the event is an all-day event, "or" ALL_DAY_MASK with the response.
          * Alternatively, use buildViewExtraLong(), getResponse(), and isAllDay().
-         * <p>
-         * For EventType.CREATE_EVENT:
-         * Set to {@link #EXTRA_CREATE_ALL_DAY} for creating an all-day event.
          * <p>
          * For EventType.GO_TO:
          * Set to {@link #EXTRA_GOTO_TIME} to go to the specified date/time.
@@ -247,12 +227,6 @@ public class CalendarController {
             return extra;
         }
     }
-
-    /**
-     * Pass to the ExtraLong parameter for EventType.CREATE_EVENT to create
-     * an all-day event
-     */
-    public static final long EXTRA_CREATE_ALL_DAY = 0x10;
 
     /**
      * Pass to the ExtraLong parameter for EventType.GO_TO to signal the time
@@ -367,7 +341,7 @@ public class CalendarController {
           long selectedMillis, String title, long calendarId) {
         EventInfo info = new EventInfo();
         info.eventType = eventType;
-        if (eventType == EventType.EDIT_EVENT || eventType == EventType.VIEW_EVENT_DETAILS) {
+        if (eventType == EventType.VIEW_EVENT_DETAILS) {
             info.viewType = ViewType.CURRENT;
         }
 
@@ -509,7 +483,7 @@ public class CalendarController {
 
         // Store the eventId if we're entering edit event
         if ((event.eventType
-                & (EventType.CREATE_EVENT | EventType.EDIT_EVENT | EventType.VIEW_EVENT_DETAILS))
+                & (EventType.VIEW_EVENT_DETAILS))
                 != 0) {
             if (event.id > 0) {
                 mEventId = event.id;
@@ -578,45 +552,6 @@ public class CalendarController {
                         eventHandlers.put(food.getKey(), food.getValue());
                     }
                 }
-            }
-        }
-
-        if (!handled) {
-            // Launch Settings
-            if (event.eventType == EventType.LAUNCH_SETTINGS) {
-                launchSettings();
-                return;
-            }
-
-            // Launch Calendar Visible Selector
-            if (event.eventType == EventType.LAUNCH_SELECT_VISIBLE_CALENDARS) {
-                launchSelectVisibleCalendars();
-                return;
-            }
-
-            // Create/View/Edit/Delete Event
-            long endTime = (event.endTime == null) ? -1 : event.endTime.toMillis(false);
-            if (event.eventType == EventType.CREATE_EVENT) {
-                launchCreateEvent(event.startTime.toMillis(false), endTime,
-                        event.extraLong == EXTRA_CREATE_ALL_DAY, event.eventTitle,
-                        event.calendarId);
-                return;
-            } else if (event.eventType == EventType.VIEW_EVENT) {
-                launchViewEvent(event.id, event.startTime.toMillis(false), endTime,
-                        event.getResponse());
-                return;
-            } else if (event.eventType == EventType.EDIT_EVENT) {
-                launchEditEvent(event.id, event.startTime.toMillis(false), endTime, true);
-                return;
-            } else if (event.eventType == EventType.VIEW_EVENT_DETAILS) {
-                launchEditEvent(event.id, event.startTime.toMillis(false), endTime, false);
-                return;
-            } else if (event.eventType == EventType.DELETE_EVENT) {
-                launchDeleteEvent(event.id, event.startTime.toMillis(false), endTime);
-                return;
-            } else if (event.eventType == EventType.SEARCH) {
-                launchSearch(event.id, event.query, event.componentName);
-                return;
             }
         }
     }
@@ -719,40 +654,6 @@ public class CalendarController {
         return mPreviousViewType;
     }
 
-    private void launchSelectVisibleCalendars() {
-        Intent intent = new Intent(Intent.ACTION_VIEW);
-        intent.setClass(mContext, SelectVisibleCalendarsActivity.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        mContext.startActivity(intent);
-    }
-
-    private void launchSettings() {
-        Intent intent = new Intent(Intent.ACTION_VIEW);
-        intent.setClass(mContext, CalendarSettingsActivity.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        mContext.startActivity(intent);
-    }
-
-    private void launchCreateEvent(long startMillis, long endMillis, boolean allDayEvent,
-            String title, long calendarId) {
-        Intent intent = generateCreateEventIntent(startMillis, endMillis, allDayEvent, title,
-            calendarId);
-        mEventId = -1;
-        mContext.startActivity(intent);
-    }
-
-    public Intent generateCreateEventIntent(long startMillis, long endMillis,
-        boolean allDayEvent, String title, long calendarId) {
-        Intent intent = new Intent(Intent.ACTION_VIEW);
-        intent.setClass(mContext, EditEventActivity.class);
-        intent.putExtra(EXTRA_EVENT_BEGIN_TIME, startMillis);
-        intent.putExtra(EXTRA_EVENT_END_TIME, endMillis);
-        intent.putExtra(EXTRA_EVENT_ALL_DAY, allDayEvent);
-        intent.putExtra(Events.CALENDAR_ID, calendarId);
-        intent.putExtra(Events.TITLE, title);
-        return intent;
-    }
-
     public void launchViewEvent(long eventId, long startMillis, long endMillis, int response) {
         Intent intent = new Intent(Intent.ACTION_VIEW);
         Uri eventUri = ContentUris.withAppendedId(Events.CONTENT_URI, eventId);
@@ -763,64 +664,6 @@ public class CalendarController {
         intent.putExtra(ATTENDEE_STATUS, response);
         intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         mContext.startActivity(intent);
-    }
-
-    private void launchEditEvent(long eventId, long startMillis, long endMillis, boolean edit) {
-        Uri uri = ContentUris.withAppendedId(Events.CONTENT_URI, eventId);
-        Intent intent = new Intent(Intent.ACTION_EDIT, uri);
-        intent.putExtra(EXTRA_EVENT_BEGIN_TIME, startMillis);
-        intent.putExtra(EXTRA_EVENT_END_TIME, endMillis);
-        intent.setClass(mContext, EditEventActivity.class);
-        intent.putExtra(EVENT_EDIT_ON_LAUNCH, edit);
-        mEventId = eventId;
-        mContext.startActivity(intent);
-    }
-
-//    private void launchAlerts() {
-//        Intent intent = new Intent();
-//        intent.setClass(mContext, AlertActivity.class);
-//        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-//        mContext.startActivity(intent);
-//    }
-
-    private void launchDeleteEvent(long eventId, long startMillis, long endMillis) {
-        launchDeleteEventAndFinish(null, eventId, startMillis, endMillis, -1);
-    }
-
-    private void launchDeleteEventAndFinish(Activity parentActivity, long eventId, long startMillis,
-            long endMillis, int deleteWhich) {
-        DeleteEventHelper deleteEventHelper = new DeleteEventHelper(mContext, parentActivity,
-                parentActivity != null /* exit when done */);
-        deleteEventHelper.delete(startMillis, endMillis, eventId, deleteWhich);
-    }
-
-    private void launchSearch(long eventId, String query, ComponentName componentName) {
-        final SearchManager searchManager =
-                (SearchManager)mContext.getSystemService(Context.SEARCH_SERVICE);
-        final SearchableInfo searchableInfo = searchManager.getSearchableInfo(componentName);
-        final Intent intent = new Intent(Intent.ACTION_SEARCH);
-        intent.putExtra(SearchManager.QUERY, query);
-        intent.setComponent(searchableInfo.getSearchActivity());
-        intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        mContext.startActivity(intent);
-    }
-
-    /**
-     * Performs a manual refresh of calendars in all known accounts.
-     */
-    public void refreshCalendars() {
-        Account[] accounts = AccountManager.get(mContext).getAccounts();
-        Log.d(TAG, "Refreshing " + accounts.length + " accounts");
-
-        String authority = Calendars.CONTENT_URI.getAuthority();
-        for (int i = 0; i < accounts.length; i++) {
-            if (Log.isLoggable(TAG, Log.DEBUG)) {
-                Log.d(TAG, "Refreshing calendars for: " + accounts[i]);
-            }
-            Bundle extras = new Bundle();
-            extras.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true);
-            ContentResolver.requestSync(accounts[i], authority, extras);
-        }
     }
 
     // Forces the viewType. Should only be used for initialization.
@@ -839,24 +682,12 @@ public class CalendarController {
         StringBuilder builder = new StringBuilder();
         if ((eventInfo.eventType & EventType.GO_TO) != 0) {
             tmp = "Go to time/event";
-        } else if ((eventInfo.eventType & EventType.CREATE_EVENT) != 0) {
-            tmp = "New event";
         } else if ((eventInfo.eventType & EventType.VIEW_EVENT) != 0) {
             tmp = "View event";
         } else if ((eventInfo.eventType & EventType.VIEW_EVENT_DETAILS) != 0) {
             tmp = "View details";
-        } else if ((eventInfo.eventType & EventType.EDIT_EVENT) != 0) {
-            tmp = "Edit event";
-        } else if ((eventInfo.eventType & EventType.DELETE_EVENT) != 0) {
-            tmp = "Delete event";
-        } else if ((eventInfo.eventType & EventType.LAUNCH_SELECT_VISIBLE_CALENDARS) != 0) {
-            tmp = "Launch select visible calendars";
-        } else if ((eventInfo.eventType & EventType.LAUNCH_SETTINGS) != 0) {
-            tmp = "Launch settings";
         } else if ((eventInfo.eventType & EventType.EVENTS_CHANGED) != 0) {
             tmp = "Refresh events";
-        } else if ((eventInfo.eventType & EventType.SEARCH) != 0) {
-            tmp = "Search";
         } else if ((eventInfo.eventType & EventType.USER_HOME) != 0) {
             tmp = "Gone home";
         } else if ((eventInfo.eventType & EventType.UPDATE_TITLE) != 0) {

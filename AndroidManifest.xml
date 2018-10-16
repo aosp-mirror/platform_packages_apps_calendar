@@ -130,40 +130,9 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".selectcalendars.SelectVisibleCalendarsActivity"
-            android:label="@string/select_visible_calendars_title"
-            android:theme="@android:style/Theme.Holo.Light"/>
-
-        <activity android:name=".selectcalendars.SelectSyncedCalendarsMultiAccountActivity"
-            android:label="@string/select_synced_calendars_title"
-            android:theme="@android:style/Theme.Holo.Light"/>
-
-        <activity android:name="CalendarSettingsActivity" android:label="@string/preferences_title"
-            android:theme="@android:style/Theme.Holo.Light"/>
-
         <!-- Declarations for search -->
         <!-- Make all activities a searchable context -->
-        <meta-data android:name="android.app.default_searchable"
-            android:value="com.android.calendar.SearchActivity"/>
-
-        <activity android:name="SearchActivity" android:label="@string/search_title"
-            android:launchMode="singleTop" android:theme="@style/CalendarTheme.WithActionBar"
-            android:windowSoftInputMode="stateAlwaysHidden"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.SEARCH"/>
-            </intent-filter>
-            <meta-data android:name="android.app.searchable" android:resource="@xml/searchable"/>
-        </activity>
-
-        <provider android:name=".CalendarRecentSuggestionsProvider"
-            android:exported="false"
-            android:authorities="com.android.calendar.CalendarRecentSuggestionsProvider" />
-
         <!-- Declarations for alerts/reminders -->
-        <activity android:name=".alerts.AlertActivity" android:launchMode="singleInstance"
-             android:theme="@android:style/Theme.Holo.Dialog" android:excludeFromRecents="true" />
-
         <activity android:name=".alerts.QuickResponseActivity" android:launchMode="singleInstance"
              android:theme="@android:style/Theme.Holo.Dialog" android:excludeFromRecents="true"
              android:label="@string/quick_response_dialog_title" />
