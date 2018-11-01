@@ -379,16 +379,6 @@
                     style="@style/TextAppearance.EditEvent_LabelSmall" />
             </LinearLayout>
 
-            <!-- GUEST LIST -->
-            <com.android.calendar.event.AttendeesView
-                android:id="@+id/long_attendee_list"
-                android:textColor="@color/event_info_body_color"
-                android:orientation="vertical"
-                android:layout_height="wrap_content"
-                android:layout_width="match_parent"
-                android:visibility="gone"
-                android:layout_marginTop="5dip"/>
-
             <!-- REMINDERS -->
             <LinearLayout
                 android:id="@+id/reminders_row"

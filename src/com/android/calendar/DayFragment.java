@@ -139,11 +139,6 @@ public class DayFragment extends Fragment implements CalendarController.EventHan
     @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-
-        long time = getSelectedTimeInMillis();
-        if (time != -1) {
-            outState.putLong(BUNDLE_KEY_RESTORE_TIME, time);
-        }
     }
 
     @Override
