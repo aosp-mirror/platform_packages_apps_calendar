@@ -217,9 +217,6 @@ public class SimpleDayPickerFragment extends ListFragment implements OnScrollLis
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (savedInstanceState != null && savedInstanceState.containsKey(KEY_CURRENT_TIME)) {
-            goTo(savedInstanceState.getLong(KEY_CURRENT_TIME), false, true, true);
-        }
     }
 
     @Override
@@ -606,30 +603,6 @@ public class SimpleDayPickerFragment extends ListFragment implements OnScrollLis
             if (mNewState == OnScrollListener.SCROLL_STATE_IDLE
                     && mPreviousScrollState != OnScrollListener.SCROLL_STATE_IDLE) {
                 mPreviousScrollState = mNewState;
-                // Uncomment the below to add snap to week back
-//                int i = 0;
-//                View child = mView.getChildAt(i);
-//                while (child != null && child.getBottom() <= 0) {
-//                    child = mView.getChildAt(++i);
-//                }
-//                if (child == null) {
-//                    // The view is no longer visible, just return
-//                    return;
-//                }
-//                int dist = child.getTop();
-//                if (dist < LIST_TOP_OFFSET) {
-//                    if (Log.isLoggable(TAG, Log.DEBUG)) {
-//                        Log.d(TAG, "scrolling by " + dist + " up? " + mIsScrollingUp);
-//                    }
-//                    int firstPosition = mView.getFirstVisiblePosition();
-//                    int lastPosition = mView.getLastVisiblePosition();
-//                    boolean scroll = firstPosition != 0 && lastPosition != mView.getCount() - 1;
-//                    if (mIsScrollingUp && scroll) {
-//                        mView.smoothScrollBy(dist, 500);
-//                    } else if (!mIsScrollingUp && scroll) {
-//                        mView.smoothScrollBy(child.getHeight() + dist, 500);
-//                    }
-//                }
                 mAdapter.updateFocusMonth(mCurrentMonthDisplayed);
             } else {
                 mPreviousScrollState = mNewState;

@@ -227,14 +227,4 @@ public class CalendarAppWidgetProvider extends AppWidgetProvider {
 
         return fillInIntent;
     }
-
-//    private static PendingIntent getNewEventPendingIntent(Context context) {
-//        Intent newEventIntent = new Intent(Intent.ACTION_EDIT);
-//        newEventIntent.setClass(context, EditEventActivity.class);
-//        Builder builder = CalendarContract.CONTENT_URI.buildUpon();
-//        builder.appendPath("events");
-//        newEventIntent.setData(builder.build());
-//        return PendingIntent.getActivity(context, 0, newEventIntent,
-//                PendingIntent.FLAG_UPDATE_CURRENT);
-//    }
 }
