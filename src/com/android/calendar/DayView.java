@@ -438,8 +438,6 @@ public class DayView extends View implements View.OnCreateContextMenuListener,
     private static int EVENT_LINE_PADDING = 4;
     private static int NEW_EVENT_HINT_FONT_SIZE = 12;
 
-    private static int mPressedColor;
-    private static int mClickedColor;
     private static int mEventTextColor;
     private static int mMoreEventsTextColor;
 
@@ -799,8 +797,6 @@ public class DayView extends View implements View.OnCreateContextMenuListener,
         mCalendarGridLineInnerVerticalColor = mResources
                 .getColor(R.color.calendar_grid_line_inner_vertical_color);
         mCalendarHourLabelColor = mResources.getColor(R.color.calendar_hour_label);
-        mPressedColor = mResources.getColor(R.color.pressed);
-        mClickedColor = mResources.getColor(R.color.day_event_clicked_background_color);
         mEventTextColor = mResources.getColor(R.color.calendar_event_text_color);
         mMoreEventsTextColor = mResources.getColor(R.color.month_event_other_color);
 
@@ -2380,36 +2376,6 @@ public class DayView extends View implements View.OnCreateContextMenuListener,
         p.setAntiAlias(true);
     }
 
-    Event getSelectedEvent() {
-        if (mSelectedEvent == null) {
-            // There is no event at the selected hour, so create a new event.
-            return getNewEvent(mSelectionDay, getSelectedTimeInMillis(),
-                    getSelectedMinutesSinceMidnight());
-        }
-        return mSelectedEvent;
-    }
-
-    boolean isEventSelected() {
-        return (mSelectedEvent != null);
-    }
-
-    Event getNewEvent() {
-        return getNewEvent(mSelectionDay, getSelectedTimeInMillis(),
-                getSelectedMinutesSinceMidnight());
-    }
-
-    static Event getNewEvent(int julianDay, long utcMillis,
-            int minutesSinceMidnight) {
-        Event event = Event.newInstance();
-        event.startDay = julianDay;
-        event.endDay = julianDay;
-        event.startMillis = utcMillis;
-        event.endMillis = event.startMillis + MILLIS_PER_HOUR;
-        event.startTime = minutesSinceMidnight;
-        event.endTime = event.startTime + MINUTES_PER_HOUR;
-        return event;
-    }
-
     private int computeMaxStringWidth(int currentMax, String[] strings, Paint p) {
         float maxWidthF = 0.0f;
 
@@ -2815,13 +2781,7 @@ public class DayView extends View implements View.OnCreateContextMenuListener,
         r.left = (int) event.left + EVENT_RECT_LEFT_MARGIN;
         r.right = (int) event.right;
 
-        int color;
-        if (event == mClickedEvent) {
-                color = mClickedColor;
-        } else {
-            color = event.color;
-        }
-
+        int color = event.color;
         switch (event.selfAttendeeStatus) {
             case Attendees.ATTENDEE_STATUS_INVITED:
                 if (event != mClickedEvent) {
@@ -2856,17 +2816,6 @@ public class DayView extends View implements View.OnCreateContextMenuListener,
         canvas.drawRect(r, p);
         p.setAlpha(alpha);
         p.setStyle(Style.FILL);
-
-        // If this event is selected, then use the selection color
-        if (mSelectedEvent == event && mClickedEvent != null) {
-            boolean paintIt = false;
-            color = 0;
-            if (paintIt) {
-                p.setColor(color);
-                canvas.drawRect(r, p);
-            }
-            p.setAntiAlias(true);
-        }
 
         // Setup rect for drawEventText which follows
         r.top = (int) event.top + EVENT_RECT_TOP_MARGIN;

@@ -930,7 +930,7 @@ public class AllInOneActivity extends Activity implements EventHandler,
 
     @Override
     public long getSupportedEventTypes() {
-        return EventType.GO_TO | EventType.VIEW_EVENT | EventType.UPDATE_TITLE;
+        return EventType.GO_TO | EventType.UPDATE_TITLE;
     }
 
     @Override
@@ -991,52 +991,6 @@ public class AllInOneActivity extends Activity implements EventHandler,
             if (!mIsTabletConfig) {
                 mActionBarMenuSpinnerAdapter.setTime(displayTime);
             }
-        } else if (event.eventType == EventType.VIEW_EVENT) {
-
-            // If in Agenda view and "show_event_details_with_agenda" is "true",
-            // do not create the event info fragment here, it will be created by the Agenda
-            // fragment
-
-            if (mCurrentView != ViewType.AGENDA) {
-                // TODO Fix the temp hack below: && mCurrentView !=
-                // ViewType.AGENDA
-                if (event.selectedTime != null) {
-                    mController.sendEvent(this, EventType.GO_TO, event.selectedTime,
-                            event.selectedTime, -1, ViewType.CURRENT);
-                }
-                int response = event.getResponse();
-                if (((mCurrentView == ViewType.DAY || (mCurrentView == ViewType.WEEK) ||
-                                mCurrentView == ViewType.MONTH) && mShowEventInfoFullScreen)){
-                    // start event info as activity
-                    Intent intent = new Intent(Intent.ACTION_VIEW);
-                    Uri eventUri = ContentUris.withAppendedId(Events.CONTENT_URI, event.id);
-                    intent.setData(eventUri);
-                    intent.setClass(this, EventInfoActivity.class);
-                    intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT |
-                            Intent.FLAG_ACTIVITY_SINGLE_TOP);
-                    intent.putExtra(EXTRA_EVENT_BEGIN_TIME, event.startTime.toMillis(false));
-                    intent.putExtra(EXTRA_EVENT_END_TIME, event.endTime.toMillis(false));
-                    intent.putExtra(ATTENDEE_STATUS, response);
-                    startActivity(intent);
-                } else {
-                    // start event info as a dialog
-                    EventInfoFragment fragment = new EventInfoFragment(this,
-                            event.id, event.startTime.toMillis(false),
-                            event.endTime.toMillis(false), response, true,
-                            EventInfoFragment.DIALOG_WINDOW_STYLE);
-                    fragment.setDialogParams(event.x, event.y, mActionBar.getHeight());
-                    FragmentManager fm = getFragmentManager();
-                    FragmentTransaction ft = fm.beginTransaction();
-                    // if we have an old popup replace it
-                    Fragment fOld = fm.findFragmentByTag(EVENT_INFO_FRAGMENT_TAG);
-                    if (fOld != null && fOld.isAdded()) {
-                        ft.remove(fOld);
-                    }
-                    ft.add(fragment, EVENT_INFO_FRAGMENT_TAG);
-                    ft.commit();
-                }
-            }
-            displayTime = event.startTime.toMillis(true);
         } else if (event.eventType == EventType.UPDATE_TITLE) {
             setTitleInActionBar(event);
             if (!mIsTabletConfig) {
