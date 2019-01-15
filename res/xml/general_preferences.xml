@@ -41,10 +41,6 @@
             android:dependency="preferences_home_tz_enabled"
             android:defaultValue="@string/preferences_home_tz_default"
             android:title="@string/preferences_home_tz_title" />
-        <PreferenceScreen
-            android:key="preferences_clear_search_history"
-            android:title="@string/preferences_clear_search_history_title"
-            android:summary="@string/preferences_clear_search_history_summary" />
     </PreferenceCategory>
     <PreferenceCategory
         android:key="preferences_alerts_category"
@@ -80,12 +76,6 @@
             android:entries="@array/preferences_default_reminder_labels"
             android:entryValues="@array/preferences_default_reminder_values"
             android:dialogTitle="@string/preferences_default_reminder_dialog" />
-
-        <PreferenceScreen
-            android:key="preferences_quick_responses"
-            android:fragment="com.android.calendar.QuickResponseSettings"
-            android:title="@string/quick_response_settings"
-            android:summary="@string/quick_response_settings_summary" />
      </PreferenceCategory>
 
 </PreferenceScreen>

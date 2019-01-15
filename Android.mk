@@ -40,6 +40,8 @@ LOCAL_PACKAGE_NAME := Calendar
 LOCAL_PROGUARD_FLAG_FILES := proguard.flags \
                              ../../../frameworks/opt/datetimepicker/proguard.flags
 
+LOCAL_PRODUCT_MODULE := true
+
 LOCAL_AAPT_FLAGS := --auto-add-overlay
 LOCAL_AAPT_FLAGS += --extra-packages com.android.ex.chips
 LOCAL_AAPT_FLAGS += --extra-packages com.android.colorpicker

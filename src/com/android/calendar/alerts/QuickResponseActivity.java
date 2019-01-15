@@ -103,23 +103,6 @@ public class QuickResponseActivity extends ListActivity implements OnItemClickLi
 
         @Override
         public void run() {
-            Intent emailIntent = AlertReceiver.createEmailIntent(QuickResponseActivity.this,
-                    mEventId, mBody);
-            if (emailIntent != null) {
-                try {
-                    startActivity(emailIntent);
-                    finish();
-                } catch (ActivityNotFoundException ex) {
-                    QuickResponseActivity.this.getListView().post(new Runnable() {
-                        @Override
-                        public void run() {
-                            Toast.makeText(QuickResponseActivity.this,
-                                    R.string.quick_response_email_failed, Toast.LENGTH_LONG);
-                            finish();
-                        }
-                    });
-                }
-            }
         }
     }
 }

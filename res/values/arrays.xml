@@ -221,7 +221,6 @@
         <item>Day</item>
         <item>Week</item>
         <item>Month</item>
-        <item>Agenda</item>
     </string-array>
 
     <!-- Experimental options for skipping reminders. [CHAR LIMIT = 37] -->
