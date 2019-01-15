@@ -31,19 +31,11 @@ public class CalendarBackupAgent extends BackupAgentHelper
 
     @Override
     public void onCreate() {
-        addHelper(SHARED_KEY, new SharedPreferencesBackupHelper(this,
-                GeneralPreferences.SHARED_PREFS_NAME));
     }
 
     @Override
     public void onRestore(BackupDataInput data, int appVersionCode, ParcelFileDescriptor newState)
             throws IOException {
-        // See Utils.getRingTonePreference for more info
-        final Editor editor = getSharedPreferences(
-                GeneralPreferences.SHARED_PREFS_NAME_NO_BACKUP, Context.MODE_PRIVATE).edit();
-        editor.putString(GeneralPreferences.KEY_ALERTS_RINGTONE,
-                GeneralPreferences.DEFAULT_RINGTONE).commit();
-
         super.onRestore(data, appVersionCode, newState);
     }
 }

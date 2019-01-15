@@ -139,11 +139,6 @@ public class DayFragment extends Fragment implements CalendarController.EventHan
     @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-
-        long time = getSelectedTimeInMillis();
-        if (time != -1) {
-            outState.putLong(BUNDLE_KEY_RESTORE_TIME, time);
-        }
     }
 
     @Override
@@ -237,21 +232,6 @@ public class DayFragment extends Fragment implements CalendarController.EventHan
 
         view = (DayView) mViewSwitcher.getNextView();
         view.clearCachedEvents();
-    }
-
-    Event getSelectedEvent() {
-        DayView view = (DayView) mViewSwitcher.getCurrentView();
-        return view.getSelectedEvent();
-    }
-
-    boolean isEventSelected() {
-        DayView view = (DayView) mViewSwitcher.getCurrentView();
-        return view.isEventSelected();
-    }
-
-    Event getNewEvent() {
-        DayView view = (DayView) mViewSwitcher.getCurrentView();
-        return view.getNewEvent();
     }
 
     public DayView getNextView() {

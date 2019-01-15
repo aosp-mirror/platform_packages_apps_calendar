@@ -1,19 +1,10 @@
--keep class com.android.calendar.selectcalendars.SelectCalendarsSyncFragment
 -keep class com.android.calendar.OtherPreferences
--keep class com.android.calendar.AboutPreferences
 -keep class com.android.calendar.GeneralPreferences
 -keepclassmembers class com.android.calendar.AllInOneActivity {
   *** setControlsOffset(...);
 }
--keepclassmembers class com.android.calendar.selectcalendars.SelectVisibleCalendarsActivity {
-  *** handleSelectSyncedCalendarsClicked(...);
-}
 -keepclassmembers class com.android.calendar.AllInOneActivity {
   *** handleSelectSyncedCalendarsClicked(...);
-}
--keepclassmembers class com.android.calendar.AsyncQueryService {
-  *** setTestHandler(...);
-  *** getLastCancelableOperation(...);
 }
 -keepclassmembers class com.android.calendar.AsyncQueryServiceHelper$OperationInfo {
   *** equivalent(...);
@@ -30,10 +21,6 @@
 }
 -keepclassmembers class com.android.calendar.month.MonthWeekEventsView {
   *** setAnimateTodayAlpha(...);
-}
--keepclassmembers class com.android.calendar.event.EditEventHelper {
- *** updateRecurrenceRule(...);
- *** extractDomain(...);
 }
 
 -keepclassmembers class * implements android.content.SharedPreferences$Editor {

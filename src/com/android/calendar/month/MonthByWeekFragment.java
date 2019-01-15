@@ -51,7 +51,6 @@ import com.android.calendar.CalendarController.ViewType;
 import com.android.calendar.Event;
 import com.android.calendar.R;
 import com.android.calendar.Utils;
-import com.android.calendar.event.CreateEventDialogFragment;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -63,8 +62,6 @@ public class MonthByWeekFragment extends SimpleDayPickerFragment implements
         OnTouchListener {
     private static final String TAG = "MonthFragment";
     private static final String TAG_EVENT_DIALOG = "event_dialog";
-
-    private CreateEventDialogFragment mEventDialog;
 
     // Selection and selection args for adding event queries
     private static final String WHERE_CALENDARS_VISIBLE = Calendars.VISIBLE + "=1";
@@ -98,20 +95,6 @@ public class MonthByWeekFragment extends SimpleDayPickerFragment implements
     private int mEventsLoadingDelay;
     private boolean mShowCalendarControls;
     private boolean mIsDetached;
-
-    private Handler mEventDialogHandler = new Handler() {
-
-        @Override
-        public void handleMessage(Message msg) {
-            final FragmentManager manager = getFragmentManager();
-            if (manager != null) {
-                Time day = (Time) msg.obj;
-                mEventDialog = new CreateEventDialogFragment(day);
-                mEventDialog.show(manager, TAG_EVENT_DIALOG);
-            }
-        }
-    };
-
 
     private final Runnable mTZUpdater = new Runnable() {
         @Override
@@ -275,7 +258,7 @@ public class MonthByWeekFragment extends SimpleDayPickerFragment implements
                 Time.getJulianDay(mSelectedDay.toMillis(true), mSelectedDay.gmtoff));
         weekParams.put(SimpleWeeksAdapter.WEEK_PARAMS_DAYS_PER_WEEK, mDaysPerWeek);
         if (mAdapter == null) {
-            mAdapter = new MonthByWeekAdapter(getActivity(), weekParams, mEventDialogHandler);
+            mAdapter = new MonthByWeekAdapter(getActivity(), weekParams);
             mAdapter.registerDataSetObserver(mObserver);
         } else {
             mAdapter.updateParams(weekParams);
@@ -507,8 +490,5 @@ public class MonthByWeekFragment extends SimpleDayPickerFragment implements
     public boolean onTouch(View v, MotionEvent event) {
         mDesiredDay.setToNow();
         return false;
-        // TODO post a cleanup to push us back onto the grid if something went
-        // wrong in a scroll such as the user stopping the view but not
-        // scrolling
     }
 }

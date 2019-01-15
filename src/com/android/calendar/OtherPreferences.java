@@ -72,7 +72,6 @@ public class OtherPreferences extends PreferenceFragment  implements OnPreferenc
     private static final String format12Hour = "%I:%M%P";
 
     private Preference mCopyDb;
-    private ListPreference mSkipReminders;
     private CheckBoxPreference mQuietHours;
     private Preference mQuietHoursStart;
     private Preference mQuietHoursEnd;
@@ -96,13 +95,6 @@ public class OtherPreferences extends PreferenceFragment  implements OnPreferenc
 
         addPreferencesFromResource(R.xml.other_preferences);
         mCopyDb = findPreference(KEY_OTHER_COPY_DB);
-        mSkipReminders = (ListPreference) findPreference(KEY_OTHER_REMINDERS_RESPONDED);
-        String skipPreferencesValue = null;
-        if (mSkipReminders != null) {
-            skipPreferencesValue = mSkipReminders.getValue();
-            mSkipReminders.setOnPreferenceChangeListener(this);
-        }
-        updateSkipRemindersSummary(skipPreferencesValue);
 
         Activity activity = getActivity();
         if (activity == null) {
@@ -138,13 +130,6 @@ public class OtherPreferences extends PreferenceFragment  implements OnPreferenc
 
     @Override
     public boolean onPreferenceChange(Preference preference, Object objValue) {
-        final String key = preference.getKey();
-
-        if (KEY_OTHER_REMINDERS_RESPONDED.equals(key)) {
-            String value = String.valueOf(objValue);
-            updateSkipRemindersSummary(value);
-        }
-
         return true;
     }
 
@@ -221,31 +206,5 @@ public class OtherPreferences extends PreferenceFragment  implements OnPreferenc
 
         String format = mIs24HourMode? format24Hour : format12Hour;
         return time.format(format);
-    }
-
-    /**
-     * Update the summary for the SkipReminders preference.
-     * @param value The corresponding value of which summary to set. If null, the default summary
-     * will be set, and the value will be set accordingly too.
-     */
-    private void updateSkipRemindersSummary(String value) {
-        if (mSkipReminders != null) {
-            // Default to "declined". Must match with R.array.preferences_skip_reminders_values.
-            int index = 0;
-
-            CharSequence[] values = mSkipReminders.getEntryValues();
-            CharSequence[] entries = mSkipReminders.getEntries();
-            for(int value_i = 0; value_i < values.length; value_i++) {
-                if (values[value_i].equals(value)) {
-                    index = value_i;
-                    break;
-                }
-            }
-            mSkipReminders.setSummary(entries[index].toString());
-            if (value == null) {
-                // Value was not known ahead of time, so the default value will be set.
-                mSkipReminders.setValue(values[index].toString());
-            }
-        }
     }
 }
