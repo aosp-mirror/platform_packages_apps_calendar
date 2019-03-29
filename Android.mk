@@ -37,6 +37,8 @@ LOCAL_RESOURCE_DIR := $(addprefix $(LOCAL_PATH)/, $(res_dirs))
 
 LOCAL_PACKAGE_NAME := Calendar
 
+LOCAL_COMPATIBILITY_SUITE := general-tests
+
 LOCAL_PROGUARD_FLAG_FILES := proguard.flags \
                              ../../../frameworks/opt/datetimepicker/proguard.flags
 
