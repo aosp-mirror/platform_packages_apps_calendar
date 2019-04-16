@@ -25,7 +25,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.IBinder;
 import android.provider.CalendarContract.CalendarAlerts;
-import android.support.v4.app.TaskStackBuilder;
+import androidx.core.app.TaskStackBuilder;
 
 import android.util.Log;
 import com.android.calendar.EventInfoActivity;
