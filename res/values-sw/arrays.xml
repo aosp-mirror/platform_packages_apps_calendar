@@ -71,7 +71,7 @@
     <item msgid="2064426942462573474">"Kujaribia"</item>
   </string-array>
   <string-array name="visibility">
-    <item msgid="3035788428581513163">"Chaguo-msingi"</item>
+    <item msgid="3035788428581513163">"Chaguomsingi"</item>
     <item msgid="5200216103966973369">"Faragha"</item>
     <item msgid="9182342638433672664">"Umma"</item>
   </string-array>
@@ -105,7 +105,6 @@
     <item msgid="5917946202321434335">"Siku"</item>
     <item msgid="6248480754959562740">"Wiki"</item>
     <item msgid="4298472806133153766">"Mwezi"</item>
-    <item msgid="5033084974413793845">"Ajenda"</item>
   </string-array>
   <string-array name="preferences_skip_reminders_labels">
     <item msgid="2285927842308686988">"Ikiwa itakataliwa tu"</item>

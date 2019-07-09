@@ -26,28 +26,29 @@
     <string name="tomorrow" msgid="614434811813859237">"Zítra"</string>
     <string name="today_at_time_fmt" msgid="1981279213130049736">"Dnes v <xliff:g id="TIME_INTERVAL">%s</xliff:g>"</string>
     <string name="tomorrow_at_time_fmt" msgid="1330779112841767432">"Zítra v <xliff:g id="TIME_INTERVAL">%s</xliff:g>"</string>
-    <string name="date_time_fmt" msgid="1642972650061946484">"<xliff:g id="DATE">%s</xliff:g>, <xliff:g id="TIME_INTERVAL">%s</xliff:g>"</string>
+    <string name="date_time_fmt" msgid="1642972650061946484">"<xliff:g id="DATE">%1$s</xliff:g>, <xliff:g id="TIME_INTERVAL">%2$s</xliff:g>"</string>
     <string name="repeats_label" msgid="7414023871434593196">"Opakování"</string>
     <string name="no_title_label" msgid="302177118061368042">"(bez názvu)"</string>
-  <plurals name="Nminutes">
-    <item quantity="one" msgid="4871052965772159239">"1 minuta"</item>
-    <item quantity="other" msgid="5644461630927544936">"<xliff:g id="COUNT">%d</xliff:g> minut"</item>
-  </plurals>
-  <plurals name="Nmins">
-    <item quantity="one" msgid="9191090668359663663">"1 min"</item>
-    <item quantity="other" msgid="9175648445939148974">"<xliff:g id="COUNT">%d</xliff:g> min"</item>
-  </plurals>
-  <plurals name="Nhours">
-    <item quantity="one" msgid="4793697728599296830">"1 hodina"</item>
-    <item quantity="other" msgid="4477841052001760620">"<xliff:g id="COUNT">%d</xliff:g> hod."</item>
-  </plurals>
-  <plurals name="Ndays">
-    <item quantity="one" msgid="5988137255732166573">"1 den"</item>
-    <item quantity="other" msgid="1709378992389618261">"<xliff:g id="COUNT">%d</xliff:g> dnů"</item>
-  </plurals>
-  <plurals name="weekN">
-    <item quantity="other" msgid="8085184869561028365">"<xliff:g id="COUNT">%d</xliff:g>. TÝDEN"</item>
-  </plurals>
+    <plurals name="Nminutes" formatted="false" msgid="7310648773807033278">
+      <item quantity="few"><xliff:g id="COUNT">%d</xliff:g> minuty</item>
+      <item quantity="many"><xliff:g id="COUNT">%d</xliff:g> minuty</item>
+      <item quantity="other"><xliff:g id="COUNT">%d</xliff:g> minut</item>
+      <item quantity="one">1 minuta</item>
+    </plurals>
+    <!-- no translation found for Nmins (2710431271593652640) -->
+    <plurals name="Nhours" formatted="false" msgid="8998738602639204540">
+      <item quantity="few"><xliff:g id="COUNT">%d</xliff:g> hodiny</item>
+      <item quantity="many"><xliff:g id="COUNT">%d</xliff:g> hodiny</item>
+      <item quantity="other"><xliff:g id="COUNT">%d</xliff:g> hodin</item>
+      <item quantity="one">1 hodina</item>
+    </plurals>
+    <plurals name="Ndays" formatted="false" msgid="2502834794639322464">
+      <item quantity="few"><xliff:g id="COUNT">%d</xliff:g> dny</item>
+      <item quantity="many"><xliff:g id="COUNT">%d</xliff:g> dne</item>
+      <item quantity="other"><xliff:g id="COUNT">%d</xliff:g> dní</item>
+      <item quantity="one">1 den</item>
+    </plurals>
+    <!-- no translation found for weekN (6682545863072873513) -->
     <string name="calendar_refresh" msgid="6172731193680500025">"Aktualizovat"</string>
     <string name="show_day_view" msgid="5782512782605466016">"Zobrazit den"</string>
     <string name="agenda_view" msgid="5566084759423843245">"Agenda"</string>
@@ -61,7 +62,7 @@
     <string name="goto_today" msgid="9162136434410891230">"Dnes"</string>
     <string name="menu_preferences" msgid="9120238479503233925">"Nastavení"</string>
     <string name="menu_select_visible_calendars" msgid="735670432781741817">"Kalendáře k zobrazení"</string>
-    <string name="search" msgid="550656004486017426">"Hledat"</string>
+    <string name="search" msgid="550656004486017426">"Vyhledávání"</string>
     <string name="hide_controls" msgid="830320505938520882">"Skrýt ovládací prvky"</string>
     <string name="show_controls" msgid="715520586028062621">"Zobrazit ovládací prvky"</string>
     <string name="select_visible_calendars_title" msgid="7944393060991949882">"Kalendáře k zobrazení"</string>
@@ -111,7 +112,7 @@
     <string name="response_yes" msgid="2027484304899988350">"Ano"</string>
     <string name="response_maybe" msgid="7791500973627841695">"Možná"</string>
     <string name="response_no" msgid="561911691884148136">"Ne"</string>
-    <string name="email_guests_label" msgid="8772030932155305903">"Poslat hostům e-mail"</string>
+    <string name="email_guests_label" msgid="8772030932155305903">"E-mail hostům"</string>
     <string name="email_organizer_label" msgid="7178059542798074813">"Poslat e-mail organizátorovi"</string>
     <string name="email_picker_label" msgid="4808253965057791781">"Psát si s uživateli"</string>
     <string name="event_not_found" msgid="8356864185947582727">"Událost nebyla nalezena."</string>
@@ -149,19 +150,10 @@
     <string name="snooze_label" msgid="1515893621063224666">"Odložit"</string>
     <string name="does_not_repeat" msgid="1877681921029738999">"Jednorázová událost"</string>
     <string name="endByDate" msgid="7654221304929538201">"; do <xliff:g id="DATE">%s</xliff:g>"</string>
-  <plurals name="endByCount">
-    <item quantity="one" msgid="3727754565990691816">"; jednorázově"</item>
-    <item quantity="other" msgid="4855496837834652446">", <xliff:g id="NUMBER">%d</xliff:g>krát"</item>
-  </plurals>
-  <plurals name="daily">
-    <item quantity="one" msgid="5169052946627480942">"denně"</item>
-    <item quantity="other" msgid="5455230727715859264">"Jednou za <xliff:g id="NUMBER">%d</xliff:g> d."</item>
-  </plurals>
+    <!-- no translation found for endByCount (8013128840623220306) -->
+    <!-- no translation found for daily (8835347097162749985) -->
     <string name="every_weekday" msgid="5896574838353902978">"Každý pracovní den (po–pá)"</string>
-  <plurals name="weekly">
-    <item quantity="one" msgid="5463021019301453273">"Týdně (<xliff:g id="DAYS_OF_WEEK">%2$s</xliff:g>)"</item>
-    <item quantity="other" msgid="2857390143157377867">"Jednou za <xliff:g id="NUMBER">%1$d</xliff:g> týd. v <xliff:g id="DAYS_OF_WEEK">%2$s</xliff:g>"</item>
-  </plurals>
+    <!-- no translation found for weekly (6866376933378266880) -->
     <string name="monthly" msgid="4587116285383048586">"Měsíčně"</string>
     <string name="yearly_plain" msgid="3652692085322162449">"Ročně"</string>
     <string name="monthly_on_day" msgid="5370155265278821156">"Měsíčně (<xliff:g id="DAY_OF_MONTH">%s</xliff:g>. den)"</string>
@@ -196,15 +188,17 @@
     <string name="preferences_default_reminder_default" msgid="2903884416749959435">"10"</string>
     <string name="preferences_use_home_tz_title" msgid="5597546849968598210">"Použít domácí čas"</string>
     <string name="preferences_use_home_tz_descrip" msgid="4835375381297413746">"Kalendáře a události se vždy zobrazí v domovském časovém pásmu"</string>
-    <string name="preferences_home_tz_title" msgid="6680000444088818578">"Domovské časové pásmo"</string>
+    <string name="preferences_home_tz_title" msgid="6680000444088818578">"Domácí časové pásmo"</string>
     <string name="preferences_show_week_num_title" msgid="5280734329664503461">"Zobrazovat číslo týdne"</string>
     <string name="preferences_about_title" msgid="2810624892412097879">"O aplikaci"</string>
     <string name="preferences_build_version" msgid="8242471883413502068">"Verze sestavení"</string>
     <string name="gadget_title" msgid="939918875331310945">"Kalendář"</string>
-  <plurals name="month_more_events">
-    <item quantity="one" msgid="8971334808414201327">"+1"</item>
-    <item quantity="other" msgid="1997405398178470838">"+<xliff:g id="NUMBER">%d</xliff:g>"</item>
-  </plurals>
+    <plurals name="month_more_events" formatted="false" msgid="6064683102623394875">
+      <item quantity="few">+<xliff:g id="NUMBER">%d</xliff:g></item>
+      <item quantity="many">+<xliff:g id="NUMBER">%d</xliff:g></item>
+      <item quantity="other">+<xliff:g id="NUMBER">%d</xliff:g></item>
+      <item quantity="one">+1</item>
+    </plurals>
     <string name="gadget_no_events" msgid="5209110911088302855">"Žádné nadcházející události"</string>
     <string name="preferences_experimental_category" msgid="8111213192001230350">"Experimentální"</string>
     <string name="preferences_reminders_category" msgid="3179315692653755740">"Připomenutí"</string>
@@ -239,42 +233,31 @@
     <string name="accessibility_email_notification" msgid="9124064701968129831">"Poslat hostům e-mail"</string>
     <string name="day_view_new_event_hint" msgid="2131483437911536229">"Přidat novou událost"</string>
     <string name="template_announce_item_index" msgid="4067877800670753110">"Událost <xliff:g id="ITEM_INDEX">%1$s</xliff:g> z <xliff:g id="ITEM_COUNT">%2$s</xliff:g>."</string>
-  <plurals name="Nevents">
-    <item quantity="one" msgid="5230907142214104485">"1 událost"</item>
-    <item quantity="other" msgid="6093072093209431078">"Události: <xliff:g id="COUNT">%d</xliff:g>"</item>
-  </plurals>
-  <plurals name="N_remaining_events">
-    <item quantity="one" msgid="431585781647034528">"+ 1 událost"</item>
-    <item quantity="other" msgid="3609243840882275136">"+ další události (<xliff:g id="COUNT">%d</xliff:g>)"</item>
-  </plurals>
+    <plurals name="Nevents" formatted="false" msgid="523806278273939134">
+      <item quantity="few"><xliff:g id="COUNT">%d</xliff:g> události</item>
+      <item quantity="many"><xliff:g id="COUNT">%d</xliff:g> události</item>
+      <item quantity="other"><xliff:g id="COUNT">%d</xliff:g> událostí</item>
+      <item quantity="one">1 událost</item>
+    </plurals>
+    <plurals name="N_remaining_events" formatted="false" msgid="182179062497393883">
+      <item quantity="few">+<xliff:g id="COUNT">%d</xliff:g> další události</item>
+      <item quantity="many">+<xliff:g id="COUNT">%d</xliff:g> další události</item>
+      <item quantity="other">+<xliff:g id="COUNT">%d</xliff:g> dalších událostí</item>
+      <item quantity="one">+ 1 další událost</item>
+    </plurals>
     <string name="acessibility_selected_marker_description" msgid="3010149843148810768">"Vybraná událost"</string>
     <string name="do_not_check" msgid="7815441673853466129">"Nezaškrtávejte –&gt;"</string>
     <string name="recurrence_dialog_title" msgid="8093909645557717483">"Opakování"</string>
     <string name="recurrence_dialog_title_never" msgid="2679396029776590130">"Neopakuje se"</string>
-  <plurals name="recurrence_interval_daily">
-    <item quantity="one" msgid="1205422710088692631">"Jednou za <xliff:g id="COUNT">%d</xliff:g> d."</item>
-    <item quantity="other" msgid="707566499994398250">"Jednou za <xliff:g id="COUNT">%d</xliff:g> d."</item>
-  </plurals>
-  <plurals name="recurrence_interval_weekly">
-    <item quantity="one" msgid="4948681635464488351">"Jednou za <xliff:g id="COUNT">%d</xliff:g> týd."</item>
-    <item quantity="other" msgid="7094801039989237061">"Jednou za <xliff:g id="COUNT">%d</xliff:g> týd."</item>
-  </plurals>
-  <plurals name="recurrence_interval_monthly">
-    <item quantity="one" msgid="4768178401603139718">"Jednou za <xliff:g id="COUNT">%d</xliff:g> měs."</item>
-    <item quantity="other" msgid="5419723710346646523">"Jedno za <xliff:g id="COUNT">%d</xliff:g> měs."</item>
-  </plurals>
-  <plurals name="recurrence_interval_yearly">
-    <item quantity="one" msgid="5819562634008179102">"Jednou za <xliff:g id="COUNT">%d</xliff:g> r."</item>
-    <item quantity="other" msgid="5678653649746562060">"Jednou za <xliff:g id="COUNT">%d</xliff:g> r."</item>
-  </plurals>
+    <!-- no translation found for recurrence_interval_daily (4500420585186480085) -->
+    <!-- no translation found for recurrence_interval_weekly (3485667498625367983) -->
+    <!-- no translation found for recurrence_interval_monthly (6278422285680542608) -->
+    <!-- no translation found for recurrence_interval_yearly (5954975405814707742) -->
     <string name="recurrence_month_pattern_by_day" msgid="4400107556121003459">"měsíčně tentýž den"</string>
     <string name="recurrence_end_continously" msgid="6898950241634912991">"Na věky věků"</string>
     <string name="recurrence_end_date_label" msgid="4142791438636994952">"Do určitého data"</string>
     <string name="recurrence_end_date" msgid="3693751578164711701">"Do <xliff:g id="DATE">%s</xliff:g>"</string>
     <string name="recurrence_end_count_label" msgid="1233883668293087977">"Po určitý počet událostí"</string>
-  <plurals name="recurrence_end_count">
-    <item quantity="one" msgid="1400782968090516215">"Pro <xliff:g id="EVENT_COUNT">%d</xliff:g> událost"</item>
-    <item quantity="other" msgid="8779598489398048259">"Pro následující počet událostí: <xliff:g id="EVENT_COUNT">%d</xliff:g>"</item>
-  </plurals>
+    <!-- no translation found for recurrence_end_count (6025427387167075860) -->
     <string name="acessibility_recurrence_choose_end_date_description" msgid="5899029840837836711">"změnit datum ukončení"</string>
 </resources>
