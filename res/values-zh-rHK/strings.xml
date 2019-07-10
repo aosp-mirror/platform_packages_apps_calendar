@@ -26,28 +26,23 @@
     <string name="tomorrow" msgid="614434811813859237">"明天"</string>
     <string name="today_at_time_fmt" msgid="1981279213130049736">"今天 <xliff:g id="TIME_INTERVAL">%s</xliff:g>"</string>
     <string name="tomorrow_at_time_fmt" msgid="1330779112841767432">"明天 <xliff:g id="TIME_INTERVAL">%s</xliff:g>"</string>
-    <string name="date_time_fmt" msgid="1642972650061946484">"<xliff:g id="DATE">%s</xliff:g> <xliff:g id="TIME_INTERVAL">%s</xliff:g>"</string>
+    <string name="date_time_fmt" msgid="1642972650061946484">"<xliff:g id="DATE">%1$s</xliff:g> <xliff:g id="TIME_INTERVAL">%2$s</xliff:g>"</string>
     <string name="repeats_label" msgid="7414023871434593196">"重複頻率"</string>
     <string name="no_title_label" msgid="302177118061368042">"(無標題)"</string>
-  <plurals name="Nminutes">
-    <item quantity="one" msgid="4871052965772159239">"1 分鐘"</item>
-    <item quantity="other" msgid="5644461630927544936">"<xliff:g id="COUNT">%d</xliff:g> 分鐘"</item>
-  </plurals>
-  <plurals name="Nmins">
-    <item quantity="one" msgid="9191090668359663663">"1 分鐘"</item>
-    <item quantity="other" msgid="9175648445939148974">"<xliff:g id="COUNT">%d</xliff:g> 分鐘"</item>
-  </plurals>
-  <plurals name="Nhours">
-    <item quantity="one" msgid="4793697728599296830">"1 小時"</item>
-    <item quantity="other" msgid="4477841052001760620">"<xliff:g id="COUNT">%d</xliff:g> 小時"</item>
-  </plurals>
-  <plurals name="Ndays">
-    <item quantity="one" msgid="5988137255732166573">"1 天"</item>
-    <item quantity="other" msgid="1709378992389618261">"<xliff:g id="COUNT">%d</xliff:g> 天"</item>
-  </plurals>
-  <plurals name="weekN">
-    <item quantity="other" msgid="8085184869561028365">"第 <xliff:g id="COUNT">%d</xliff:g> 週"</item>
-  </plurals>
+    <plurals name="Nminutes" formatted="false" msgid="7310648773807033278">
+      <item quantity="other"><xliff:g id="COUNT">%d</xliff:g> 分鐘</item>
+      <item quantity="one">1 分鐘</item>
+    </plurals>
+    <!-- no translation found for Nmins (2710431271593652640) -->
+    <plurals name="Nhours" formatted="false" msgid="8998738602639204540">
+      <item quantity="other"><xliff:g id="COUNT">%d</xliff:g> 小時</item>
+      <item quantity="one">1 小時</item>
+    </plurals>
+    <plurals name="Ndays" formatted="false" msgid="2502834794639322464">
+      <item quantity="other"><xliff:g id="COUNT">%d</xliff:g> 天</item>
+      <item quantity="one">1 天</item>
+    </plurals>
+    <!-- no translation found for weekN (6682545863072873513) -->
     <string name="calendar_refresh" msgid="6172731193680500025">"重新整理"</string>
     <string name="show_day_view" msgid="5782512782605466016">"顯示天"</string>
     <string name="agenda_view" msgid="5566084759423843245">"待辦事項"</string>
@@ -146,22 +141,13 @@
     <string name="discard_label" msgid="2394623883289782541">"取消"</string>
     <string name="snooze_all_label" msgid="4994488813124409077">"全部延遲"</string>
     <string name="dismiss_all_label" msgid="1834400025868091301">"全部關閉"</string>
-    <string name="snooze_label" msgid="1515893621063224666">"重響"</string>
+    <string name="snooze_label" msgid="1515893621063224666">"延後"</string>
     <string name="does_not_repeat" msgid="1877681921029738999">"單次活動"</string>
     <string name="endByDate" msgid="7654221304929538201">"；直至 <xliff:g id="DATE">%s</xliff:g>"</string>
-  <plurals name="endByCount">
-    <item quantity="one" msgid="3727754565990691816">"；1 次"</item>
-    <item quantity="other" msgid="4855496837834652446">"；<xliff:g id="NUMBER">%d</xliff:g> 次"</item>
-  </plurals>
-  <plurals name="daily">
-    <item quantity="one" msgid="5169052946627480942">"每天"</item>
-    <item quantity="other" msgid="5455230727715859264">"每 <xliff:g id="NUMBER">%d</xliff:g> 天"</item>
-  </plurals>
+    <!-- no translation found for endByCount (8013128840623220306) -->
+    <!-- no translation found for daily (8835347097162749985) -->
     <string name="every_weekday" msgid="5896574838353902978">"每週的工作日 (星期一至五)"</string>
-  <plurals name="weekly">
-    <item quantity="one" msgid="5463021019301453273">"每星期 (逢<xliff:g id="DAYS_OF_WEEK">%2$s</xliff:g>)"</item>
-    <item quantity="other" msgid="2857390143157377867">"每 <xliff:g id="NUMBER">%1$d</xliff:g> 星期 (逢<xliff:g id="DAYS_OF_WEEK">%2$s</xliff:g>)"</item>
-  </plurals>
+    <!-- no translation found for weekly (6866376933378266880) -->
     <string name="monthly" msgid="4587116285383048586">"每月"</string>
     <string name="yearly_plain" msgid="3652692085322162449">"每年"</string>
     <string name="monthly_on_day" msgid="5370155265278821156">"每月 (<xliff:g id="DAY_OF_MONTH">%s</xliff:g> 日)"</string>
@@ -201,10 +187,10 @@
     <string name="preferences_about_title" msgid="2810624892412097879">"關於"</string>
     <string name="preferences_build_version" msgid="8242471883413502068">"型號版本"</string>
     <string name="gadget_title" msgid="939918875331310945">"日曆"</string>
-  <plurals name="month_more_events">
-    <item quantity="one" msgid="8971334808414201327">"+1"</item>
-    <item quantity="other" msgid="1997405398178470838">"+<xliff:g id="NUMBER">%d</xliff:g>"</item>
-  </plurals>
+    <plurals name="month_more_events" formatted="false" msgid="6064683102623394875">
+      <item quantity="other">+<xliff:g id="NUMBER">%d</xliff:g></item>
+      <item quantity="one">+1</item>
+    </plurals>
     <string name="gadget_no_events" msgid="5209110911088302855">"沒有即將開始的日曆活動"</string>
     <string name="preferences_experimental_category" msgid="8111213192001230350">"實驗版"</string>
     <string name="preferences_reminders_category" msgid="3179315692653755740">"提醒"</string>
@@ -235,46 +221,31 @@
     <string name="accessibility_reminder_showmeas" msgid="6669129015980006570">"將我顯示為"</string>
     <string name="accessibility_reminder_privacy" msgid="8669288484484022771">"私隱設定"</string>
     <string name="acessibility_cal_notification" msgid="7267601064994839394">"日曆通知"</string>
-    <string name="acessibility_snooze_notification" msgid="5007852779125102681">"重響通知"</string>
+    <string name="acessibility_snooze_notification" msgid="5007852779125102681">"延後通知"</string>
     <string name="accessibility_email_notification" msgid="9124064701968129831">"發電郵給邀請對象"</string>
     <string name="day_view_new_event_hint" msgid="2131483437911536229">"+ 新活動"</string>
     <string name="template_announce_item_index" msgid="4067877800670753110">"第 <xliff:g id="ITEM_INDEX">%1$s</xliff:g> 項活動 (共 <xliff:g id="ITEM_COUNT">%2$s</xliff:g> 項)"</string>
-  <plurals name="Nevents">
-    <item quantity="one" msgid="5230907142214104485">"1 項活動"</item>
-    <item quantity="other" msgid="6093072093209431078">"<xliff:g id="COUNT">%d</xliff:g> 項活動"</item>
-  </plurals>
-  <plurals name="N_remaining_events">
-    <item quantity="one" msgid="431585781647034528">"+1 項活動"</item>
-    <item quantity="other" msgid="3609243840882275136">"+<xliff:g id="COUNT">%d</xliff:g> 項活動"</item>
-  </plurals>
+    <plurals name="Nevents" formatted="false" msgid="523806278273939134">
+      <item quantity="other"><xliff:g id="COUNT">%d</xliff:g> 個活動</item>
+      <item quantity="one">1 個活動</item>
+    </plurals>
+    <plurals name="N_remaining_events" formatted="false" msgid="182179062497393883">
+      <item quantity="other">+<xliff:g id="COUNT">%d</xliff:g> 個活動</item>
+      <item quantity="one">+1 個活動</item>
+    </plurals>
     <string name="acessibility_selected_marker_description" msgid="3010149843148810768">"選取的活動"</string>
     <string name="do_not_check" msgid="7815441673853466129">"切勿勾選 -&gt;"</string>
     <string name="recurrence_dialog_title" msgid="8093909645557717483">"重複"</string>
     <string name="recurrence_dialog_title_never" msgid="2679396029776590130">"絕不重複"</string>
-  <plurals name="recurrence_interval_daily">
-    <item quantity="one" msgid="1205422710088692631">"每 <xliff:g id="COUNT">%d</xliff:g> 天"</item>
-    <item quantity="other" msgid="707566499994398250">"每 <xliff:g id="COUNT">%d</xliff:g> 天"</item>
-  </plurals>
-  <plurals name="recurrence_interval_weekly">
-    <item quantity="one" msgid="4948681635464488351">"每 <xliff:g id="COUNT">%d</xliff:g> 星期"</item>
-    <item quantity="other" msgid="7094801039989237061">"每 <xliff:g id="COUNT">%d</xliff:g> 星期"</item>
-  </plurals>
-  <plurals name="recurrence_interval_monthly">
-    <item quantity="one" msgid="4768178401603139718">"每 <xliff:g id="COUNT">%d</xliff:g> 個月"</item>
-    <item quantity="other" msgid="5419723710346646523">"每 <xliff:g id="COUNT">%d</xliff:g> 個月"</item>
-  </plurals>
-  <plurals name="recurrence_interval_yearly">
-    <item quantity="one" msgid="5819562634008179102">"每 <xliff:g id="COUNT">%d</xliff:g> 年"</item>
-    <item quantity="other" msgid="5678653649746562060">"每 <xliff:g id="COUNT">%d</xliff:g> 年"</item>
-  </plurals>
+    <!-- no translation found for recurrence_interval_daily (4500420585186480085) -->
+    <!-- no translation found for recurrence_interval_weekly (3485667498625367983) -->
+    <!-- no translation found for recurrence_interval_monthly (6278422285680542608) -->
+    <!-- no translation found for recurrence_interval_yearly (5954975405814707742) -->
     <string name="recurrence_month_pattern_by_day" msgid="4400107556121003459">"每月同一日"</string>
     <string name="recurrence_end_continously" msgid="6898950241634912991">"無盡期"</string>
     <string name="recurrence_end_date_label" msgid="4142791438636994952">"直至指定日期"</string>
     <string name="recurrence_end_date" msgid="3693751578164711701">"直至 <xliff:g id="DATE">%s</xliff:g>"</string>
     <string name="recurrence_end_count_label" msgid="1233883668293087977">"重複幾次"</string>
-  <plurals name="recurrence_end_count">
-    <item quantity="one" msgid="1400782968090516215">"<xliff:g id="EVENT_COUNT">%d</xliff:g>的活動"</item>
-    <item quantity="other" msgid="8779598489398048259">"<xliff:g id="EVENT_COUNT">%d</xliff:g>的活動"</item>
-  </plurals>
+    <!-- no translation found for recurrence_end_count (6025427387167075860) -->
     <string name="acessibility_recurrence_choose_end_date_description" msgid="5899029840837836711">"更改結束日期"</string>
 </resources>

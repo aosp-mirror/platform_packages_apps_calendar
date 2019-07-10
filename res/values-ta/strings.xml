@@ -26,28 +26,23 @@
     <string name="tomorrow" msgid="614434811813859237">"நாளை"</string>
     <string name="today_at_time_fmt" msgid="1981279213130049736">"இன்று <xliff:g id="TIME_INTERVAL">%s</xliff:g> மணிக்கு"</string>
     <string name="tomorrow_at_time_fmt" msgid="1330779112841767432">"நாளை <xliff:g id="TIME_INTERVAL">%s</xliff:g> க்கு"</string>
-    <string name="date_time_fmt" msgid="1642972650061946484">"<xliff:g id="DATE">%s</xliff:g>, <xliff:g id="TIME_INTERVAL">%s</xliff:g>"</string>
+    <string name="date_time_fmt" msgid="1642972650061946484">"<xliff:g id="DATE">%1$s</xliff:g>, <xliff:g id="TIME_INTERVAL">%2$s</xliff:g>"</string>
     <string name="repeats_label" msgid="7414023871434593196">"நினைவுபடுத்துதல்"</string>
     <string name="no_title_label" msgid="302177118061368042">"(தலைப்பு இல்லை)"</string>
-  <plurals name="Nminutes">
-    <item quantity="one" msgid="4871052965772159239">"1 நிமிடம்"</item>
-    <item quantity="other" msgid="5644461630927544936">"<xliff:g id="COUNT">%d</xliff:g> நிமிடங்கள்"</item>
-  </plurals>
-  <plurals name="Nmins">
-    <item quantity="one" msgid="9191090668359663663">"1 நிமிடம்"</item>
-    <item quantity="other" msgid="9175648445939148974">"<xliff:g id="COUNT">%d</xliff:g> நிமிடங்கள்"</item>
-  </plurals>
-  <plurals name="Nhours">
-    <item quantity="one" msgid="4793697728599296830">"1 மணிநேரம்"</item>
-    <item quantity="other" msgid="4477841052001760620">"<xliff:g id="COUNT">%d</xliff:g> மணிநேரம்"</item>
-  </plurals>
-  <plurals name="Ndays">
-    <item quantity="one" msgid="5988137255732166573">"1 நாள்"</item>
-    <item quantity="other" msgid="1709378992389618261">"<xliff:g id="COUNT">%d</xliff:g> நாட்கள்"</item>
-  </plurals>
-  <plurals name="weekN">
-    <item quantity="other" msgid="8085184869561028365">"வாரம் <xliff:g id="COUNT">%d</xliff:g>"</item>
-  </plurals>
+    <plurals name="Nminutes" formatted="false" msgid="7310648773807033278">
+      <item quantity="other"><xliff:g id="COUNT">%d</xliff:g> நிமிடங்கள்</item>
+      <item quantity="one">1 நிமிடம்</item>
+    </plurals>
+    <!-- no translation found for Nmins (2710431271593652640) -->
+    <plurals name="Nhours" formatted="false" msgid="8998738602639204540">
+      <item quantity="other"><xliff:g id="COUNT">%d</xliff:g> மணிநேரம்</item>
+      <item quantity="one">1 மணிநேரம்</item>
+    </plurals>
+    <plurals name="Ndays" formatted="false" msgid="2502834794639322464">
+      <item quantity="other"><xliff:g id="COUNT">%d</xliff:g> நாட்கள்</item>
+      <item quantity="one">1 நாள்</item>
+    </plurals>
+    <!-- no translation found for weekN (6682545863072873513) -->
     <string name="calendar_refresh" msgid="6172731193680500025">"புதுப்பி"</string>
     <string name="show_day_view" msgid="5782512782605466016">"கிழமையைக் காட்டு"</string>
     <string name="agenda_view" msgid="5566084759423843245">"நிகழ்ச்சி விவரம்"</string>
@@ -149,19 +144,10 @@
     <string name="snooze_label" msgid="1515893621063224666">"உறக்கநிலை"</string>
     <string name="does_not_repeat" msgid="1877681921029738999">"ஒரு முறை நிகழ்வு"</string>
     <string name="endByDate" msgid="7654221304929538201">"; <xliff:g id="DATE">%s</xliff:g> வரை"</string>
-  <plurals name="endByCount">
-    <item quantity="one" msgid="3727754565990691816">"; ஒரு முறை"</item>
-    <item quantity="other" msgid="4855496837834652446">"; <xliff:g id="NUMBER">%d</xliff:g> முறைகள்"</item>
-  </plurals>
-  <plurals name="daily">
-    <item quantity="one" msgid="5169052946627480942">"தினசரி"</item>
-    <item quantity="other" msgid="5455230727715859264">"ஒவ்வொரு <xliff:g id="NUMBER">%d</xliff:g> நாட்கள்"</item>
-  </plurals>
+    <!-- no translation found for endByCount (8013128840623220306) -->
+    <!-- no translation found for daily (8835347097162749985) -->
     <string name="every_weekday" msgid="5896574838353902978">"எல்லா வாரநாட்கள் (திங்கள்–வெள்ளி)"</string>
-  <plurals name="weekly">
-    <item quantity="one" msgid="5463021019301453273">"வாரந்தோறும் - <xliff:g id="DAYS_OF_WEEK">%2$s</xliff:g>"</item>
-    <item quantity="other" msgid="2857390143157377867">"ஒவ்வொரு <xliff:g id="NUMBER">%1$d</xliff:g> வாரங்களில் - <xliff:g id="DAYS_OF_WEEK">%2$s</xliff:g>"</item>
-  </plurals>
+    <!-- no translation found for weekly (6866376933378266880) -->
     <string name="monthly" msgid="4587116285383048586">"மாதந்தோறும்"</string>
     <string name="yearly_plain" msgid="3652692085322162449">"ஆண்டுதோறும்"</string>
     <string name="monthly_on_day" msgid="5370155265278821156">"மாதந்தோறும் (<xliff:g id="DAY_OF_MONTH">%s</xliff:g> அன்று)"</string>
@@ -201,10 +187,10 @@
     <string name="preferences_about_title" msgid="2810624892412097879">"அறிமுகம்"</string>
     <string name="preferences_build_version" msgid="8242471883413502068">"நடப்புப் பதிப்பு"</string>
     <string name="gadget_title" msgid="939918875331310945">"கேலெண்டர்"</string>
-  <plurals name="month_more_events">
-    <item quantity="one" msgid="8971334808414201327">"+1"</item>
-    <item quantity="other" msgid="1997405398178470838">"+<xliff:g id="NUMBER">%d</xliff:g>"</item>
-  </plurals>
+    <plurals name="month_more_events" formatted="false" msgid="6064683102623394875">
+      <item quantity="other">மேலும் <xliff:g id="NUMBER">%d</xliff:g></item>
+      <item quantity="one">மேலும் 1</item>
+    </plurals>
     <string name="gadget_no_events" msgid="5209110911088302855">"வரவிருக்கும் கேலெண்டர் நிகழ்வுகள் எதுவுமில்லை"</string>
     <string name="preferences_experimental_category" msgid="8111213192001230350">"சோதனை முயற்சி"</string>
     <string name="preferences_reminders_category" msgid="3179315692653755740">"நினைவூட்டல்கள்"</string>
@@ -214,7 +200,7 @@
     <string name="preferences_reminders_quiet_hours_description" msgid="65969073433791290">"குறிப்பிட்ட நேரத்தின்போது நிகழ்வு நினைவூட்டல்களை அமைதிப்படுத்தலாம்."</string>
     <string name="preferences_reminders_quiet_hours_start" msgid="3433058529220285232">"அமைதி நேரத்தின் தொடக்க நேரம்"</string>
     <string name="preferences_reminders_quiet_hours_end" msgid="7492883554865119346">"அமைதி நேரத்தின் முடிவு நேரம்"</string>
-    <string name="preferences_debug_category" msgid="6203278208385095018">"பிழைத்திருத்தம்"</string>
+    <string name="preferences_debug_category" msgid="6203278208385095018">"பிழைதிருத்தம்"</string>
     <string name="copy_db" msgid="437691290566699292">"தரவுத்தளத்தை அனுப்பு"</string>
     <string name="directory_searching_fmt" msgid="1232037509095606687">"<xliff:g id="DOMAIN">%s</xliff:g> ஐத் தேடுகிறது…"</string>
     <string name="accessibility_remove_attendee" msgid="7082751172654698863">"பங்கேற்பாளரை அகற்று"</string>
@@ -239,42 +225,27 @@
     <string name="accessibility_email_notification" msgid="9124064701968129831">"விருந்தினர்களுக்கு மின்னஞ்சல் செய்"</string>
     <string name="day_view_new_event_hint" msgid="2131483437911536229">"+ புதிய நிகழ்வு"</string>
     <string name="template_announce_item_index" msgid="4067877800670753110">"<xliff:g id="ITEM_COUNT">%2$s</xliff:g> இல் <xliff:g id="ITEM_INDEX">%1$s</xliff:g> ஆவது நிகழ்வு."</string>
-  <plurals name="Nevents">
-    <item quantity="one" msgid="5230907142214104485">"1 நிகழ்வு"</item>
-    <item quantity="other" msgid="6093072093209431078">"<xliff:g id="COUNT">%d</xliff:g> நிகழ்வுகள்"</item>
-  </plurals>
-  <plurals name="N_remaining_events">
-    <item quantity="one" msgid="431585781647034528">"+1 நிகழ்வு"</item>
-    <item quantity="other" msgid="3609243840882275136">"+<xliff:g id="COUNT">%d</xliff:g> நிகழ்வுகள்"</item>
-  </plurals>
+    <plurals name="Nevents" formatted="false" msgid="523806278273939134">
+      <item quantity="other"><xliff:g id="COUNT">%d</xliff:g> நிகழ்வுகள்</item>
+      <item quantity="one">1 நிகழ்வு</item>
+    </plurals>
+    <plurals name="N_remaining_events" formatted="false" msgid="182179062497393883">
+      <item quantity="other">மேலும் <xliff:g id="COUNT">%d</xliff:g> நிகழ்வுகள்</item>
+      <item quantity="one">மேலும் 1 நிகழ்வு</item>
+    </plurals>
     <string name="acessibility_selected_marker_description" msgid="3010149843148810768">"தேர்ந்தெடுத்த நிகழ்வு"</string>
     <string name="do_not_check" msgid="7815441673853466129">"தேர்வுசெய்ய வேண்டாம் -&gt;"</string>
     <string name="recurrence_dialog_title" msgid="8093909645557717483">"நினைவுபடுத்து"</string>
     <string name="recurrence_dialog_title_never" msgid="2679396029776590130">"நினைவுபடுத்த வேண்டாம்"</string>
-  <plurals name="recurrence_interval_daily">
-    <item quantity="one" msgid="1205422710088692631">"ஒவ்வொரு <xliff:g id="COUNT">%d</xliff:g> நாள்"</item>
-    <item quantity="other" msgid="707566499994398250">"ஒவ்வொரு <xliff:g id="COUNT">%d</xliff:g> நாட்கள்"</item>
-  </plurals>
-  <plurals name="recurrence_interval_weekly">
-    <item quantity="one" msgid="4948681635464488351">"ஒவ்வொரு <xliff:g id="COUNT">%d</xliff:g> வாரம்"</item>
-    <item quantity="other" msgid="7094801039989237061">"ஒவ்வொரு <xliff:g id="COUNT">%d</xliff:g> வாரங்கள்"</item>
-  </plurals>
-  <plurals name="recurrence_interval_monthly">
-    <item quantity="one" msgid="4768178401603139718">"<xliff:g id="COUNT">%d</xliff:g> மாதம்"</item>
-    <item quantity="other" msgid="5419723710346646523">"ஒவ்வொரு <xliff:g id="COUNT">%d</xliff:g> மாதங்கள்"</item>
-  </plurals>
-  <plurals name="recurrence_interval_yearly">
-    <item quantity="one" msgid="5819562634008179102">"ஒவ்வொரு <xliff:g id="COUNT">%d</xliff:g> ஆண்டு"</item>
-    <item quantity="other" msgid="5678653649746562060">"ஒவ்வொரு <xliff:g id="COUNT">%d</xliff:g> ஆண்டுகள்"</item>
-  </plurals>
+    <!-- no translation found for recurrence_interval_daily (4500420585186480085) -->
+    <!-- no translation found for recurrence_interval_weekly (3485667498625367983) -->
+    <!-- no translation found for recurrence_interval_monthly (6278422285680542608) -->
+    <!-- no translation found for recurrence_interval_yearly (5954975405814707742) -->
     <string name="recurrence_month_pattern_by_day" msgid="4400107556121003459">"ஒவ்வொரு மாதமும் இதே தினத்தில்"</string>
     <string name="recurrence_end_continously" msgid="6898950241634912991">"எப்போதும்"</string>
     <string name="recurrence_end_date_label" msgid="4142791438636994952">"தேதி வரை"</string>
     <string name="recurrence_end_date" msgid="3693751578164711701">"<xliff:g id="DATE">%s</xliff:g> வரை"</string>
     <string name="recurrence_end_count_label" msgid="1233883668293087977">"நிகழ்வுகளின் எண்ணிக்கை"</string>
-  <plurals name="recurrence_end_count">
-    <item quantity="one" msgid="1400782968090516215">"<xliff:g id="EVENT_COUNT">%d</xliff:g> நிகழ்விற்கு"</item>
-    <item quantity="other" msgid="8779598489398048259">"<xliff:g id="EVENT_COUNT">%d</xliff:g> நிகழ்வுகளுக்கு"</item>
-  </plurals>
+    <!-- no translation found for recurrence_end_count (6025427387167075860) -->
     <string name="acessibility_recurrence_choose_end_date_description" msgid="5899029840837836711">"முடிவு தேதியை மாற்று"</string>
 </resources>
