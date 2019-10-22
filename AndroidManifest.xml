@@ -94,27 +94,6 @@
                 android:value="com.android.calendar.AllInOneActivity" />
         </activity>
 
-        <activity android:name=".event.EditEventActivity"
-            android:theme="@style/CalendarTheme.WithActionBar">
-        </activity>
-
-        <activity-alias android:name="EditEventActivity"
-            android:targetActivity=".event.EditEventActivity"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.EDIT" />
-                <action android:name="android.intent.action.INSERT" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <data android:mimeType="vnd.android.cursor.item/event" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.EDIT" />
-                <action android:name="android.intent.action.INSERT" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <data android:mimeType="vnd.android.cursor.dir/event" />
-            </intent-filter>
-        </activity-alias>
-
         <activity android:name="GoogleCalendarUriIntentFilter" android:label="@string/app_label"
             android:theme="@android:style/Theme.NoDisplay"
             android:configChanges="orientation|keyboardHidden">
