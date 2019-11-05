@@ -64,11 +64,11 @@ public class CalendarAppWidgetProvider extends AppWidgetProvider {
             performUpdate(context, appWidgetManager,
                     appWidgetManager.getAppWidgetIds(getComponentName(context)),
                     null /* no eventIds */);
-        } else if (action.equals(Intent.ACTION_PROVIDER_CHANGED)
+        } else if (action != null && (action.equals(Intent.ACTION_PROVIDER_CHANGED)
                 || action.equals(Intent.ACTION_TIME_CHANGED)
                 || action.equals(Intent.ACTION_TIMEZONE_CHANGED)
                 || action.equals(Intent.ACTION_DATE_CHANGED)
-                || action.equals(Utils.getWidgetScheduledUpdateAction(context))) {
+                || action.equals(Utils.getWidgetScheduledUpdateAction(context)))) {
             Intent service = new Intent(context, CalendarAppWidgetService.class);
             context.startService(service);
         } else {
