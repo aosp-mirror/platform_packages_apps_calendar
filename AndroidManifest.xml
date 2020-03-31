@@ -80,7 +80,8 @@
 
         <activity android:name="EventInfoActivity"
             android:parentActivityName="com.android.calendar.AllInOneActivity"
-            android:theme="@style/CalendarTheme.WithActionBar">
+            android:theme="@style/CalendarTheme.WithActionBar"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -117,7 +118,8 @@
 
         <activity android:name="GoogleCalendarUriIntentFilter" android:label="@string/app_label"
             android:theme="@android:style/Theme.NoDisplay"
-            android:configChanges="orientation|keyboardHidden">
+            android:configChanges="orientation|keyboardHidden"
+            android:exported="true">
 
             <intent-filter
                android:priority="50">
@@ -138,7 +140,8 @@
              android:theme="@android:style/Theme.Holo.Dialog" android:excludeFromRecents="true"
              android:label="@string/quick_response_dialog_title" />
 
-        <receiver android:name=".alerts.AlertReceiver">
+        <receiver android:name=".alerts.AlertReceiver"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.EVENT_REMINDER" />
                 <action android:name="android.intent.action.TIME_SET" />
@@ -160,7 +163,8 @@
         <receiver android:name=".alerts.GlobalDismissManager"
                   android:exported="false" />
 
-        <receiver android:name=".UpgradeReceiver">
+        <receiver android:name=".UpgradeReceiver"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -180,7 +184,8 @@
         <service android:name=".alerts.InitAlarmsService" />
 
         <!-- Declarations for the widget -->
-        <receiver android:name=".widget.CalendarAppWidgetProvider" android:label="@string/gadget_title">
+        <receiver android:name=".widget.CalendarAppWidgetProvider" android:label="@string/gadget_title"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
                 <action android:name="com.android.calendar.APPWIDGET_UPDATE" />
@@ -188,7 +193,8 @@
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/appwidget_info" />
         </receiver>
 
-        <receiver android:name=".widget.CalendarAppWidgetService$CalendarFactory">
+        <receiver android:name=".widget.CalendarAppWidgetService$CalendarFactory"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.TIMEZONE_CHANGED"/>
                 <action android:name="android.intent.action.DATE_CHANGED"/>
