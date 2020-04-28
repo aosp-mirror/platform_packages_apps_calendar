@@ -4,8 +4,9 @@ include $(CLEAR_VARS)
 # Include res dir from chips
 chips_dir := ../../../frameworks/opt/chips/res
 color_picker_dir := ../../../frameworks/opt/colorpicker/res
+datetimepicker_dir := ../../../frameworks/opt/datetimepicker/res
 timezonepicker_dir := ../../../frameworks/opt/timezonepicker/res
-res_dirs := $(chips_dir) $(color_picker_dir) $(timezonepicker_dir) res
+res_dirs := $(chips_dir) $(color_picker_dir) $(datetimepicker_dir) $(timezonepicker_dir) res
 src_dirs := src
 
 LOCAL_JACK_COVERAGE_INCLUDE_FILTER := com.android.calendar.*
@@ -25,6 +26,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
         android-common \
         libchips \
         colorpicker \
+        android-opt-datetimepicker \
         android-opt-timezonepicker \
         androidx.legacy_legacy-support-v4 \
         calendar-common
@@ -35,16 +37,16 @@ LOCAL_RESOURCE_DIR := $(addprefix $(LOCAL_PATH)/, $(res_dirs))
 
 LOCAL_PACKAGE_NAME := Calendar
 
-LOCAL_PROGUARD_FLAG_FILES := proguard.flags
+LOCAL_PROGUARD_FLAG_FILES := proguard.flags \
+                             ../../../frameworks/opt/datetimepicker/proguard.flags
 
 LOCAL_PRODUCT_MODULE := true
 
 LOCAL_AAPT_FLAGS := --auto-add-overlay
 LOCAL_AAPT_FLAGS += --extra-packages com.android.ex.chips
 LOCAL_AAPT_FLAGS += --extra-packages com.android.colorpicker
+LOCAL_AAPT_FLAGS += --extra-packages com.android.datetimepicker
 LOCAL_AAPT_FLAGS += --extra-packages com.android.timezonepicker
-
-LOCAL_AAPT_FLAGS += --legacy
 
 include $(BUILD_PACKAGE)
 
