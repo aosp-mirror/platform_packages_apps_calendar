@@ -26,28 +26,23 @@
     <string name="tomorrow" msgid="614434811813859237">"明日"</string>
     <string name="today_at_time_fmt" msgid="1981279213130049736">"今日の<xliff:g id="TIME_INTERVAL">%s</xliff:g>"</string>
     <string name="tomorrow_at_time_fmt" msgid="1330779112841767432">"明日の<xliff:g id="TIME_INTERVAL">%s</xliff:g>"</string>
-    <string name="date_time_fmt" msgid="1642972650061946484">"<xliff:g id="DATE">%s</xliff:g>の<xliff:g id="TIME_INTERVAL">%s</xliff:g>"</string>
+    <string name="date_time_fmt" msgid="1642972650061946484">"<xliff:g id="DATE">%1$s</xliff:g>の<xliff:g id="TIME_INTERVAL">%2$s</xliff:g>"</string>
     <string name="repeats_label" msgid="7414023871434593196">"繰り返し"</string>
     <string name="no_title_label" msgid="302177118061368042">"（タイトルなし）"</string>
-  <plurals name="Nminutes">
-    <item quantity="one" msgid="4871052965772159239">"1分"</item>
-    <item quantity="other" msgid="5644461630927544936">"<xliff:g id="COUNT">%d</xliff:g>分"</item>
-  </plurals>
-  <plurals name="Nmins">
-    <item quantity="one" msgid="9191090668359663663">"1分"</item>
-    <item quantity="other" msgid="9175648445939148974">"<xliff:g id="COUNT">%d</xliff:g>分"</item>
-  </plurals>
-  <plurals name="Nhours">
-    <item quantity="one" msgid="4793697728599296830">"1時間"</item>
-    <item quantity="other" msgid="4477841052001760620">"<xliff:g id="COUNT">%d</xliff:g>時間"</item>
-  </plurals>
-  <plurals name="Ndays">
-    <item quantity="one" msgid="5988137255732166573">"1日"</item>
-    <item quantity="other" msgid="1709378992389618261">"<xliff:g id="COUNT">%d</xliff:g>日"</item>
-  </plurals>
-  <plurals name="weekN">
-    <item quantity="other" msgid="8085184869561028365">"第<xliff:g id="COUNT">%d</xliff:g>週"</item>
-  </plurals>
+    <plurals name="Nminutes" formatted="false" msgid="7310648773807033278">
+      <item quantity="other"><xliff:g id="COUNT">%d</xliff:g>分</item>
+      <item quantity="one">1分</item>
+    </plurals>
+    <!-- no translation found for Nmins (2710431271593652640) -->
+    <plurals name="Nhours" formatted="false" msgid="8998738602639204540">
+      <item quantity="other"><xliff:g id="COUNT">%d</xliff:g>時間</item>
+      <item quantity="one">1時間</item>
+    </plurals>
+    <plurals name="Ndays" formatted="false" msgid="2502834794639322464">
+      <item quantity="other"><xliff:g id="COUNT">%d</xliff:g>日</item>
+      <item quantity="one">1日</item>
+    </plurals>
+    <!-- no translation found for weekN (6682545863072873513) -->
     <string name="calendar_refresh" msgid="6172731193680500025">"更新"</string>
     <string name="show_day_view" msgid="5782512782605466016">"日付を表示"</string>
     <string name="agenda_view" msgid="5566084759423843245">"予定リスト"</string>
@@ -97,7 +92,7 @@
     <string name="privacy_label" msgid="9215031965259597335">"公開設定"</string>
     <string name="reminders_label" msgid="7292389181815525676">"通知を追加"</string>
     <string name="no_syncable_calendars" msgid="7019488867045436129">"カレンダーがありません"</string>
-    <string name="no_calendars_found" msgid="8968682716053492187">"予定を追加するには、端末に少なくとも1つのカレンダーアカウントを追加してカレンダーを表示できるようにする必要があります。アカウントを追加するには[アカウントを追加]をタップします（アカウントを追加したばかりの場合は、同期の完了を待って再試行してください）。または[キャンセル]をタップして、カレンダーが表示できるかどうかを確認してください。"</string>
+    <string name="no_calendars_found" msgid="8968682716053492187">"予定を追加するには、デバイスに少なくとも1つのカレンダーアカウントを追加してカレンダーを表示できるようにする必要があります。アカウントを追加するには[アカウントを追加]をタップします（アカウントを追加したばかりの場合は、同期の完了を待って再試行してください）。または[キャンセル]をタップして、カレンダーが表示できるかどうかを確認してください。"</string>
     <string name="create_an_account_desc" msgid="7249605109240576895">"Googleアカウントがあればカレンダーをもっと活用できます。\n\n• どのウェブブラウザからもアクセスできます\n• 予定を安全にバックアップできます"</string>
     <string name="add_account" msgid="1669072099756774952">"アカウントを追加"</string>
     <string name="view_event_calendar_label" msgid="6126231656338241140">"カレンダー:"</string>
@@ -113,7 +108,7 @@
     <string name="response_no" msgid="561911691884148136">"いいえ"</string>
     <string name="email_guests_label" msgid="8772030932155305903">"ゲストにメールを送信"</string>
     <string name="email_organizer_label" msgid="7178059542798074813">"主催者にメールを送信"</string>
-    <string name="email_picker_label" msgid="4808253965057791781">"メールに次を含める:"</string>
+    <string name="email_picker_label" msgid="4808253965057791781">"メール送信に使用:"</string>
     <string name="event_not_found" msgid="8356864185947582727">"予定が見つかりません。"</string>
     <string name="map_label" msgid="8795383535586556038">"地図"</string>
     <string name="call_label" msgid="2960328220008869083">"発信"</string>
@@ -149,25 +144,16 @@
     <string name="snooze_label" msgid="1515893621063224666">"スヌーズ"</string>
     <string name="does_not_repeat" msgid="1877681921029738999">"繰り返しなし"</string>
     <string name="endByDate" msgid="7654221304929538201">"（<xliff:g id="DATE">%s</xliff:g>まで）"</string>
-  <plurals name="endByCount">
-    <item quantity="one" msgid="3727754565990691816">"（1回）"</item>
-    <item quantity="other" msgid="4855496837834652446">"（<xliff:g id="NUMBER">%d</xliff:g>回）"</item>
-  </plurals>
-  <plurals name="daily">
-    <item quantity="one" msgid="5169052946627480942">"毎日"</item>
-    <item quantity="other" msgid="5455230727715859264">"<xliff:g id="NUMBER">%d</xliff:g>日ごと"</item>
-  </plurals>
+    <!-- no translation found for endByCount (8013128840623220306) -->
+    <!-- no translation found for daily (8835347097162749985) -->
     <string name="every_weekday" msgid="5896574838353902978">"平日（月～金）"</string>
-  <plurals name="weekly">
-    <item quantity="one" msgid="5463021019301453273">"毎週<xliff:g id="DAYS_OF_WEEK">%2$s</xliff:g>"</item>
-    <item quantity="other" msgid="2857390143157377867">"<xliff:g id="NUMBER">%1$d</xliff:g>週間ごとの<xliff:g id="DAYS_OF_WEEK">%2$s</xliff:g>"</item>
-  </plurals>
+    <!-- no translation found for weekly (6866376933378266880) -->
     <string name="monthly" msgid="4587116285383048586">"月次"</string>
     <string name="yearly_plain" msgid="3652692085322162449">"毎年"</string>
     <string name="monthly_on_day" msgid="5370155265278821156">"毎月（<xliff:g id="DAY_OF_MONTH">%s</xliff:g>日）"</string>
     <string name="yearly" msgid="8576208380302949002">"毎年（<xliff:g id="DATES">%s</xliff:g>）"</string>
     <string name="custom" product="tablet" msgid="3806817351377723249">"カスタム（タブレットではカスタマイズ不可）"</string>
-    <string name="custom" product="default" msgid="4137468716966004993">"カスタム（端末ではカスタマイズ不可）"</string>
+    <string name="custom" product="default" msgid="4137468716966004993">"カスタム（デバイスではカスタマイズ不可）"</string>
     <string name="modify_event" msgid="5982876409997142690">"この予定のみを変更する"</string>
     <string name="modify_all" msgid="4421657265864209041">"一連の定期的な予定すべてを変更する"</string>
     <string name="modify_all_following" msgid="3017428541066390380">"これ以降の予定すべてを変更する"</string>
@@ -180,7 +166,7 @@
     <string name="menu_about_preferences" msgid="6124375438237674973">"カレンダーについて"</string>
     <string name="preferences_title" msgid="8045855493262131773">"設定"</string>
     <string name="preferences_general_title" msgid="2069075513760573117">"カレンダーの表示設定"</string>
-    <string name="preferences_reminder_title" msgid="5199606534191180129">"通知とリマインダ"</string>
+    <string name="preferences_reminder_title" msgid="5199606534191180129">"通知とリマインダー"</string>
     <string name="preferences_hide_declined_title" msgid="1849295943669890034">"辞退した予定を非表示"</string>
     <string name="preferences_week_start_day_title" msgid="4619489296444901622">"週の開始日"</string>
     <string name="preferences_week_start_day_dialog" msgid="5181634128884089113">"週の開始日"</string>
@@ -191,8 +177,8 @@
     <string name="preferences_alerts_vibrateWhen_title" msgid="8731372580674292759">"バイブレーション"</string>
     <string name="preferences_alerts_ringtone_title" msgid="1849706055052358346">"音声"</string>
     <string name="preferences_alerts_popup_title" msgid="6643468203670475296">"ポップアップ通知"</string>
-    <string name="preferences_default_reminder_title" msgid="5188861433342733905">"既定の通知時間"</string>
-    <string name="preferences_default_reminder_dialog" msgid="2490348857239323412">"リマインダ通知"</string>
+    <string name="preferences_default_reminder_title" msgid="5188861433342733905">"リマインダーの既定値"</string>
+    <string name="preferences_default_reminder_dialog" msgid="2490348857239323412">"リマインダー通知"</string>
     <string name="preferences_default_reminder_default" msgid="2903884416749959435">"10"</string>
     <string name="preferences_use_home_tz_title" msgid="5597546849968598210">"自宅タイムゾーン"</string>
     <string name="preferences_use_home_tz_descrip" msgid="4835375381297413746">"旅行中も自宅のタイムゾーンでカレンダーと予定時間を表示する"</string>
@@ -201,10 +187,10 @@
     <string name="preferences_about_title" msgid="2810624892412097879">"概要"</string>
     <string name="preferences_build_version" msgid="8242471883413502068">"ビルドバージョン"</string>
     <string name="gadget_title" msgid="939918875331310945">"カレンダー"</string>
-  <plurals name="month_more_events">
-    <item quantity="one" msgid="8971334808414201327">"+1"</item>
-    <item quantity="other" msgid="1997405398178470838">"+<xliff:g id="NUMBER">%d</xliff:g>"</item>
-  </plurals>
+    <plurals name="month_more_events" formatted="false" msgid="6064683102623394875">
+      <item quantity="other">他<xliff:g id="NUMBER">%d</xliff:g>件</item>
+      <item quantity="one">他1件</item>
+    </plurals>
     <string name="gadget_no_events" msgid="5209110911088302855">"近日中の予定はありません"</string>
     <string name="preferences_experimental_category" msgid="8111213192001230350">"試験運用版"</string>
     <string name="preferences_reminders_category" msgid="3179315692653755740">"通知"</string>
@@ -224,14 +210,14 @@
     <string name="accessibility_pick_end_time" msgid="7120310166355224941">"終了時間"</string>
     <string name="accessibility_pick_time_zone" msgid="7155465783500323811">"タイムゾーン"</string>
     <string name="accessibility_pick_recurrence" msgid="1834311617874828931">"定期的な予定を作成する"</string>
-    <string name="accessibility_add_reminder" msgid="2267950744060950152">"通知を追加"</string>
+    <string name="accessibility_add_reminder" msgid="2267950744060950152">"リマインダーを追加"</string>
     <string name="accessibility_remove_reminder" msgid="5261609343259665139">"通知を削除"</string>
     <string name="accessibility_add_attendee" msgid="5654014177472600916">"参加者を追加"</string>
     <string name="accessibility_sync_cal" msgid="6506181885764723383">"カレンダーを同期"</string>
     <string name="accessibility_all_day" msgid="4146955438811915282">"終日"</string>
     <string name="accessibility_repeats" msgid="1629279916830919582">"頻度"</string>
-    <string name="accessibility_reminder_time" msgid="3594100545814579575">"通知の時間"</string>
-    <string name="accessibility_reminder_type" msgid="5339120699701437227">"通知のタイプ"</string>
+    <string name="accessibility_reminder_time" msgid="3594100545814579575">"リマインダーの時間"</string>
+    <string name="accessibility_reminder_type" msgid="5339120699701437227">"リマインダーのタイプ"</string>
     <string name="accessibility_reminder_showmeas" msgid="6669129015980006570">"外部向け表示"</string>
     <string name="accessibility_reminder_privacy" msgid="8669288484484022771">"公開設定"</string>
     <string name="acessibility_cal_notification" msgid="7267601064994839394">"カレンダーの通知"</string>
@@ -239,42 +225,27 @@
     <string name="accessibility_email_notification" msgid="9124064701968129831">"ゲストにメールを送信"</string>
     <string name="day_view_new_event_hint" msgid="2131483437911536229">"新しい予定を追加"</string>
     <string name="template_announce_item_index" msgid="4067877800670753110">"<xliff:g id="ITEM_COUNT">%2$s</xliff:g>件中<xliff:g id="ITEM_INDEX">%1$s</xliff:g>件目の予定"</string>
-  <plurals name="Nevents">
-    <item quantity="one" msgid="5230907142214104485">"予定1件"</item>
-    <item quantity="other" msgid="6093072093209431078">"予定<xliff:g id="COUNT">%d</xliff:g>件"</item>
-  </plurals>
-  <plurals name="N_remaining_events">
-    <item quantity="one" msgid="431585781647034528">"他1件の予定"</item>
-    <item quantity="other" msgid="3609243840882275136">"他<xliff:g id="COUNT">%d</xliff:g>件の予定"</item>
-  </plurals>
+    <plurals name="Nevents" formatted="false" msgid="523806278273939134">
+      <item quantity="other"><xliff:g id="COUNT">%d</xliff:g>件の予定</item>
+      <item quantity="one">1件の予定</item>
+    </plurals>
+    <plurals name="N_remaining_events" formatted="false" msgid="182179062497393883">
+      <item quantity="other">他<xliff:g id="COUNT">%d</xliff:g>件の予定</item>
+      <item quantity="one">他1件の予定</item>
+    </plurals>
     <string name="acessibility_selected_marker_description" msgid="3010149843148810768">"選択した予定"</string>
     <string name="do_not_check" msgid="7815441673853466129">"オンにしないでください -&gt;"</string>
     <string name="recurrence_dialog_title" msgid="8093909645557717483">"繰り返し"</string>
     <string name="recurrence_dialog_title_never" msgid="2679396029776590130">"1度のみ"</string>
-  <plurals name="recurrence_interval_daily">
-    <item quantity="one" msgid="1205422710088692631">"繰り返す間隔: <xliff:g id="COUNT">%d</xliff:g>日"</item>
-    <item quantity="other" msgid="707566499994398250">"繰り返す間隔: <xliff:g id="COUNT">%d</xliff:g>日"</item>
-  </plurals>
-  <plurals name="recurrence_interval_weekly">
-    <item quantity="one" msgid="4948681635464488351">"繰り返す間隔: <xliff:g id="COUNT">%d</xliff:g>週間"</item>
-    <item quantity="other" msgid="7094801039989237061">"繰り返す間隔: <xliff:g id="COUNT">%d</xliff:g>週間"</item>
-  </plurals>
-  <plurals name="recurrence_interval_monthly">
-    <item quantity="one" msgid="4768178401603139718">"繰り返す間隔: <xliff:g id="COUNT">%d</xliff:g>か月"</item>
-    <item quantity="other" msgid="5419723710346646523">"繰り返す間隔: <xliff:g id="COUNT">%d</xliff:g>か月"</item>
-  </plurals>
-  <plurals name="recurrence_interval_yearly">
-    <item quantity="one" msgid="5819562634008179102">"繰り返す間隔: <xliff:g id="COUNT">%d</xliff:g>年"</item>
-    <item quantity="other" msgid="5678653649746562060">"繰り返す間隔: <xliff:g id="COUNT">%d</xliff:g>年"</item>
-  </plurals>
+    <!-- no translation found for recurrence_interval_daily (4500420585186480085) -->
+    <!-- no translation found for recurrence_interval_weekly (3485667498625367983) -->
+    <!-- no translation found for recurrence_interval_monthly (6278422285680542608) -->
+    <!-- no translation found for recurrence_interval_yearly (5954975405814707742) -->
     <string name="recurrence_month_pattern_by_day" msgid="4400107556121003459">"毎月同じ日"</string>
     <string name="recurrence_end_continously" msgid="6898950241634912991">"終了日なし"</string>
     <string name="recurrence_end_date_label" msgid="4142791438636994952">"終了日:"</string>
     <string name="recurrence_end_date" msgid="3693751578164711701">"<xliff:g id="DATE">%s</xliff:g>まで"</string>
     <string name="recurrence_end_count_label" msgid="1233883668293087977">"回数"</string>
-  <plurals name="recurrence_end_count">
-    <item quantity="one" msgid="1400782968090516215">"<xliff:g id="EVENT_COUNT">%d</xliff:g>回繰り返す"</item>
-    <item quantity="other" msgid="8779598489398048259">"<xliff:g id="EVENT_COUNT">%d</xliff:g>回繰り返す"</item>
-  </plurals>
+    <!-- no translation found for recurrence_end_count (6025427387167075860) -->
     <string name="acessibility_recurrence_choose_end_date_description" msgid="5899029840837836711">"終了日を変更します"</string>
 </resources>

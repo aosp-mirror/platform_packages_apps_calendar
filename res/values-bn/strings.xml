@@ -26,28 +26,23 @@
     <string name="tomorrow" msgid="614434811813859237">"আগামীকাল"</string>
     <string name="today_at_time_fmt" msgid="1981279213130049736">"আজ <xliff:g id="TIME_INTERVAL">%s</xliff:g>"</string>
     <string name="tomorrow_at_time_fmt" msgid="1330779112841767432">"আগামীকাল <xliff:g id="TIME_INTERVAL">%s</xliff:g>"</string>
-    <string name="date_time_fmt" msgid="1642972650061946484">"<xliff:g id="DATE">%s</xliff:g>, <xliff:g id="TIME_INTERVAL">%s</xliff:g>"</string>
+    <string name="date_time_fmt" msgid="1642972650061946484">"<xliff:g id="DATE">%1$s</xliff:g>, <xliff:g id="TIME_INTERVAL">%2$s</xliff:g>"</string>
     <string name="repeats_label" msgid="7414023871434593196">"পুনরাবৃত্তি"</string>
     <string name="no_title_label" msgid="302177118061368042">"(কোনো শীর্ষক নেই)"</string>
-  <plurals name="Nminutes">
-    <item quantity="one" msgid="4871052965772159239">"১ মিনিট"</item>
-    <item quantity="other" msgid="5644461630927544936">"<xliff:g id="COUNT">%d</xliff:g> মিনিট"</item>
-  </plurals>
-  <plurals name="Nmins">
-    <item quantity="one" msgid="9191090668359663663">"১ মিনিট"</item>
-    <item quantity="other" msgid="9175648445939148974">"<xliff:g id="COUNT">%d</xliff:g> মিনিট"</item>
-  </plurals>
-  <plurals name="Nhours">
-    <item quantity="one" msgid="4793697728599296830">"১ ঘন্টা"</item>
-    <item quantity="other" msgid="4477841052001760620">"<xliff:g id="COUNT">%d</xliff:g> ঘন্টা"</item>
-  </plurals>
-  <plurals name="Ndays">
-    <item quantity="one" msgid="5988137255732166573">"১ দিন"</item>
-    <item quantity="other" msgid="1709378992389618261">"<xliff:g id="COUNT">%d</xliff:g> দিন"</item>
-  </plurals>
-  <plurals name="weekN">
-    <item quantity="other" msgid="8085184869561028365">"<xliff:g id="COUNT">%d</xliff:g> নং সপ্তাহ"</item>
-  </plurals>
+    <plurals name="Nminutes" formatted="false" msgid="7310648773807033278">
+      <item quantity="one"><xliff:g id="COUNT">%d</xliff:g> মিনিট</item>
+      <item quantity="other"><xliff:g id="COUNT">%d</xliff:g> মিনিট</item>
+    </plurals>
+    <!-- no translation found for Nmins (2710431271593652640) -->
+    <plurals name="Nhours" formatted="false" msgid="8998738602639204540">
+      <item quantity="one"><xliff:g id="COUNT">%d</xliff:g> ঘণ্টা</item>
+      <item quantity="other"><xliff:g id="COUNT">%d</xliff:g> ঘণ্টা</item>
+    </plurals>
+    <plurals name="Ndays" formatted="false" msgid="2502834794639322464">
+      <item quantity="one"><xliff:g id="COUNT">%d</xliff:g> দিন</item>
+      <item quantity="other"><xliff:g id="COUNT">%d</xliff:g> দিন</item>
+    </plurals>
+    <!-- no translation found for weekN (6682545863072873513) -->
     <string name="calendar_refresh" msgid="6172731193680500025">"রিফ্রেশ করুন"</string>
     <string name="show_day_view" msgid="5782512782605466016">"দিনটি দেখান"</string>
     <string name="agenda_view" msgid="5566084759423843245">"কার্যসূচি"</string>
@@ -61,7 +56,7 @@
     <string name="goto_today" msgid="9162136434410891230">"আজ"</string>
     <string name="menu_preferences" msgid="9120238479503233925">"সেটিংস"</string>
     <string name="menu_select_visible_calendars" msgid="735670432781741817">"প্রদর্শনের জন্য ক্যালেন্ডার"</string>
-    <string name="search" msgid="550656004486017426">"অনুসন্ধান করুন"</string>
+    <string name="search" msgid="550656004486017426">"খুঁজুন"</string>
     <string name="hide_controls" msgid="830320505938520882">"নিয়ন্ত্রণগুলি লুকান"</string>
     <string name="show_controls" msgid="715520586028062621">"নিয়ন্ত্রণগুলি দেখান"</string>
     <string name="select_visible_calendars_title" msgid="7944393060991949882">"প্রদর্শনের জন্য ক্যালেন্ডার"</string>
@@ -72,7 +67,7 @@
     <string name="select_synced_calendars_title" msgid="7916084873075901448">"সিঙ্ক করার জন্য ক্যালেন্ডার"</string>
     <string name="select_synced_calendars_button" msgid="8890542984949996251">"সিঙ্ক করার জন্য ক্যালেন্ডার"</string>
     <string name="hint_what" msgid="709155115005044531">"ইভেন্টের নাম"</string>
-    <string name="hint_where" msgid="4972598001033801974">"অবস্থান"</string>
+    <string name="hint_where" msgid="4972598001033801974">"লোকেশন"</string>
     <string name="hint_description" msgid="1910143586169033232">"বর্ণনা"</string>
     <string name="hint_attendees" msgid="1650488163176888480">"অতিথিগণ"</string>
     <string name="creating_event" msgid="7516249252554059980">"ইভেন্ট তৈরি করা হয়েছে"</string>
@@ -115,7 +110,7 @@
     <string name="email_organizer_label" msgid="7178059542798074813">"সংগঠকে ইমেল পাঠান"</string>
     <string name="email_picker_label" msgid="4808253965057791781">"এটি সহ ইমেল পাঠান"</string>
     <string name="event_not_found" msgid="8356864185947582727">"ইভেন্ট পাওয়া যায়নি৷"</string>
-    <string name="map_label" msgid="8795383535586556038">"মানচিত্র"</string>
+    <string name="map_label" msgid="8795383535586556038">"ম্যাপ"</string>
     <string name="call_label" msgid="2960328220008869083">"কল করুন"</string>
     <string name="quick_response_settings" msgid="6776151690686068278">"দ্রুত প্রতিক্রিয়াগুলি"</string>
     <string name="quick_response_settings_summary" msgid="7878304729027355604">"অতিথিদের ইমেল পাঠানোর সময়ে ডিফল্ট প্রতিক্রিয়াগুলির সম্পাদনা করুন"</string>
@@ -127,7 +122,7 @@
     <item msgid="1524421198348168403">"মাত্র কয়েক মিনিট দেরীতে চলছে৷"</item>
     <item msgid="6215158751728689832">"১০ মিনিটের মধ্যে উপস্থিত হোন৷"</item>
     <item msgid="4485794001743679338">"চালিয়ে যান এবং আমাকে ছাড়াই শুরু করুন৷"</item>
-    <item msgid="8036557974294987511">"দুঃখিত, আমি আসতে পারছি না৷ আমাদেরকে আবার সময়সূচী নির্ধারণ করতে হবে৷"</item>
+    <item msgid="8036557974294987511">"দুঃখিত, আমি আসতে পারছি না৷ আমাদেরকে আবার সময়সূচি নির্ধারণ করতে হবে৷"</item>
   </string-array>
     <string name="quick_response_custom_msg" msgid="8792374208224108798">"আপনার নিজের পছন্দ মতো লিখুন…"</string>
     <string name="event_info_organizer" msgid="9138683335394832629">"সংগঠক:"</string>
@@ -149,19 +144,10 @@
     <string name="snooze_label" msgid="1515893621063224666">"স্নুজ"</string>
     <string name="does_not_repeat" msgid="1877681921029738999">"এক বারের জন্য ইভেন্ট"</string>
     <string name="endByDate" msgid="7654221304929538201">"; <xliff:g id="DATE">%s</xliff:g> তারিখ পর্যন্ত"</string>
-  <plurals name="endByCount">
-    <item quantity="one" msgid="3727754565990691816">"; একবারের জন্য"</item>
-    <item quantity="other" msgid="4855496837834652446">"; <xliff:g id="NUMBER">%d</xliff:g> বারের জন্য"</item>
-  </plurals>
-  <plurals name="daily">
-    <item quantity="one" msgid="5169052946627480942">"প্রতিদিন"</item>
-    <item quantity="other" msgid="5455230727715859264">"প্রতি <xliff:g id="NUMBER">%d</xliff:g> দিনে"</item>
-  </plurals>
+    <!-- no translation found for endByCount (8013128840623220306) -->
+    <!-- no translation found for daily (8835347097162749985) -->
     <string name="every_weekday" msgid="5896574838353902978">"প্রতিটি কর্মদিবসে (সোম–শুক্র)"</string>
-  <plurals name="weekly">
-    <item quantity="one" msgid="5463021019301453273">"প্রতি সপ্তাহের <xliff:g id="DAYS_OF_WEEK">%2$s</xliff:g> এ"</item>
-    <item quantity="other" msgid="2857390143157377867">"প্রতি <xliff:g id="NUMBER">%1$d</xliff:g> সপ্তাহ পর পর <xliff:g id="DAYS_OF_WEEK">%2$s</xliff:g> এ"</item>
-  </plurals>
+    <!-- no translation found for weekly (6866376933378266880) -->
     <string name="monthly" msgid="4587116285383048586">"মাসিক"</string>
     <string name="yearly_plain" msgid="3652692085322162449">"বাৎসরিক"</string>
     <string name="monthly_on_day" msgid="5370155265278821156">"মাসিক (<xliff:g id="DAY_OF_MONTH">%s</xliff:g> তারিখে)"</string>
@@ -184,39 +170,39 @@
     <string name="preferences_hide_declined_title" msgid="1849295943669890034">"প্রত্যাখ্যাত ইভেন্টগুলি লুকান"</string>
     <string name="preferences_week_start_day_title" msgid="4619489296444901622">"সপ্তাহের শুরু"</string>
     <string name="preferences_week_start_day_dialog" msgid="5181634128884089113">"সপ্তাহের শুরু"</string>
-    <string name="preferences_clear_search_history_title" msgid="6619916370215282982">"অনুসন্ধানের ইতিহাস সাফ করুন"</string>
-    <string name="preferences_clear_search_history_summary" msgid="7864674093455778158">"আপনার করা সমস্ত অনুসন্ধান সরান"</string>
-    <string name="search_history_cleared" msgid="1536707558435227567">"অনুসন্ধানের ইতিহাস সাফ করা হয়েছে৷"</string>
+    <string name="preferences_clear_search_history_title" msgid="6619916370215282982">"সার্চের ইতিহাস সাফ করুন"</string>
+    <string name="preferences_clear_search_history_summary" msgid="7864674093455778158">"আপনার করা সমস্ত সার্চ সরান"</string>
+    <string name="search_history_cleared" msgid="1536707558435227567">"সার্চের ইতিহাস সাফ করা হয়েছে৷"</string>
     <string name="preferences_alerts_title" msgid="6636088008103904020">"বিজ্ঞপ্তিগুলি"</string>
     <string name="preferences_alerts_vibrateWhen_title" msgid="8731372580674292759">"কম্পন"</string>
-    <string name="preferences_alerts_ringtone_title" msgid="1849706055052358346">"শব্দ"</string>
+    <string name="preferences_alerts_ringtone_title" msgid="1849706055052358346">"আওয়াজ"</string>
     <string name="preferences_alerts_popup_title" msgid="6643468203670475296">"পপ-আপ বিজ্ঞপ্তি"</string>
     <string name="preferences_default_reminder_title" msgid="5188861433342733905">"অনুস্মারকের ডিফল্ট সময়"</string>
     <string name="preferences_default_reminder_dialog" msgid="2490348857239323412">"অনুস্মারকের ডিফল্ট সময়"</string>
     <string name="preferences_default_reminder_default" msgid="2903884416749959435">"১০"</string>
-    <string name="preferences_use_home_tz_title" msgid="5597546849968598210">"হোম সময় অঞ্চল ব্যবহার করুন"</string>
+    <string name="preferences_use_home_tz_title" msgid="5597546849968598210">"নিজের দেশের সময় অঞ্চল ব্যবহার করুন"</string>
     <string name="preferences_use_home_tz_descrip" msgid="4835375381297413746">"ভ্রমণের সময়ে আপনার হোম সময় অঞ্চলের ভিত্তিতে ক্যালেন্ডার ও ইভেন্টের সময়গুলি দেখায়"</string>
     <string name="preferences_home_tz_title" msgid="6680000444088818578">"হোম সময় অঞ্চল"</string>
     <string name="preferences_show_week_num_title" msgid="5280734329664503461">"কত নম্বর সপ্তাহ তা দেখান"</string>
     <string name="preferences_about_title" msgid="2810624892412097879">"সম্বন্ধে"</string>
     <string name="preferences_build_version" msgid="8242471883413502068">"তৈরির সংস্করণ"</string>
     <string name="gadget_title" msgid="939918875331310945">"ক্যালেন্ডার"</string>
-  <plurals name="month_more_events">
-    <item quantity="one" msgid="8971334808414201327">"+১"</item>
-    <item quantity="other" msgid="1997405398178470838">"+<xliff:g id="NUMBER">%d</xliff:g>"</item>
-  </plurals>
+    <plurals name="month_more_events" formatted="false" msgid="6064683102623394875">
+      <item quantity="one">+<xliff:g id="NUMBER">%d</xliff:g>টি</item>
+      <item quantity="other">+<xliff:g id="NUMBER">%d</xliff:g>টি</item>
+    </plurals>
     <string name="gadget_no_events" msgid="5209110911088302855">"কোনো আগত ক্যালেন্ডার ইভেন্ট নেই"</string>
     <string name="preferences_experimental_category" msgid="8111213192001230350">"পরীক্ষামূলক"</string>
     <string name="preferences_reminders_category" msgid="3179315692653755740">"অনুস্মারকগুলি"</string>
     <string name="preferences_reminders_responded_label" msgid="1196570678238475838">"অনুস্মারকগুলি উপেক্ষা করুন"</string>
     <string name="preferences_reminders_responded_dialog" msgid="1873289128793828352">"অনুস্মারকগুলি উপেক্ষা করুন"</string>
-    <string name="preferences_reminders_quiet_hours_label" msgid="8529712276644546893">"নিঃশব্দ থাকার সময়"</string>
-    <string name="preferences_reminders_quiet_hours_description" msgid="65969073433791290">"একটি নির্দিষ্ট সময়ে ইভেন্টের অনুস্মারকগুলি নিঃশব্দ রাখুন৷"</string>
-    <string name="preferences_reminders_quiet_hours_start" msgid="3433058529220285232">"নিঃশব্দ থাকা শুরুর সময়"</string>
-    <string name="preferences_reminders_quiet_hours_end" msgid="7492883554865119346">"নিঃশব্দ থাকা সমাপ্তির সময়"</string>
+    <string name="preferences_reminders_quiet_hours_label" msgid="8529712276644546893">"মিউট থাকার সময়"</string>
+    <string name="preferences_reminders_quiet_hours_description" msgid="65969073433791290">"একটি নির্দিষ্ট সময়ে ইভেন্টের অনুস্মারকগুলি মিউট রাখুন৷"</string>
+    <string name="preferences_reminders_quiet_hours_start" msgid="3433058529220285232">"মিউট থাকা শুরুর সময়"</string>
+    <string name="preferences_reminders_quiet_hours_end" msgid="7492883554865119346">"মিউট থাকা সমাপ্তির সময়"</string>
     <string name="preferences_debug_category" msgid="6203278208385095018">"ত্রুটি মুক্ত করা হচ্ছে"</string>
     <string name="copy_db" msgid="437691290566699292">"ডেটাবেস পাঠান"</string>
-    <string name="directory_searching_fmt" msgid="1232037509095606687">"<xliff:g id="DOMAIN">%s</xliff:g> অনুসন্ধান করছে…"</string>
+    <string name="directory_searching_fmt" msgid="1232037509095606687">"<xliff:g id="DOMAIN">%s</xliff:g> সার্চ করছে…"</string>
     <string name="accessibility_remove_attendee" msgid="7082751172654698863">"অংশগ্রহণকারীদের সরান"</string>
     <string name="accessibility_pick_start_date" msgid="3926641487042699037">"শুরুর তারিখ"</string>
     <string name="accessibility_pick_start_time" msgid="4913428100936555149">"শুরুর সময়"</string>
@@ -239,42 +225,27 @@
     <string name="accessibility_email_notification" msgid="9124064701968129831">"অতিথিদেরকে ইমেল পাঠান"</string>
     <string name="day_view_new_event_hint" msgid="2131483437911536229">"+ নতুন ইভেন্ট"</string>
     <string name="template_announce_item_index" msgid="4067877800670753110">"<xliff:g id="ITEM_COUNT">%2$s</xliff:g>টির মধ্যে <xliff:g id="ITEM_INDEX">%1$s</xliff:g> নম্বর ইভেন্ট৷"</string>
-  <plurals name="Nevents">
-    <item quantity="one" msgid="5230907142214104485">"১টি ইভেন্ট"</item>
-    <item quantity="other" msgid="6093072093209431078">"<xliff:g id="COUNT">%d</xliff:g>টি ইভেন্ট"</item>
-  </plurals>
-  <plurals name="N_remaining_events">
-    <item quantity="one" msgid="431585781647034528">"+১টি ইভেন্ট"</item>
-    <item quantity="other" msgid="3609243840882275136">"+<xliff:g id="COUNT">%d</xliff:g>টি ইভেন্ট"</item>
-  </plurals>
+    <plurals name="Nevents" formatted="false" msgid="523806278273939134">
+      <item quantity="one"><xliff:g id="COUNT">%d</xliff:g>টি ইভেন্ট</item>
+      <item quantity="other"><xliff:g id="COUNT">%d</xliff:g>টি ইভেন্ট</item>
+    </plurals>
+    <plurals name="N_remaining_events" formatted="false" msgid="182179062497393883">
+      <item quantity="one">+<xliff:g id="COUNT">%d</xliff:g>টি ইভেন্ট</item>
+      <item quantity="other">+<xliff:g id="COUNT">%d</xliff:g>টি ইভেন্ট</item>
+    </plurals>
     <string name="acessibility_selected_marker_description" msgid="3010149843148810768">"নির্বাচিত ইভেন্ট"</string>
     <string name="do_not_check" msgid="7815441673853466129">"টিক চিহ্ন দেবেন না -&gt;"</string>
     <string name="recurrence_dialog_title" msgid="8093909645557717483">"পুনরাবৃত্তি করুন"</string>
     <string name="recurrence_dialog_title_never" msgid="2679396029776590130">"পুনরাবৃত্তি করবেন না"</string>
-  <plurals name="recurrence_interval_daily">
-    <item quantity="one" msgid="1205422710088692631">"প্রতি <xliff:g id="COUNT">%d</xliff:g> দিনে"</item>
-    <item quantity="other" msgid="707566499994398250">"প্রতি <xliff:g id="COUNT">%d</xliff:g> দিনে"</item>
-  </plurals>
-  <plurals name="recurrence_interval_weekly">
-    <item quantity="one" msgid="4948681635464488351">"প্রতি <xliff:g id="COUNT">%d</xliff:g> সপ্তাহে"</item>
-    <item quantity="other" msgid="7094801039989237061">"প্রতি <xliff:g id="COUNT">%d</xliff:g> সপ্তাহে"</item>
-  </plurals>
-  <plurals name="recurrence_interval_monthly">
-    <item quantity="one" msgid="4768178401603139718">"প্রতি <xliff:g id="COUNT">%d</xliff:g> মাসে"</item>
-    <item quantity="other" msgid="5419723710346646523">"প্রতি <xliff:g id="COUNT">%d</xliff:g> মাসে"</item>
-  </plurals>
-  <plurals name="recurrence_interval_yearly">
-    <item quantity="one" msgid="5819562634008179102">"প্রতি <xliff:g id="COUNT">%d</xliff:g> বছরে"</item>
-    <item quantity="other" msgid="5678653649746562060">"প্রতি <xliff:g id="COUNT">%d</xliff:g> বছরে"</item>
-  </plurals>
+    <!-- no translation found for recurrence_interval_daily (4500420585186480085) -->
+    <!-- no translation found for recurrence_interval_weekly (3485667498625367983) -->
+    <!-- no translation found for recurrence_interval_monthly (6278422285680542608) -->
+    <!-- no translation found for recurrence_interval_yearly (5954975405814707742) -->
     <string name="recurrence_month_pattern_by_day" msgid="4400107556121003459">"প্রতি মাসের একই দিনে"</string>
     <string name="recurrence_end_continously" msgid="6898950241634912991">"চিরকাল"</string>
     <string name="recurrence_end_date_label" msgid="4142791438636994952">"একটি তারিখ পর্যন্ত"</string>
     <string name="recurrence_end_date" msgid="3693751578164711701">"<xliff:g id="DATE">%s</xliff:g> পর্যন্ত"</string>
     <string name="recurrence_end_count_label" msgid="1233883668293087977">"একাধিক ঘটনার জন্য"</string>
-  <plurals name="recurrence_end_count">
-    <item quantity="one" msgid="1400782968090516215">"<xliff:g id="EVENT_COUNT">%d</xliff:g>টি ইভেন্টের জন্য"</item>
-    <item quantity="other" msgid="8779598489398048259">"<xliff:g id="EVENT_COUNT">%d</xliff:g>টি ইভেন্টের জন্য"</item>
-  </plurals>
+    <!-- no translation found for recurrence_end_count (6025427387167075860) -->
     <string name="acessibility_recurrence_choose_end_date_description" msgid="5899029840837836711">"সমাপ্তির তারিখ পরিবর্তন করুন"</string>
 </resources>

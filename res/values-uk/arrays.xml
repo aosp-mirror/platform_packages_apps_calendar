@@ -66,7 +66,7 @@
     <item msgid="5840983116375063739">"Понеділок"</item>
   </string-array>
   <string-array name="availability">
-    <item msgid="454869065893453189">"Зайнятий"</item>
+    <item msgid="454869065893453189">"Зайнятий(-а)"</item>
     <item msgid="6228387173725732140">"На місці"</item>
     <item msgid="2064426942462573474">"Під питанням"</item>
   </string-array>
@@ -105,7 +105,6 @@
     <item msgid="5917946202321434335">"День"</item>
     <item msgid="6248480754959562740">"Тиждень"</item>
     <item msgid="4298472806133153766">"Місяць"</item>
-    <item msgid="5033084974413793845">"Порядок денний"</item>
   </string-array>
   <string-array name="preferences_skip_reminders_labels">
     <item msgid="2285927842308686988">"Лише якщо відхилено"</item>

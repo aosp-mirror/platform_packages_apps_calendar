@@ -20,7 +20,7 @@
     <item msgid="5172236776878811487">"ಅಧಿಸೂಚನೆ"</item>
     <item msgid="1751151680520784746">"ಇಮೇಲ್"</item>
     <item msgid="2658001219380695677">"SMS"</item>
-    <item msgid="7926918288165444873">"ಆಲಾರಾಂ"</item>
+    <item msgid="7926918288165444873">"ಅಲಾರಾಂ"</item>
   </string-array>
   <string-array name="reminder_minutes_labels">
     <item msgid="2416970002377237011">"0 ನಿಮಿಷಗಳು"</item>
@@ -60,7 +60,7 @@
     <item msgid="8336577387266744930">"1 ವಾರ"</item>
   </string-array>
   <string-array name="preferences_week_start_day_labels">
-    <item msgid="986150274035512339">"ಸ್ಥಳೀಯ ಡೀಫಾಲ್ಟ್‌‌"</item>
+    <item msgid="986150274035512339">"ಸ್ಥಳೀಯ ಡಿಫಾಲ್ಟ್‌‌"</item>
     <item msgid="134027225275475280">"ಶನಿವಾರ"</item>
     <item msgid="95029346069903091">"ಭಾನುವಾರ"</item>
     <item msgid="5840983116375063739">"ಸೋಮವಾರ"</item>
@@ -71,7 +71,7 @@
     <item msgid="2064426942462573474">"ಪ್ರಾಯೋಗಿಕ"</item>
   </string-array>
   <string-array name="visibility">
-    <item msgid="3035788428581513163">"ಡೀಫಾಲ್ಟ್"</item>
+    <item msgid="3035788428581513163">"ಡಿಫಾಲ್ಟ್"</item>
     <item msgid="5200216103966973369">"ಖಾಸಗಿ"</item>
     <item msgid="9182342638433672664">"ಸಾರ್ವಜನಿಕ"</item>
   </string-array>
@@ -105,7 +105,6 @@
     <item msgid="5917946202321434335">"ದಿನ"</item>
     <item msgid="6248480754959562740">"ವಾರ"</item>
     <item msgid="4298472806133153766">"ತಿಂಗಳು"</item>
-    <item msgid="5033084974413793845">"ಕಾರ್ಯಸೂಚಿ"</item>
   </string-array>
   <string-array name="preferences_skip_reminders_labels">
     <item msgid="2285927842308686988">"ನಿರಾಕರಿಸಿದರೆ ಮಾತ್ರ"</item>

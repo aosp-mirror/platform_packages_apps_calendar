@@ -26,28 +26,23 @@
     <string name="tomorrow" msgid="614434811813859237">"Kesho"</string>
     <string name="today_at_time_fmt" msgid="1981279213130049736">"Leo saa <xliff:g id="TIME_INTERVAL">%s</xliff:g>"</string>
     <string name="tomorrow_at_time_fmt" msgid="1330779112841767432">"Kesho saa <xliff:g id="TIME_INTERVAL">%s</xliff:g>"</string>
-    <string name="date_time_fmt" msgid="1642972650061946484">"<xliff:g id="DATE">%s</xliff:g>, <xliff:g id="TIME_INTERVAL">%s</xliff:g>"</string>
+    <string name="date_time_fmt" msgid="1642972650061946484">"<xliff:g id="DATE">%1$s</xliff:g>, <xliff:g id="TIME_INTERVAL">%2$s</xliff:g>"</string>
     <string name="repeats_label" msgid="7414023871434593196">"Kurudia"</string>
-    <string name="no_title_label" msgid="302177118061368042">"(Hakuna kichwa)"</string>
-  <plurals name="Nminutes">
-    <item quantity="one" msgid="4871052965772159239">"Dakika 1"</item>
-    <item quantity="other" msgid="5644461630927544936">"Dakika <xliff:g id="COUNT">%d</xliff:g>"</item>
-  </plurals>
-  <plurals name="Nmins">
-    <item quantity="one" msgid="9191090668359663663">"Dakika 1"</item>
-    <item quantity="other" msgid="9175648445939148974">"Dakika <xliff:g id="COUNT">%d</xliff:g>"</item>
-  </plurals>
-  <plurals name="Nhours">
-    <item quantity="one" msgid="4793697728599296830">"Saa 1"</item>
-    <item quantity="other" msgid="4477841052001760620">"Saa <xliff:g id="COUNT">%d</xliff:g>"</item>
-  </plurals>
-  <plurals name="Ndays">
-    <item quantity="one" msgid="5988137255732166573">"siku 1"</item>
-    <item quantity="other" msgid="1709378992389618261">"siku <xliff:g id="COUNT">%d</xliff:g>"</item>
-  </plurals>
-  <plurals name="weekN">
-    <item quantity="other" msgid="8085184869561028365">"WIKI <xliff:g id="COUNT">%d</xliff:g>"</item>
-  </plurals>
+    <string name="no_title_label" msgid="302177118061368042">"(Kichwa hakijaongezwa)"</string>
+    <plurals name="Nminutes" formatted="false" msgid="7310648773807033278">
+      <item quantity="other">Dakika <xliff:g id="COUNT">%d</xliff:g></item>
+      <item quantity="one">Dakika 1</item>
+    </plurals>
+    <!-- no translation found for Nmins (2710431271593652640) -->
+    <plurals name="Nhours" formatted="false" msgid="8998738602639204540">
+      <item quantity="other">Saa <xliff:g id="COUNT">%d</xliff:g></item>
+      <item quantity="one">Saa 1</item>
+    </plurals>
+    <plurals name="Ndays" formatted="false" msgid="2502834794639322464">
+      <item quantity="other">Siku <xliff:g id="COUNT">%d</xliff:g></item>
+      <item quantity="one">Siku 1</item>
+    </plurals>
+    <!-- no translation found for weekN (6682545863072873513) -->
     <string name="calendar_refresh" msgid="6172731193680500025">"Onyesha upya"</string>
     <string name="show_day_view" msgid="5782512782605466016">"Onyesha siku"</string>
     <string name="agenda_view" msgid="5566084759423843245">"Ajenda"</string>
@@ -80,9 +75,9 @@
     <string name="empty_event" msgid="9018699257414338634">"Tukio tupu halikuundwa."</string>
     <string name="creating_event_with_guest" msgid="5758688413124191931">"Mialiko itatumwa."</string>
     <string name="saving_event_with_guest" msgid="9184584438475689577">"Visasisho vitatumwa."</string>
-    <string name="rsvp_accepted" msgid="8146618862268962727">"Alijibu ndiyo."</string>
-    <string name="rsvp_tentative" msgid="6545510359501328718">"Alijibu labda."</string>
-    <string name="rsvp_declined" msgid="8686330037802222895">"Alijibu la."</string>
+    <string name="rsvp_accepted" msgid="8146618862268962727">"Umejibu ndiyo."</string>
+    <string name="rsvp_tentative" msgid="6545510359501328718">"Umejibu labda."</string>
+    <string name="rsvp_declined" msgid="8686330037802222895">"Umejibu la."</string>
     <string name="create_event_dialog_save" msgid="1080859798521717414">"Hifadhi"</string>
     <string name="alert_title" msgid="7869592820853066853">"Arifa za kalenda"</string>
     <string name="event_info_title" msgid="56024222340421620">"Tazama tukio"</string>
@@ -118,7 +113,7 @@
     <string name="map_label" msgid="8795383535586556038">"Ramani"</string>
     <string name="call_label" msgid="2960328220008869083">"Piga simu"</string>
     <string name="quick_response_settings" msgid="6776151690686068278">"Majibu ya haraka"</string>
-    <string name="quick_response_settings_summary" msgid="7878304729027355604">"Hariri majibu ya chaguo-msingi wakati wa kutumia wateja barua pepe"</string>
+    <string name="quick_response_settings_summary" msgid="7878304729027355604">"Hariri majibu ya chaguomsingi wakati wa kutumia wateja barua pepe"</string>
     <string name="quick_response_settings_title" msgid="8966517107774567031">"Hariri majibu ya haraka"</string>
     <string name="quick_response_settings_edit_title" msgid="6260055523174081930">"Majibu ya haraka"</string>
     <string name="quick_response_dialog_title" msgid="2681309456412199207">"Chagua jibu la haraka"</string>
@@ -149,19 +144,10 @@
     <string name="snooze_label" msgid="1515893621063224666">"Baadaye"</string>
     <string name="does_not_repeat" msgid="1877681921029738999">"Tukio la wakati mmoja"</string>
     <string name="endByDate" msgid="7654221304929538201">"; hadi <xliff:g id="DATE">%s</xliff:g>"</string>
-  <plurals name="endByCount">
-    <item quantity="one" msgid="3727754565990691816">"; kwa wakati mmoja"</item>
-    <item quantity="other" msgid="4855496837834652446">"; kwa mara <xliff:g id="NUMBER">%d</xliff:g>"</item>
-  </plurals>
-  <plurals name="daily">
-    <item quantity="one" msgid="5169052946627480942">"Kila siku"</item>
-    <item quantity="other" msgid="5455230727715859264">"Kila baada ya siku <xliff:g id="NUMBER">%d</xliff:g>"</item>
-  </plurals>
+    <!-- no translation found for endByCount (8013128840623220306) -->
+    <!-- no translation found for daily (8835347097162749985) -->
     <string name="every_weekday" msgid="5896574838353902978">"Kila siku ya kazi (Jumatatu-Ijumaa)"</string>
-  <plurals name="weekly">
-    <item quantity="one" msgid="5463021019301453273">"Kila wiki siku ya <xliff:g id="DAYS_OF_WEEK">%2$s</xliff:g>"</item>
-    <item quantity="other" msgid="2857390143157377867">"Kila wiki  <xliff:g id="NUMBER">%1$d</xliff:g> siku ya <xliff:g id="DAYS_OF_WEEK">%2$s</xliff:g>"</item>
-  </plurals>
+    <!-- no translation found for weekly (6866376933378266880) -->
     <string name="monthly" msgid="4587116285383048586">"Kila mwezi"</string>
     <string name="yearly_plain" msgid="3652692085322162449">"Kila mwaka"</string>
     <string name="monthly_on_day" msgid="5370155265278821156">"Kila mwezi (kwa siku ya <xliff:g id="DAY_OF_MONTH">%s</xliff:g>)"</string>
@@ -191,8 +177,8 @@
     <string name="preferences_alerts_vibrateWhen_title" msgid="8731372580674292759">"Tikisika"</string>
     <string name="preferences_alerts_ringtone_title" msgid="1849706055052358346">"Sauti"</string>
     <string name="preferences_alerts_popup_title" msgid="6643468203670475296">"Arifa ibukizi"</string>
-    <string name="preferences_default_reminder_title" msgid="5188861433342733905">"Muda chaguo-msingi wa kikumbusho"</string>
-    <string name="preferences_default_reminder_dialog" msgid="2490348857239323412">"Muda chaguo-msingi wa kikumbusho"</string>
+    <string name="preferences_default_reminder_title" msgid="5188861433342733905">"Muda chaguomsingi wa kikumbusho"</string>
+    <string name="preferences_default_reminder_dialog" msgid="2490348857239323412">"Muda chaguomsingi wa kikumbusho"</string>
     <string name="preferences_default_reminder_default" msgid="2903884416749959435">"10"</string>
     <string name="preferences_use_home_tz_title" msgid="5597546849968598210">"Tumia saa za eneo za nyumbani"</string>
     <string name="preferences_use_home_tz_descrip" msgid="4835375381297413746">"Huonyesha kalenda na saa za matukio katika saa za eneo utokalo wakati unasafiri"</string>
@@ -201,10 +187,10 @@
     <string name="preferences_about_title" msgid="2810624892412097879">"Kuhusu"</string>
     <string name="preferences_build_version" msgid="8242471883413502068">"Toleo la muundo"</string>
     <string name="gadget_title" msgid="939918875331310945">"Kalenda"</string>
-  <plurals name="month_more_events">
-    <item quantity="one" msgid="8971334808414201327">"+1"</item>
-    <item quantity="other" msgid="1997405398178470838">"+<xliff:g id="NUMBER">%d</xliff:g>"</item>
-  </plurals>
+    <plurals name="month_more_events" formatted="false" msgid="6064683102623394875">
+      <item quantity="other">+<xliff:g id="NUMBER">%d</xliff:g></item>
+      <item quantity="one">+1</item>
+    </plurals>
     <string name="gadget_no_events" msgid="5209110911088302855">"Hakuna matukio ya kalenda yatakayofanyika hivi karibuni"</string>
     <string name="preferences_experimental_category" msgid="8111213192001230350">"Ya majaribio"</string>
     <string name="preferences_reminders_category" msgid="3179315692653755740">"Vikumbusho"</string>
@@ -239,42 +225,27 @@
     <string name="accessibility_email_notification" msgid="9124064701968129831">"Watumie wageni barua pepe"</string>
     <string name="day_view_new_event_hint" msgid="2131483437911536229">"+ Tukio jipya"</string>
     <string name="template_announce_item_index" msgid="4067877800670753110">"Tukio <xliff:g id="ITEM_INDEX">%1$s</xliff:g> la <xliff:g id="ITEM_COUNT">%2$s</xliff:g>"</string>
-  <plurals name="Nevents">
-    <item quantity="one" msgid="5230907142214104485">"Tukio 1"</item>
-    <item quantity="other" msgid="6093072093209431078">"Matukio <xliff:g id="COUNT">%d</xliff:g>"</item>
-  </plurals>
-  <plurals name="N_remaining_events">
-    <item quantity="one" msgid="431585781647034528">"+ tukio 1"</item>
-    <item quantity="other" msgid="3609243840882275136">"+ matukio <xliff:g id="COUNT">%d</xliff:g>"</item>
-  </plurals>
+    <plurals name="Nevents" formatted="false" msgid="523806278273939134">
+      <item quantity="other">Matukio <xliff:g id="COUNT">%d</xliff:g></item>
+      <item quantity="one">Tukio 1</item>
+    </plurals>
+    <plurals name="N_remaining_events" formatted="false" msgid="182179062497393883">
+      <item quantity="other">Matukio +<xliff:g id="COUNT">%d</xliff:g> </item>
+      <item quantity="one">Tukio +1 </item>
+    </plurals>
     <string name="acessibility_selected_marker_description" msgid="3010149843148810768">"Tukio lililochaguliwa"</string>
     <string name="do_not_check" msgid="7815441673853466129">"Usikague -&gt;"</string>
     <string name="recurrence_dialog_title" msgid="8093909645557717483">"Rudia"</string>
     <string name="recurrence_dialog_title_never" msgid="2679396029776590130">"Usirudie kamwe"</string>
-  <plurals name="recurrence_interval_daily">
-    <item quantity="one" msgid="1205422710088692631">"Kila baada ya siku <xliff:g id="COUNT">%d</xliff:g>"</item>
-    <item quantity="other" msgid="707566499994398250">"Kila baada ya siku <xliff:g id="COUNT">%d</xliff:g>"</item>
-  </plurals>
-  <plurals name="recurrence_interval_weekly">
-    <item quantity="one" msgid="4948681635464488351">"Kila baada ya wiki <xliff:g id="COUNT">%d</xliff:g>"</item>
-    <item quantity="other" msgid="7094801039989237061">"Kila baada ya wiki <xliff:g id="COUNT">%d</xliff:g>"</item>
-  </plurals>
-  <plurals name="recurrence_interval_monthly">
-    <item quantity="one" msgid="4768178401603139718">"Kila baada ya mwezi <xliff:g id="COUNT">%d</xliff:g>"</item>
-    <item quantity="other" msgid="5419723710346646523">"Kila baada ya miezi <xliff:g id="COUNT">%d</xliff:g>"</item>
-  </plurals>
-  <plurals name="recurrence_interval_yearly">
-    <item quantity="one" msgid="5819562634008179102">"Kila baada ya mwaka <xliff:g id="COUNT">%d</xliff:g>"</item>
-    <item quantity="other" msgid="5678653649746562060">"Kila baada ya miaka <xliff:g id="COUNT">%d</xliff:g>"</item>
-  </plurals>
+    <!-- no translation found for recurrence_interval_daily (4500420585186480085) -->
+    <!-- no translation found for recurrence_interval_weekly (3485667498625367983) -->
+    <!-- no translation found for recurrence_interval_monthly (6278422285680542608) -->
+    <!-- no translation found for recurrence_interval_yearly (5954975405814707742) -->
     <string name="recurrence_month_pattern_by_day" msgid="4400107556121003459">"katika siku sawa ya kila mwezi"</string>
     <string name="recurrence_end_continously" msgid="6898950241634912991">"Milele"</string>
     <string name="recurrence_end_date_label" msgid="4142791438636994952">"Hadi tarehe"</string>
     <string name="recurrence_end_date" msgid="3693751578164711701">"Hadi <xliff:g id="DATE">%s</xliff:g>"</string>
     <string name="recurrence_end_count_label" msgid="1233883668293087977">"Kwa matukio kadhaa"</string>
-  <plurals name="recurrence_end_count">
-    <item quantity="one" msgid="1400782968090516215">"Kwa tukio <xliff:g id="EVENT_COUNT">%d</xliff:g>"</item>
-    <item quantity="other" msgid="8779598489398048259">"Kwa matukio <xliff:g id="EVENT_COUNT">%d</xliff:g>"</item>
-  </plurals>
+    <!-- no translation found for recurrence_end_count (6025427387167075860) -->
     <string name="acessibility_recurrence_choose_end_date_description" msgid="5899029840837836711">"badilisha tarehe ya mwisho"</string>
 </resources>

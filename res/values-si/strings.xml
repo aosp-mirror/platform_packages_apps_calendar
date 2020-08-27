@@ -26,28 +26,23 @@
     <string name="tomorrow" msgid="614434811813859237">"හෙට"</string>
     <string name="today_at_time_fmt" msgid="1981279213130049736">"අද <xliff:g id="TIME_INTERVAL">%s</xliff:g> ට"</string>
     <string name="tomorrow_at_time_fmt" msgid="1330779112841767432">"හෙට <xliff:g id="TIME_INTERVAL">%s</xliff:g> ට"</string>
-    <string name="date_time_fmt" msgid="1642972650061946484">"<xliff:g id="DATE">%s</xliff:g>, <xliff:g id="TIME_INTERVAL">%s</xliff:g>"</string>
+    <string name="date_time_fmt" msgid="1642972650061946484">"<xliff:g id="DATE">%1$s</xliff:g>, <xliff:g id="TIME_INTERVAL">%2$s</xliff:g>"</string>
     <string name="repeats_label" msgid="7414023871434593196">"පුනරාවර්තනය"</string>
     <string name="no_title_label" msgid="302177118061368042">"(නමක් නොමැත)"</string>
-  <plurals name="Nminutes">
-    <item quantity="one" msgid="4871052965772159239">"මිනිත්තු 1"</item>
-    <item quantity="other" msgid="5644461630927544936">"මිනිත්තු <xliff:g id="COUNT">%d</xliff:g>"</item>
-  </plurals>
-  <plurals name="Nmins">
-    <item quantity="one" msgid="9191090668359663663">"මිනි 1"</item>
-    <item quantity="other" msgid="9175648445939148974">"මිනි <xliff:g id="COUNT">%d</xliff:g>"</item>
-  </plurals>
-  <plurals name="Nhours">
-    <item quantity="one" msgid="4793697728599296830">"පැය 1"</item>
-    <item quantity="other" msgid="4477841052001760620">"පැය <xliff:g id="COUNT">%d</xliff:g>"</item>
-  </plurals>
-  <plurals name="Ndays">
-    <item quantity="one" msgid="5988137255732166573">"දවස් 1"</item>
-    <item quantity="other" msgid="1709378992389618261">"දින <xliff:g id="COUNT">%d</xliff:g>"</item>
-  </plurals>
-  <plurals name="weekN">
-    <item quantity="other" msgid="8085184869561028365">"සතිය <xliff:g id="COUNT">%d</xliff:g>"</item>
-  </plurals>
+    <plurals name="Nminutes" formatted="false" msgid="7310648773807033278">
+      <item quantity="one">මිනිත්තු <xliff:g id="COUNT">%d</xliff:g></item>
+      <item quantity="other">මිනිත්තු <xliff:g id="COUNT">%d</xliff:g></item>
+    </plurals>
+    <!-- no translation found for Nmins (2710431271593652640) -->
+    <plurals name="Nhours" formatted="false" msgid="8998738602639204540">
+      <item quantity="one">පැය <xliff:g id="COUNT">%d</xliff:g></item>
+      <item quantity="other">පැය <xliff:g id="COUNT">%d</xliff:g></item>
+    </plurals>
+    <plurals name="Ndays" formatted="false" msgid="2502834794639322464">
+      <item quantity="one">දින <xliff:g id="COUNT">%d</xliff:g></item>
+      <item quantity="other">දින <xliff:g id="COUNT">%d</xliff:g></item>
+    </plurals>
+    <!-- no translation found for weekN (6682545863072873513) -->
     <string name="calendar_refresh" msgid="6172731193680500025">"නැවුම් කරන්න"</string>
     <string name="show_day_view" msgid="5782512782605466016">"දවස පෙන්වන්න"</string>
     <string name="agenda_view" msgid="5566084759423843245">"න්‍යාය පත්‍රය"</string>
@@ -119,7 +114,7 @@
     <string name="call_label" msgid="2960328220008869083">"ඇමතුම"</string>
     <string name="quick_response_settings" msgid="6776151690686068278">"ක්ෂණික ප්‍රතිචාර"</string>
     <string name="quick_response_settings_summary" msgid="7878304729027355604">"අමුත්තන්ට ඊ-තැපැල් කරන විට සුපුරුදු ප්‍රතිචාර සංස්කරණය කරන්න"</string>
-    <string name="quick_response_settings_title" msgid="8966517107774567031">"ක්ෂණික ප්‍රතිචාර සංස්කරණය කරන්න"</string>
+    <string name="quick_response_settings_title" msgid="8966517107774567031">"ක්ෂණික ප්‍රතිචාර සංස්කරණය"</string>
     <string name="quick_response_settings_edit_title" msgid="6260055523174081930">"ක්ෂණික ප්‍රතිචාරය"</string>
     <string name="quick_response_dialog_title" msgid="2681309456412199207">"ක්ෂණික ප්‍රතිචාරය තෝරන්න"</string>
     <string name="quick_response_email_failed" msgid="5544066405231853245">"ඊ-තැපැල් ක්‍රමලේඛනක් සොයාගැනීමට අපොහොසත් විය"</string>
@@ -149,19 +144,10 @@
     <string name="snooze_label" msgid="1515893621063224666">"යළි සිහි කැඳවන්න"</string>
     <string name="does_not_repeat" msgid="1877681921029738999">"එක්-වරක් වන සිදුවීමක්"</string>
     <string name="endByDate" msgid="7654221304929538201">"; <xliff:g id="DATE">%s</xliff:g> තෙක්"</string>
-  <plurals name="endByCount">
-    <item quantity="one" msgid="3727754565990691816">"; එක් වරක් සඳහා"</item>
-    <item quantity="other" msgid="4855496837834652446">"; වාර <xliff:g id="NUMBER">%d</xliff:g> සඳහා"</item>
-  </plurals>
-  <plurals name="daily">
-    <item quantity="one" msgid="5169052946627480942">"දිනපතා"</item>
-    <item quantity="other" msgid="5455230727715859264">"සෑම දින <xliff:g id="NUMBER">%d</xliff:g> කට"</item>
-  </plurals>
+    <!-- no translation found for endByCount (8013128840623220306) -->
+    <!-- no translation found for daily (8835347097162749985) -->
     <string name="every_weekday" msgid="5896574838353902978">"සෑම සතියේ දිනකම (සඳු–සිකු)"</string>
-  <plurals name="weekly">
-    <item quantity="one" msgid="5463021019301453273">"සතිපතාම <xliff:g id="DAYS_OF_WEEK">%2$s</xliff:g> දින"</item>
-    <item quantity="other" msgid="2857390143157377867">"සෑම සති <xliff:g id="NUMBER">%1$d</xliff:g> කට වරක් <xliff:g id="DAYS_OF_WEEK">%2$s</xliff:g> දින"</item>
-  </plurals>
+    <!-- no translation found for weekly (6866376933378266880) -->
     <string name="monthly" msgid="4587116285383048586">"මාසිකව"</string>
     <string name="yearly_plain" msgid="3652692085322162449">"වාර්ෂිකව"</string>
     <string name="monthly_on_day" msgid="5370155265278821156">"මාසිකව (<xliff:g id="DAY_OF_MONTH">%s</xliff:g> දින)"</string>
@@ -201,10 +187,10 @@
     <string name="preferences_about_title" msgid="2810624892412097879">"පිළිබඳ"</string>
     <string name="preferences_build_version" msgid="8242471883413502068">"තැනුම් අනුවාදය"</string>
     <string name="gadget_title" msgid="939918875331310945">"දින දර්ශනය"</string>
-  <plurals name="month_more_events">
-    <item quantity="one" msgid="8971334808414201327">"+1"</item>
-    <item quantity="other" msgid="1997405398178470838">"+<xliff:g id="NUMBER">%d</xliff:g>"</item>
-  </plurals>
+    <plurals name="month_more_events" formatted="false" msgid="6064683102623394875">
+      <item quantity="one">+<xliff:g id="NUMBER">%d</xliff:g></item>
+      <item quantity="other">+<xliff:g id="NUMBER">%d</xliff:g></item>
+    </plurals>
     <string name="gadget_no_events" msgid="5209110911088302855">"ඉදිරියට පැමිණීම කිසිඳු දින දර්ශන සිදුවීමක් නැත"</string>
     <string name="preferences_experimental_category" msgid="8111213192001230350">"පරීක්ෂණාත්මක"</string>
     <string name="preferences_reminders_category" msgid="3179315692653755740">"සිහි කැඳවීම්"</string>
@@ -239,42 +225,27 @@
     <string name="accessibility_email_notification" msgid="9124064701968129831">"අමුත්තන්ට ඊ-තැපැල් කරන්න"</string>
     <string name="day_view_new_event_hint" msgid="2131483437911536229">"+ නව සිදුවීම"</string>
     <string name="template_announce_item_index" msgid="4067877800670753110">"<xliff:g id="ITEM_COUNT">%2$s</xliff:g> ගෙන් <xliff:g id="ITEM_INDEX">%1$s</xliff:g> සිදුවීම."</string>
-  <plurals name="Nevents">
-    <item quantity="one" msgid="5230907142214104485">"සිදුවීම් 1"</item>
-    <item quantity="other" msgid="6093072093209431078">"සිදුවීම් <xliff:g id="COUNT">%d</xliff:g>"</item>
-  </plurals>
-  <plurals name="N_remaining_events">
-    <item quantity="one" msgid="431585781647034528">"+1 සිදුවීම්"</item>
-    <item quantity="other" msgid="3609243840882275136">"+<xliff:g id="COUNT">%d</xliff:g> සිදුවීම්"</item>
-  </plurals>
+    <plurals name="Nevents" formatted="false" msgid="523806278273939134">
+      <item quantity="one">සිදුවීම් <xliff:g id="COUNT">%d</xliff:g></item>
+      <item quantity="other">සිදුවීම් <xliff:g id="COUNT">%d</xliff:g></item>
+    </plurals>
+    <plurals name="N_remaining_events" formatted="false" msgid="182179062497393883">
+      <item quantity="one">සිදුවීම් +<xliff:g id="COUNT">%d</xliff:g></item>
+      <item quantity="other">සිදුවීම් +<xliff:g id="COUNT">%d</xliff:g></item>
+    </plurals>
     <string name="acessibility_selected_marker_description" msgid="3010149843148810768">"සිදුවීම තෝරන්න"</string>
     <string name="do_not_check" msgid="7815441673853466129">"පරික්ෂාකරන්න එපා -&gt;"</string>
     <string name="recurrence_dialog_title" msgid="8093909645557717483">"නැවත කරන්න"</string>
     <string name="recurrence_dialog_title_never" msgid="2679396029776590130">"නැවත නොකරන්න"</string>
-  <plurals name="recurrence_interval_daily">
-    <item quantity="one" msgid="1205422710088692631">"සෑම දින <xliff:g id="COUNT">%d</xliff:g> කට"</item>
-    <item quantity="other" msgid="707566499994398250">"සෑම දින <xliff:g id="COUNT">%d</xliff:g> කට"</item>
-  </plurals>
-  <plurals name="recurrence_interval_weekly">
-    <item quantity="one" msgid="4948681635464488351">"සෑම සති <xliff:g id="COUNT">%d</xliff:g> කට"</item>
-    <item quantity="other" msgid="7094801039989237061">"සෑම සති <xliff:g id="COUNT">%d</xliff:g> කට"</item>
-  </plurals>
-  <plurals name="recurrence_interval_monthly">
-    <item quantity="one" msgid="4768178401603139718">"සෑම මාස <xliff:g id="COUNT">%d</xliff:g> කට"</item>
-    <item quantity="other" msgid="5419723710346646523">"සෑම මාස <xliff:g id="COUNT">%d</xliff:g> කට"</item>
-  </plurals>
-  <plurals name="recurrence_interval_yearly">
-    <item quantity="one" msgid="5819562634008179102">"සෑම වසර <xliff:g id="COUNT">%d</xliff:g> කට"</item>
-    <item quantity="other" msgid="5678653649746562060">"සෑම වසර <xliff:g id="COUNT">%d</xliff:g> කට"</item>
-  </plurals>
+    <!-- no translation found for recurrence_interval_daily (4500420585186480085) -->
+    <!-- no translation found for recurrence_interval_weekly (3485667498625367983) -->
+    <!-- no translation found for recurrence_interval_monthly (6278422285680542608) -->
+    <!-- no translation found for recurrence_interval_yearly (5954975405814707742) -->
     <string name="recurrence_month_pattern_by_day" msgid="4400107556121003459">"සෑම මසකම එකම දිනයේ"</string>
     <string name="recurrence_end_continously" msgid="6898950241634912991">"සදහටම"</string>
     <string name="recurrence_end_date_label" msgid="4142791438636994952">"දිනයක් දක්වා"</string>
     <string name="recurrence_end_date" msgid="3693751578164711701">"<xliff:g id="DATE">%s</xliff:g> තෙක්"</string>
     <string name="recurrence_end_count_label" msgid="1233883668293087977">"සිදුවීම් ගණනක් සඳහා"</string>
-  <plurals name="recurrence_end_count">
-    <item quantity="one" msgid="1400782968090516215">"සිදුවීම් <xliff:g id="EVENT_COUNT">%d</xliff:g> සඳහා"</item>
-    <item quantity="other" msgid="8779598489398048259">"සිදුවීම් <xliff:g id="EVENT_COUNT">%d</xliff:g> සඳහා"</item>
-  </plurals>
+    <!-- no translation found for recurrence_end_count (6025427387167075860) -->
     <string name="acessibility_recurrence_choose_end_date_description" msgid="5899029840837836711">"අවසන්වන දිනය වෙනස් කරන්න"</string>
 </resources>
