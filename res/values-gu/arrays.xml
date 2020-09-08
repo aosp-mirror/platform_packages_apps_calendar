@@ -105,7 +105,6 @@
     <item msgid="5917946202321434335">"દિવસ"</item>
     <item msgid="6248480754959562740">"અઠવાડિયું"</item>
     <item msgid="4298472806133153766">"મહિનો"</item>
-    <item msgid="5033084974413793845">"એજેંડા"</item>
   </string-array>
   <string-array name="preferences_skip_reminders_labels">
     <item msgid="2285927842308686988">"માત્ર નકારવામાં આવે તો જ"</item>

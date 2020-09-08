@@ -26,28 +26,23 @@
     <string name="tomorrow" msgid="614434811813859237">"Sabah"</string>
     <string name="today_at_time_fmt" msgid="1981279213130049736">"Bu gün saat <xliff:g id="TIME_INTERVAL">%s</xliff:g>"</string>
     <string name="tomorrow_at_time_fmt" msgid="1330779112841767432">"Sabah saat <xliff:g id="TIME_INTERVAL">%s</xliff:g>"</string>
-    <string name="date_time_fmt" msgid="1642972650061946484">"<xliff:g id="DATE">%s</xliff:g>, <xliff:g id="TIME_INTERVAL">%s</xliff:g>"</string>
+    <string name="date_time_fmt" msgid="1642972650061946484">"<xliff:g id="DATE">%1$s</xliff:g>, <xliff:g id="TIME_INTERVAL">%2$s</xliff:g>"</string>
     <string name="repeats_label" msgid="7414023871434593196">"Təkrarlama"</string>
     <string name="no_title_label" msgid="302177118061368042">"(Başlıq yoxdur)"</string>
-  <plurals name="Nminutes">
-    <item quantity="one" msgid="4871052965772159239">"1 dəqiqə"</item>
-    <item quantity="other" msgid="5644461630927544936">"<xliff:g id="COUNT">%d</xliff:g> dəqiqə"</item>
-  </plurals>
-  <plurals name="Nmins">
-    <item quantity="one" msgid="9191090668359663663">"1 dəq"</item>
-    <item quantity="other" msgid="9175648445939148974">"<xliff:g id="COUNT">%d</xliff:g> dəq"</item>
-  </plurals>
-  <plurals name="Nhours">
-    <item quantity="one" msgid="4793697728599296830">"1 saat"</item>
-    <item quantity="other" msgid="4477841052001760620">"<xliff:g id="COUNT">%d</xliff:g> saat"</item>
-  </plurals>
-  <plurals name="Ndays">
-    <item quantity="one" msgid="5988137255732166573">"1 gün"</item>
-    <item quantity="other" msgid="1709378992389618261">"<xliff:g id="COUNT">%d</xliff:g> gün"</item>
-  </plurals>
-  <plurals name="weekN">
-    <item quantity="other" msgid="8085184869561028365">"HƏFTƏ <xliff:g id="COUNT">%d</xliff:g>"</item>
-  </plurals>
+    <plurals name="Nminutes" formatted="false" msgid="7310648773807033278">
+      <item quantity="other"><xliff:g id="COUNT">%d</xliff:g> dəqiqə</item>
+      <item quantity="one">1 dəqiqə</item>
+    </plurals>
+    <!-- no translation found for Nmins (2710431271593652640) -->
+    <plurals name="Nhours" formatted="false" msgid="8998738602639204540">
+      <item quantity="other"><xliff:g id="COUNT">%d</xliff:g> saat</item>
+      <item quantity="one">1 saat</item>
+    </plurals>
+    <plurals name="Ndays" formatted="false" msgid="2502834794639322464">
+      <item quantity="other"><xliff:g id="COUNT">%d</xliff:g> gün</item>
+      <item quantity="one">1 gün</item>
+    </plurals>
+    <!-- no translation found for weekN (6682545863072873513) -->
     <string name="calendar_refresh" msgid="6172731193680500025">"Yenilə"</string>
     <string name="show_day_view" msgid="5782512782605466016">"Günü göstər"</string>
     <string name="agenda_view" msgid="5566084759423843245">"Gündəlik"</string>
@@ -56,7 +51,7 @@
     <string name="month_view" msgid="7287101431749285412">"Ay"</string>
     <string name="event_view" msgid="7621353079385122317">"Tədbirə bax"</string>
     <string name="event_create" msgid="6941040556709110617">"Yeni tədbir"</string>
-    <string name="event_edit" msgid="4006961928830064662">"Tədbiri redaktə et"</string>
+    <string name="event_edit" msgid="4006961928830064662">"Tədbirə düzəliş edin"</string>
     <string name="event_delete" msgid="2386667193277770442">"Tədbiri sil"</string>
     <string name="goto_today" msgid="9162136434410891230">"Bugün"</string>
     <string name="menu_preferences" msgid="9120238479503233925">"Parametrlər"</string>
@@ -80,6 +75,9 @@
     <string name="empty_event" msgid="9018699257414338634">"Boş tədbir yaradıla bilmədi."</string>
     <string name="creating_event_with_guest" msgid="5758688413124191931">"Dəvətlər göndəriləcək."</string>
     <string name="saving_event_with_guest" msgid="9184584438475689577">"Güncəlləmələr göndəriləcək."</string>
+    <string name="rsvp_accepted" msgid="8146618862268962727">"Bəli cavabını verdi."</string>
+    <string name="rsvp_tentative" msgid="6545510359501328718">"Bəlkə cavabını verdi."</string>
+    <string name="rsvp_declined" msgid="8686330037802222895">"Xeyr cavabını verdi."</string>
     <string name="create_event_dialog_save" msgid="1080859798521717414">"Yadda saxla"</string>
     <string name="alert_title" msgid="7869592820853066853">"Təqvim bildirişləri"</string>
     <string name="event_info_title" msgid="56024222340421620">"Tədbirə bax"</string>
@@ -115,8 +113,8 @@
     <string name="map_label" msgid="8795383535586556038">"Xəritə"</string>
     <string name="call_label" msgid="2960328220008869083">"Zəng et"</string>
     <string name="quick_response_settings" msgid="6776151690686068278">"Qısa cavablar"</string>
-    <string name="quick_response_settings_summary" msgid="7878304729027355604">"Qonaqlara e-poçt göndərərkən defolt cavabları redaktə et"</string>
-    <string name="quick_response_settings_title" msgid="8966517107774567031">"Qısa cavabları redaktə et"</string>
+    <string name="quick_response_settings_summary" msgid="7878304729027355604">"Qonaqlara e-poçt göndərərkən defolt cavablara düzəliş edin"</string>
+    <string name="quick_response_settings_title" msgid="8966517107774567031">"Qısa cavablara düzəliş edin"</string>
     <string name="quick_response_settings_edit_title" msgid="6260055523174081930">"Qısa cavab"</string>
     <string name="quick_response_dialog_title" msgid="2681309456412199207">"Qısa cavab seç"</string>
     <string name="quick_response_email_failed" msgid="5544066405231853245">"E-poçt proqram tapılmadı"</string>
@@ -137,7 +135,7 @@
     <string name="show_newer_events" msgid="2604638815440163080">"<xliff:g id="NEWEST_SEARCH_RANGE">%1$s</xliff:g> seçimindən sonrakı tədbirləri görmək üçün toxunun"</string>
     <string name="search_title" msgid="8898015280250716254">"Təqvimlərimdə axtar"</string>
     <string name="edit_event_label" msgid="7413222956349977161">"Detallar"</string>
-    <string name="edit_label" msgid="8934331258435656534">"Redaktə et"</string>
+    <string name="edit_label" msgid="8934331258435656534">"Düzəliş edin"</string>
     <string name="delete_label" msgid="874742811918030739">"Sil"</string>
     <string name="save_label" msgid="2133599104834432589">"Bitdi"</string>
     <string name="discard_label" msgid="2394623883289782541">"Ləğv et"</string>
@@ -146,19 +144,10 @@
     <string name="snooze_label" msgid="1515893621063224666">"Mürgülə"</string>
     <string name="does_not_repeat" msgid="1877681921029738999">"Tək səfərlik tədbir"</string>
     <string name="endByDate" msgid="7654221304929538201">"; <xliff:g id="DATE">%s</xliff:g> tarixinə qədər"</string>
-  <plurals name="endByCount">
-    <item quantity="one" msgid="3727754565990691816">"; bir dəfəlik"</item>
-    <item quantity="other" msgid="4855496837834652446">"; <xliff:g id="NUMBER">%d</xliff:g> dəfəlik"</item>
-  </plurals>
-  <plurals name="daily">
-    <item quantity="one" msgid="5169052946627480942">"Günlük"</item>
-    <item quantity="other" msgid="5455230727715859264">"Hər <xliff:g id="NUMBER">%d</xliff:g> gün"</item>
-  </plurals>
+    <!-- no translation found for endByCount (8013128840623220306) -->
+    <!-- no translation found for daily (8835347097162749985) -->
     <string name="every_weekday" msgid="5896574838353902978">"Hər həftə içi (B.e.–Cümə)"</string>
-  <plurals name="weekly">
-    <item quantity="one" msgid="5463021019301453273">"Hər həftə <xliff:g id="DAYS_OF_WEEK">%2$s</xliff:g>"</item>
-    <item quantity="other" msgid="2857390143157377867">"Hər <xliff:g id="NUMBER">%1$d</xliff:g> həftədən bir <xliff:g id="DAYS_OF_WEEK">%2$s</xliff:g>"</item>
-  </plurals>
+    <!-- no translation found for weekly (6866376933378266880) -->
     <string name="monthly" msgid="4587116285383048586">"Hər ay"</string>
     <string name="yearly_plain" msgid="3652692085322162449">"Hər il"</string>
     <string name="monthly_on_day" msgid="5370155265278821156">"Hər ay (<xliff:g id="DAY_OF_MONTH">%s</xliff:g>)"</string>
@@ -198,10 +187,10 @@
     <string name="preferences_about_title" msgid="2810624892412097879">"Haqqında"</string>
     <string name="preferences_build_version" msgid="8242471883413502068">"Quruluş versiyası"</string>
     <string name="gadget_title" msgid="939918875331310945">"Təqvim"</string>
-  <plurals name="month_more_events">
-    <item quantity="one" msgid="8971334808414201327">"+1"</item>
-    <item quantity="other" msgid="1997405398178470838">"+<xliff:g id="NUMBER">%d</xliff:g>"</item>
-  </plurals>
+    <plurals name="month_more_events" formatted="false" msgid="6064683102623394875">
+      <item quantity="other"> + <xliff:g id="NUMBER">%d</xliff:g></item>
+      <item quantity="one"> +1</item>
+    </plurals>
     <string name="gadget_no_events" msgid="5209110911088302855">"Gələcək təqvim tədbiri yoxdur"</string>
     <string name="preferences_experimental_category" msgid="8111213192001230350">"Eksperimental"</string>
     <string name="preferences_reminders_category" msgid="3179315692653755740">"Xatırladıcılar"</string>
@@ -236,42 +225,27 @@
     <string name="accessibility_email_notification" msgid="9124064701968129831">"E-poçt qonaqları"</string>
     <string name="day_view_new_event_hint" msgid="2131483437911536229">"+ Yeni tədbir"</string>
     <string name="template_announce_item_index" msgid="4067877800670753110">"<xliff:g id="ITEM_COUNT">%2$s</xliff:g> tədbirdən <xliff:g id="ITEM_INDEX">%1$s</xliff:g>."</string>
-  <plurals name="Nevents">
-    <item quantity="one" msgid="5230907142214104485">"1 tədbir"</item>
-    <item quantity="other" msgid="6093072093209431078">"<xliff:g id="COUNT">%d</xliff:g> tədbir"</item>
-  </plurals>
-  <plurals name="N_remaining_events">
-    <item quantity="one" msgid="431585781647034528">"+1 tədbir"</item>
-    <item quantity="other" msgid="3609243840882275136">"+<xliff:g id="COUNT">%d</xliff:g> tədbir"</item>
-  </plurals>
+    <plurals name="Nevents" formatted="false" msgid="523806278273939134">
+      <item quantity="other"><xliff:g id="COUNT">%d</xliff:g> tədbir</item>
+      <item quantity="one">1 tədbir</item>
+    </plurals>
+    <plurals name="N_remaining_events" formatted="false" msgid="182179062497393883">
+      <item quantity="other"> + <xliff:g id="COUNT">%d</xliff:g> tədbir</item>
+      <item quantity="one">+1 tədbir</item>
+    </plurals>
     <string name="acessibility_selected_marker_description" msgid="3010149843148810768">"Seçilmiş tədbir"</string>
     <string name="do_not_check" msgid="7815441673853466129">"Seçili OLMASIN -&gt;"</string>
     <string name="recurrence_dialog_title" msgid="8093909645557717483">"Təkrar"</string>
     <string name="recurrence_dialog_title_never" msgid="2679396029776590130">"Heç vaxt təkrarlanmır"</string>
-  <plurals name="recurrence_interval_daily">
-    <item quantity="one" msgid="1205422710088692631">"Hər <xliff:g id="COUNT">%d</xliff:g> gündən bir"</item>
-    <item quantity="other" msgid="707566499994398250">"Hər <xliff:g id="COUNT">%d</xliff:g> gündən bir"</item>
-  </plurals>
-  <plurals name="recurrence_interval_weekly">
-    <item quantity="one" msgid="4948681635464488351">"Hər <xliff:g id="COUNT">%d</xliff:g> həftədən bir"</item>
-    <item quantity="other" msgid="7094801039989237061">"Hər <xliff:g id="COUNT">%d</xliff:g> həftədən bir"</item>
-  </plurals>
-  <plurals name="recurrence_interval_monthly">
-    <item quantity="one" msgid="4768178401603139718">"Hər <xliff:g id="COUNT">%d</xliff:g> aydan bir"</item>
-    <item quantity="other" msgid="5419723710346646523">"Hər <xliff:g id="COUNT">%d</xliff:g> aydan bir"</item>
-  </plurals>
-  <plurals name="recurrence_interval_yearly">
-    <item quantity="one" msgid="5819562634008179102">"Hər <xliff:g id="COUNT">%d</xliff:g> ildən bir"</item>
-    <item quantity="other" msgid="5678653649746562060">"Hər <xliff:g id="COUNT">%d</xliff:g> ildən bir"</item>
-  </plurals>
+    <!-- no translation found for recurrence_interval_daily (4500420585186480085) -->
+    <!-- no translation found for recurrence_interval_weekly (3485667498625367983) -->
+    <!-- no translation found for recurrence_interval_monthly (6278422285680542608) -->
+    <!-- no translation found for recurrence_interval_yearly (5954975405814707742) -->
     <string name="recurrence_month_pattern_by_day" msgid="4400107556121003459">"hər ayın eyni günü"</string>
     <string name="recurrence_end_continously" msgid="6898950241634912991">"Həmişə"</string>
     <string name="recurrence_end_date_label" msgid="4142791438636994952">"Bir tarixə qədər"</string>
     <string name="recurrence_end_date" msgid="3693751578164711701">"<xliff:g id="DATE">%s</xliff:g> tarixinə qədər"</string>
     <string name="recurrence_end_count_label" msgid="1233883668293087977">"Bir sıra tədbirlər üçün"</string>
-  <plurals name="recurrence_end_count">
-    <item quantity="one" msgid="1400782968090516215">"Hər <xliff:g id="EVENT_COUNT">%d</xliff:g> tədbir"</item>
-    <item quantity="other" msgid="8779598489398048259">"Hər <xliff:g id="EVENT_COUNT">%d</xliff:g> tədbir"</item>
-  </plurals>
+    <!-- no translation found for recurrence_end_count (6025427387167075860) -->
     <string name="acessibility_recurrence_choose_end_date_description" msgid="5899029840837836711">"son tarixi dəyiş"</string>
 </resources>

@@ -41,7 +41,7 @@
     <item msgid="6135563708172153696">"۱ هفته"</item>
   </string-array>
   <string-array name="preferences_default_reminder_labels">
-    <item msgid="7495163916242649023">"هیچکدام"</item>
+    <item msgid="7495163916242649023">"هیچ‌کدام"</item>
     <item msgid="5883344836499335043">"0 دقیقه"</item>
     <item msgid="4354350447805231188">"۱ دقیقه"</item>
     <item msgid="265674592625309858">"۵ دقیقه"</item>
@@ -86,7 +86,7 @@
     <item msgid="5605392595848194997">"بدون پاسخ"</item>
     <item msgid="3724434080904437698">"بله"</item>
     <item msgid="8854145743148992583">"شاید"</item>
-    <item msgid="6174292185978948873">"خیر"</item>
+    <item msgid="6174292185978948873">"نه"</item>
   </string-array>
   <string-array name="delete_repeating_labels">
     <item msgid="4208432367651646938">"فقط این رویداد"</item>
@@ -105,7 +105,6 @@
     <item msgid="5917946202321434335">"روز"</item>
     <item msgid="6248480754959562740">"هفته"</item>
     <item msgid="4298472806133153766">"ماه"</item>
-    <item msgid="5033084974413793845">"دستور کار"</item>
   </string-array>
   <string-array name="preferences_skip_reminders_labels">
     <item msgid="2285927842308686988">"فقط درصورت ردکردن"</item>
