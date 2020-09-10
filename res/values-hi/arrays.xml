@@ -89,27 +89,26 @@
     <item msgid="6174292185978948873">"नहीं"</item>
   </string-array>
   <string-array name="delete_repeating_labels">
-    <item msgid="4208432367651646938">"केवल यह ईवेंट"</item>
-    <item msgid="1536401639805370405">"यह और आगामी ईवेंट"</item>
-    <item msgid="7833229563617435430">"सभी ईवेंट"</item>
+    <item msgid="4208432367651646938">"केवल यह इवेंट"</item>
+    <item msgid="1536401639805370405">"यह और आगामी इवेंट"</item>
+    <item msgid="7833229563617435430">"सभी इवेंट"</item>
   </string-array>
   <string-array name="delete_repeating_labels_no_selected">
-    <item msgid="1341910309321756150">"यह और भविष्य के ईवेंट"</item>
-    <item msgid="6315440193748139854">"सभी ईवेंट"</item>
+    <item msgid="1341910309321756150">"यह और भविष्य के इवेंट"</item>
+    <item msgid="6315440193748139854">"सभी इवेंट"</item>
   </string-array>
   <string-array name="change_response_labels">
-    <item msgid="3466644709343519437">"केवल यह ईवेंट"</item>
-    <item msgid="140670561403965380">"श्रृंखला में सभी ईवेंट"</item>
+    <item msgid="3466644709343519437">"केवल यह इवेंट"</item>
+    <item msgid="140670561403965380">"शृंखला में सभी इवेंट"</item>
   </string-array>
   <string-array name="buttons_list">
     <item msgid="5917946202321434335">"दिन"</item>
     <item msgid="6248480754959562740">"सप्ताह"</item>
     <item msgid="4298472806133153766">"माह"</item>
-    <item msgid="5033084974413793845">"कार्यसूची"</item>
   </string-array>
   <string-array name="preferences_skip_reminders_labels">
     <item msgid="2285927842308686988">"केवल अस्वीकार होने पर"</item>
-    <item msgid="6367412240524984286">"यदि अस्वीकार हुआ हो या उत्तर न मिला हो"</item>
+    <item msgid="6367412240524984286">"अगर अस्वीकार हुआ हो या उत्तर न मिला हो"</item>
   </string-array>
   <string-array name="recurrence_freq">
     <item msgid="3388478383574917007">"हर दिन दोहराएं"</item>
