@@ -84,9 +84,9 @@
   </string-array>
   <string-array name="response_labels1">
     <item msgid="5605392595848194997">"မတုံ့ပြန်"</item>
-    <item msgid="3724434080904437698">"လက်ခံ"</item>
+    <item msgid="3724434080904437698">"Yes"</item>
     <item msgid="8854145743148992583">"ဖြစ်နိုင်"</item>
-    <item msgid="6174292185978948873">"လက်မခံ"</item>
+    <item msgid="6174292185978948873">"No"</item>
   </string-array>
   <string-array name="delete_repeating_labels">
     <item msgid="4208432367651646938">"ဒီဖြစ်ရပ် သာလျှင်"</item>
@@ -105,7 +105,6 @@
     <item msgid="5917946202321434335">"ရက်စွဲ"</item>
     <item msgid="6248480754959562740">"အပတ်"</item>
     <item msgid="4298472806133153766">"လ"</item>
-    <item msgid="5033084974413793845">"အစီအစဉ်"</item>
   </string-array>
   <string-array name="preferences_skip_reminders_labels">
     <item msgid="2285927842308686988">"ငြင်းပယ် ခံခဲ့ရမှသာ"</item>

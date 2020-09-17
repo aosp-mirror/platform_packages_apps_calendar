@@ -17,7 +17,7 @@
 <resources xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
   <string-array name="reminder_methods_labels">
-    <item msgid="5172236776878811487">"Underretning"</item>
+    <item msgid="5172236776878811487">"Notifikation"</item>
     <item msgid="1751151680520784746">"E-mail"</item>
     <item msgid="2658001219380695677">"Sms"</item>
     <item msgid="7926918288165444873">"Påmindelse"</item>
@@ -105,7 +105,6 @@
     <item msgid="5917946202321434335">"Dag"</item>
     <item msgid="6248480754959562740">"Uge"</item>
     <item msgid="4298472806133153766">"Måned"</item>
-    <item msgid="5033084974413793845">"Dagsorden"</item>
   </string-array>
   <string-array name="preferences_skip_reminders_labels">
     <item msgid="2285927842308686988">"Kun hvis afvist"</item>
