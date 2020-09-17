@@ -84,9 +84,9 @@
   </string-array>
   <string-array name="response_labels1">
     <item msgid="5605392595848194997">"ไม่มีการตอบกลับ"</item>
-    <item msgid="3724434080904437698">"ใช่"</item>
+    <item msgid="3724434080904437698">"ไป"</item>
     <item msgid="8854145743148992583">"ไม่แน่"</item>
-    <item msgid="6174292185978948873">"ไม่"</item>
+    <item msgid="6174292185978948873">"ไม่ไป"</item>
   </string-array>
   <string-array name="delete_repeating_labels">
     <item msgid="4208432367651646938">"เฉพาะกิจกรรมนี้"</item>
@@ -105,7 +105,6 @@
     <item msgid="5917946202321434335">"วัน"</item>
     <item msgid="6248480754959562740">"สัปดาห์"</item>
     <item msgid="4298472806133153766">"เดือน"</item>
-    <item msgid="5033084974413793845">"กำหนดการ"</item>
   </string-array>
   <string-array name="preferences_skip_reminders_labels">
     <item msgid="2285927842308686988">"หากถูกปฏิเสธเท่านั้น"</item>

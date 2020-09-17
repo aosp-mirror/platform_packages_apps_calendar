@@ -26,28 +26,23 @@
     <string name="tomorrow" msgid="614434811813859237">"Mañá"</string>
     <string name="today_at_time_fmt" msgid="1981279213130049736">"Hoxe ás <xliff:g id="TIME_INTERVAL">%s</xliff:g>"</string>
     <string name="tomorrow_at_time_fmt" msgid="1330779112841767432">"Mañá ás <xliff:g id="TIME_INTERVAL">%s</xliff:g>"</string>
-    <string name="date_time_fmt" msgid="1642972650061946484">"<xliff:g id="DATE">%s</xliff:g>, <xliff:g id="TIME_INTERVAL">%s</xliff:g>"</string>
+    <string name="date_time_fmt" msgid="1642972650061946484">"<xliff:g id="DATE">%1$s</xliff:g>, <xliff:g id="TIME_INTERVAL">%2$s</xliff:g>"</string>
     <string name="repeats_label" msgid="7414023871434593196">"Repetición"</string>
     <string name="no_title_label" msgid="302177118061368042">"(Sen título)"</string>
-  <plurals name="Nminutes">
-    <item quantity="one" msgid="4871052965772159239">"1 minuto"</item>
-    <item quantity="other" msgid="5644461630927544936">"<xliff:g id="COUNT">%d</xliff:g> minutos"</item>
-  </plurals>
-  <plurals name="Nmins">
-    <item quantity="one" msgid="9191090668359663663">"1 min"</item>
-    <item quantity="other" msgid="9175648445939148974">"<xliff:g id="COUNT">%d</xliff:g> minutos"</item>
-  </plurals>
-  <plurals name="Nhours">
-    <item quantity="one" msgid="4793697728599296830">"1 hora"</item>
-    <item quantity="other" msgid="4477841052001760620">"<xliff:g id="COUNT">%d</xliff:g> horas"</item>
-  </plurals>
-  <plurals name="Ndays">
-    <item quantity="one" msgid="5988137255732166573">"1 día"</item>
-    <item quantity="other" msgid="1709378992389618261">"<xliff:g id="COUNT">%d</xliff:g> días"</item>
-  </plurals>
-  <plurals name="weekN">
-    <item quantity="other" msgid="8085184869561028365">"<xliff:g id="COUNT">%d</xliff:g> SEMANA"</item>
-  </plurals>
+    <plurals name="Nminutes" formatted="false" msgid="7310648773807033278">
+      <item quantity="other"><xliff:g id="COUNT">%d</xliff:g> minutos</item>
+      <item quantity="one">1 minuto</item>
+    </plurals>
+    <!-- no translation found for Nmins (2710431271593652640) -->
+    <plurals name="Nhours" formatted="false" msgid="8998738602639204540">
+      <item quantity="other"><xliff:g id="COUNT">%d</xliff:g> horas</item>
+      <item quantity="one">1 hora</item>
+    </plurals>
+    <plurals name="Ndays" formatted="false" msgid="2502834794639322464">
+      <item quantity="other"><xliff:g id="COUNT">%d</xliff:g> días</item>
+      <item quantity="one">1 día</item>
+    </plurals>
+    <!-- no translation found for weekN (6682545863072873513) -->
     <string name="calendar_refresh" msgid="6172731193680500025">"Actualizar"</string>
     <string name="show_day_view" msgid="5782512782605466016">"Mostrar día"</string>
     <string name="agenda_view" msgid="5566084759423843245">"Axenda"</string>
@@ -149,19 +144,10 @@
     <string name="snooze_label" msgid="1515893621063224666">"Adiar"</string>
     <string name="does_not_repeat" msgid="1877681921029738999">"Evento único"</string>
     <string name="endByDate" msgid="7654221304929538201">"; (ata o <xliff:g id="DATE">%s</xliff:g>)"</string>
-  <plurals name="endByCount">
-    <item quantity="one" msgid="3727754565990691816">"; unha vez"</item>
-    <item quantity="other" msgid="4855496837834652446">"; <xliff:g id="NUMBER">%d</xliff:g> veces"</item>
-  </plurals>
-  <plurals name="daily">
-    <item quantity="one" msgid="5169052946627480942">"Diariamente"</item>
-    <item quantity="other" msgid="5455230727715859264">"Cada <xliff:g id="NUMBER">%d</xliff:g> días"</item>
-  </plurals>
+    <!-- no translation found for endByCount (8013128840623220306) -->
+    <!-- no translation found for daily (8835347097162749985) -->
     <string name="every_weekday" msgid="5896574838353902978">"Cada día da semana (de luns a venres)"</string>
-  <plurals name="weekly">
-    <item quantity="one" msgid="5463021019301453273">"Semanalmente o <xliff:g id="DAYS_OF_WEEK">%2$s</xliff:g>"</item>
-    <item quantity="other" msgid="2857390143157377867">"Cada <xliff:g id="NUMBER">%1$d</xliff:g> semanas o <xliff:g id="DAYS_OF_WEEK">%2$s</xliff:g>"</item>
-  </plurals>
+    <!-- no translation found for weekly (6866376933378266880) -->
     <string name="monthly" msgid="4587116285383048586">"Mensualmente"</string>
     <string name="yearly_plain" msgid="3652692085322162449">"Anualmente"</string>
     <string name="monthly_on_day" msgid="5370155265278821156">"Mensualmente (o día <xliff:g id="DAY_OF_MONTH">%s</xliff:g>)"</string>
@@ -196,15 +182,15 @@
     <string name="preferences_default_reminder_default" msgid="2903884416749959435">"10"</string>
     <string name="preferences_use_home_tz_title" msgid="5597546849968598210">"Usar fuso horario de orixe"</string>
     <string name="preferences_use_home_tz_descrip" msgid="4835375381297413746">"Mostra calendarios e horas de eventos no teu fuso horario de orixe cando esteas de viaxe"</string>
-    <string name="preferences_home_tz_title" msgid="6680000444088818578">"Zona horaria local"</string>
+    <string name="preferences_home_tz_title" msgid="6680000444088818578">"Fuso horario local"</string>
     <string name="preferences_show_week_num_title" msgid="5280734329664503461">"Mostrar número de semana"</string>
     <string name="preferences_about_title" msgid="2810624892412097879">"Acerca de"</string>
     <string name="preferences_build_version" msgid="8242471883413502068">"Versión da compilación"</string>
     <string name="gadget_title" msgid="939918875331310945">"Calendario"</string>
-  <plurals name="month_more_events">
-    <item quantity="one" msgid="8971334808414201327">"1 máis"</item>
-    <item quantity="other" msgid="1997405398178470838">"<xliff:g id="NUMBER">%d</xliff:g> máis"</item>
-  </plurals>
+    <plurals name="month_more_events" formatted="false" msgid="6064683102623394875">
+      <item quantity="other"><xliff:g id="NUMBER">%d</xliff:g> máis</item>
+      <item quantity="one">1 máis</item>
+    </plurals>
     <string name="gadget_no_events" msgid="5209110911088302855">"Sen eventos próximos no calendario"</string>
     <string name="preferences_experimental_category" msgid="8111213192001230350">"Experimental"</string>
     <string name="preferences_reminders_category" msgid="3179315692653755740">"Recordatorios"</string>
@@ -239,42 +225,27 @@
     <string name="accessibility_email_notification" msgid="9124064701968129831">"Enviar correo electrónico aos convidados"</string>
     <string name="day_view_new_event_hint" msgid="2131483437911536229">"+ Novo evento"</string>
     <string name="template_announce_item_index" msgid="4067877800670753110">"Evento <xliff:g id="ITEM_INDEX">%1$s</xliff:g> de <xliff:g id="ITEM_COUNT">%2$s</xliff:g>."</string>
-  <plurals name="Nevents">
-    <item quantity="one" msgid="5230907142214104485">"1 evento"</item>
-    <item quantity="other" msgid="6093072093209431078">"<xliff:g id="COUNT">%d</xliff:g> eventos"</item>
-  </plurals>
-  <plurals name="N_remaining_events">
-    <item quantity="one" msgid="431585781647034528">"1 evento máis"</item>
-    <item quantity="other" msgid="3609243840882275136">"<xliff:g id="COUNT">%d</xliff:g> eventos máis"</item>
-  </plurals>
+    <plurals name="Nevents" formatted="false" msgid="523806278273939134">
+      <item quantity="other"><xliff:g id="COUNT">%d</xliff:g> eventos</item>
+      <item quantity="one">1 evento</item>
+    </plurals>
+    <plurals name="N_remaining_events" formatted="false" msgid="182179062497393883">
+      <item quantity="other"><xliff:g id="COUNT">%d</xliff:g> eventos máis</item>
+      <item quantity="one">1 evento máis</item>
+    </plurals>
     <string name="acessibility_selected_marker_description" msgid="3010149843148810768">"Evento seleccionado"</string>
     <string name="do_not_check" msgid="7815441673853466129">"NON marques -&gt;"</string>
     <string name="recurrence_dialog_title" msgid="8093909645557717483">"Repetir"</string>
     <string name="recurrence_dialog_title_never" msgid="2679396029776590130">"Nunca se repite"</string>
-  <plurals name="recurrence_interval_daily">
-    <item quantity="one" msgid="1205422710088692631">"Cada <xliff:g id="COUNT">%d</xliff:g> día"</item>
-    <item quantity="other" msgid="707566499994398250">"Cada <xliff:g id="COUNT">%d</xliff:g> días"</item>
-  </plurals>
-  <plurals name="recurrence_interval_weekly">
-    <item quantity="one" msgid="4948681635464488351">"Cada <xliff:g id="COUNT">%d</xliff:g> semana"</item>
-    <item quantity="other" msgid="7094801039989237061">"Cada <xliff:g id="COUNT">%d</xliff:g> semanas"</item>
-  </plurals>
-  <plurals name="recurrence_interval_monthly">
-    <item quantity="one" msgid="4768178401603139718">"Cada <xliff:g id="COUNT">%d</xliff:g> mes"</item>
-    <item quantity="other" msgid="5419723710346646523">"Cada <xliff:g id="COUNT">%d</xliff:g> meses"</item>
-  </plurals>
-  <plurals name="recurrence_interval_yearly">
-    <item quantity="one" msgid="5819562634008179102">"Cada <xliff:g id="COUNT">%d</xliff:g> ano"</item>
-    <item quantity="other" msgid="5678653649746562060">"Cada <xliff:g id="COUNT">%d</xliff:g> anos"</item>
-  </plurals>
+    <!-- no translation found for recurrence_interval_daily (4500420585186480085) -->
+    <!-- no translation found for recurrence_interval_weekly (3485667498625367983) -->
+    <!-- no translation found for recurrence_interval_monthly (6278422285680542608) -->
+    <!-- no translation found for recurrence_interval_yearly (5954975405814707742) -->
     <string name="recurrence_month_pattern_by_day" msgid="4400107556121003459">"o mesmo día cada mes"</string>
     <string name="recurrence_end_continously" msgid="6898950241634912991">"Sempre"</string>
     <string name="recurrence_end_date_label" msgid="4142791438636994952">"Ata unha data"</string>
     <string name="recurrence_end_date" msgid="3693751578164711701">"Ata o <xliff:g id="DATE">%s</xliff:g>"</string>
     <string name="recurrence_end_count_label" msgid="1233883668293087977">"Para algúns eventos"</string>
-  <plurals name="recurrence_end_count">
-    <item quantity="one" msgid="1400782968090516215">"Para <xliff:g id="EVENT_COUNT">%d</xliff:g> evento"</item>
-    <item quantity="other" msgid="8779598489398048259">"Para <xliff:g id="EVENT_COUNT">%d</xliff:g> eventos"</item>
-  </plurals>
+    <!-- no translation found for recurrence_end_count (6025427387167075860) -->
     <string name="acessibility_recurrence_choose_end_date_description" msgid="5899029840837836711">"cambiar a data de finalización"</string>
 </resources>
