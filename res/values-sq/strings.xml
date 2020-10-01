@@ -1,0 +1,328 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--  Copyright (C) 2006 The Android Open Source Project
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+ -->
+
+<resources xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="app_label" msgid="5452708708398908131">"Kalendari"</string>
+    <string name="what_label" msgid="1933578391985810049">"Çfarë"</string>
+    <string name="where_label" msgid="3472482206065595118">"Ku"</string>
+    <string name="when_label" msgid="894636567327261599">"Kur"</string>
+    <string name="timezone_label" msgid="3988530993300431650">"Brezi orar"</string>
+    <!-- no translation found for attendees_label (2971281641565729725) -->
+    <skip />
+    <string name="today" msgid="8577375020252453006">"Sot"</string>
+    <string name="tomorrow" msgid="614434811813859237">"Nesër"</string>
+    <string name="today_at_time_fmt" msgid="1981279213130049736">"Sot në <xliff:g id="TIME_INTERVAL">%s</xliff:g>"</string>
+    <string name="tomorrow_at_time_fmt" msgid="1330779112841767432">"Sot në <xliff:g id="TIME_INTERVAL">%s</xliff:g>"</string>
+    <string name="date_time_fmt" msgid="1642972650061946484">"<xliff:g id="DATE">%1$s</xliff:g>, <xliff:g id="TIME_INTERVAL">%2$s</xliff:g>"</string>
+    <!-- no translation found for repeats_label (7414023871434593196) -->
+    <skip />
+    <string name="no_title_label" msgid="302177118061368042">"(Pa titull)"</string>
+    <plurals name="Nminutes" formatted="false" msgid="7310648773807033278">
+      <item quantity="other"><xliff:g id="COUNT">%d</xliff:g> minuta</item>
+      <item quantity="one">1 minutë</item>
+    </plurals>
+    <!-- no translation found for Nmins (2710431271593652640) -->
+    <plurals name="Nhours" formatted="false" msgid="8998738602639204540">
+      <item quantity="other"><xliff:g id="COUNT">%d</xliff:g> orë</item>
+      <item quantity="one">1 orë</item>
+    </plurals>
+    <plurals name="Ndays" formatted="false" msgid="2502834794639322464">
+      <item quantity="other"><xliff:g id="COUNT">%d</xliff:g> ditë</item>
+      <item quantity="one">1 ditë</item>
+    </plurals>
+    <!-- no translation found for weekN (6682545863072873513) -->
+    <string name="calendar_refresh" msgid="6172731193680500025">"Rifresko"</string>
+    <string name="show_day_view" msgid="5782512782605466016">"Shfaq ditën"</string>
+    <!-- no translation found for agenda_view (5566084759423843245) -->
+    <skip />
+    <string name="day_view" msgid="4467754504843584437">"Ditë"</string>
+    <string name="week_view" msgid="6775043022159508060">"Javë"</string>
+    <string name="month_view" msgid="7287101431749285412">"Muaj"</string>
+    <!-- no translation found for event_view (7621353079385122317) -->
+    <skip />
+    <string name="event_create" msgid="6941040556709110617">"Ngjarje e re"</string>
+    <string name="event_edit" msgid="4006961928830064662">"Redakto ngjarjen"</string>
+    <string name="event_delete" msgid="2386667193277770442">"Fshi ngjarjen"</string>
+    <!-- no translation found for goto_today (9162136434410891230) -->
+    <skip />
+    <!-- no translation found for menu_preferences (9120238479503233925) -->
+    <skip />
+    <!-- no translation found for menu_select_visible_calendars (735670432781741817) -->
+    <skip />
+    <string name="search" msgid="550656004486017426">"Kërko"</string>
+    <!-- no translation found for hide_controls (830320505938520882) -->
+    <skip />
+    <!-- no translation found for show_controls (715520586028062621) -->
+    <skip />
+    <!-- no translation found for select_visible_calendars_title (7944393060991949882) -->
+    <skip />
+    <string name="synced" msgid="7913940305983383493">"i sinkronizuar"</string>
+    <string name="not_synced" msgid="4275114941801829419">"i pasinkronizuar"</string>
+    <string name="acct_not_synced" msgid="6126800985681230627">"Kjo llogari nuk po sinkronizohet kështu që kalendarët e tu mund të mos jenë të përditësuar."</string>
+    <string name="accounts" msgid="849401841083180306">"Llogaritë dhe sinkronizimi"</string>
+    <!-- no translation found for select_synced_calendars_title (7916084873075901448) -->
+    <skip />
+    <!-- no translation found for select_synced_calendars_button (8890542984949996251) -->
+    <skip />
+    <string name="hint_what" msgid="709155115005044531">"Emri i ngjarjes"</string>
+    <string name="hint_where" msgid="4972598001033801974">"Vendndodhja"</string>
+    <string name="hint_description" msgid="1910143586169033232">"Përshkrimi"</string>
+    <!-- no translation found for hint_attendees (1650488163176888480) -->
+    <skip />
+    <string name="creating_event" msgid="7516249252554059980">"Ngjarja u krijua."</string>
+    <string name="saving_event" msgid="7694181017411177226">"Ngjarja u ruajt."</string>
+    <string name="empty_event" msgid="9018699257414338634">"Ngjarja bosh nuk u krijua."</string>
+    <string name="creating_event_with_guest" msgid="5758688413124191931">"Ftesat do të dërgohen."</string>
+    <string name="saving_event_with_guest" msgid="9184584438475689577">"Përditësimet do të dërgohen."</string>
+    <string name="rsvp_accepted" msgid="8146618862268962727">"U përgjigj \"Po\"."</string>
+    <string name="rsvp_tentative" msgid="6545510359501328718">"U përgjigj \"Ndoshta\"."</string>
+    <string name="rsvp_declined" msgid="8686330037802222895">"U përgjigj \"Jo\"."</string>
+    <string name="create_event_dialog_save" msgid="1080859798521717414">"Ruaj"</string>
+    <string name="alert_title" msgid="7869592820853066853">"Njoftimet e kalendarit"</string>
+    <string name="event_info_title" msgid="56024222340421620">"Shiko ngjarjen"</string>
+    <string name="event_info_title_invite" msgid="9160326363769403865">"Ftesë takimi"</string>
+    <!-- no translation found for edit_event_to_label (795012981218062421) -->
+    <skip />
+    <!-- no translation found for edit_event_from_label (174999102612666115) -->
+    <skip />
+    <string name="edit_event_all_day_label" msgid="6200181113992136073">"Gjithë ditën"</string>
+    <!-- no translation found for edit_event_calendar_label (4556498359505856900) -->
+    <skip />
+    <string name="edit_event_show_all" msgid="4558049350756058301">"Shfaqi të gjitha"</string>
+    <string name="description_label" msgid="7193475046717505855">"Përshkrimi"</string>
+    <string name="presence_label" msgid="6169724148441175862">"Më shfaq si"</string>
+    <string name="privacy_label" msgid="9215031965259597335">"Privatësia"</string>
+    <!-- no translation found for reminders_label (7292389181815525676) -->
+    <skip />
+    <string name="no_syncable_calendars" msgid="7019488867045436129">"S\'ka kalendarë"</string>
+    <!-- no translation found for no_calendars_found (8968682716053492187) -->
+    <skip />
+    <string name="create_an_account_desc" msgid="7249605109240576895">"Kalendari funksionon më mirë me një llogari të Google.\n\n• Hape nga çdo shfletues interneti\n• Krijo kopje rezervë të sigurt të ngjarjeve të tua"</string>
+    <!-- no translation found for add_account (1669072099756774952) -->
+    <skip />
+    <string name="view_event_calendar_label" msgid="6126231656338241140">"Kalendari:"</string>
+    <string name="view_event_organizer_label" msgid="2753151795647402277">"Organizuesi:"</string>
+    <string name="choose_event_color_label" msgid="2192923501857428854">"Zgjidh ngjyrën e ngjarjes"</string>
+    <string name="event_color_picker_dialog_title" msgid="4631938661655159511">"Ngjyra e ngjarjes"</string>
+    <string name="event_color_set_to_default" msgid="3447218820785647967">"Caktoje si ngjyrën e paracaktuar të kalendarit"</string>
+    <string name="calendar_color_picker_dialog_title" msgid="3595509200561433667">"Ngjyra e kalendarit"</string>
+    <!-- no translation found for calendar_square_color_picker_description (7430468363525563483) -->
+    <skip />
+    <!-- no translation found for view_event_response_label (8382281658458798329) -->
+    <skip />
+    <string name="response_yes" msgid="2027484304899988350">"Po"</string>
+    <string name="response_maybe" msgid="7791500973627841695">"Ndoshta"</string>
+    <string name="response_no" msgid="561911691884148136">"Jo"</string>
+    <string name="email_guests_label" msgid="8772030932155305903">"Dërgo mail te të ftuarit"</string>
+    <string name="email_organizer_label" msgid="7178059542798074813">"Dërgo mail tek organizuesi"</string>
+    <string name="email_picker_label" msgid="4808253965057791781">"Dërgo mail me"</string>
+    <string name="event_not_found" msgid="8356864185947582727">"Ngjarja nuk u gjet."</string>
+    <string name="map_label" msgid="8795383535586556038">"Harta"</string>
+    <!-- no translation found for call_label (2960328220008869083) -->
+    <skip />
+    <string name="quick_response_settings" msgid="6776151690686068278">"Përgjigje të shpejta"</string>
+    <string name="quick_response_settings_summary" msgid="7878304729027355604">"Redakto përgjigjet e paracaktuara kur dërgon mail te të ftuarit"</string>
+    <string name="quick_response_settings_title" msgid="8966517107774567031">"Redakto përgjigjet e shpejta"</string>
+    <string name="quick_response_settings_edit_title" msgid="6260055523174081930">"Përgjigje e shpejtë"</string>
+    <string name="quick_response_dialog_title" msgid="2681309456412199207">"Zgjidh përgjigjen e shpejtë"</string>
+    <string name="quick_response_email_failed" msgid="5544066405231853245">"Dështoi në gjetjen e një programi për të dërguar mail-e"</string>
+  <string-array name="quick_response_defaults">
+    <item msgid="1524421198348168403">"Vonohen vetëm pak minuta."</item>
+    <item msgid="6215158751728689832">"Do të jem aty për rreth 10 minuta."</item>
+    <item msgid="4485794001743679338">"Vazhdo dhe fillo pa mua."</item>
+    <item msgid="8036557974294987511">"Më vjen keq, nuk mund të vij. Duhet ta ri-planifikojmë."</item>
+  </string-array>
+    <string name="quick_response_custom_msg" msgid="8792374208224108798">"Shkruaj përgjigjen tënde..."</string>
+    <!-- no translation found for event_info_organizer (9138683335394832629) -->
+    <skip />
+    <!-- no translation found for event_info_reminders_label (8913097552956388972) -->
+    <skip />
+    <string name="agenda_today" msgid="5965841338467422191">"SOT, <xliff:g id="DATE">%1$s</xliff:g>"</string>
+    <string name="agenda_yesterday" msgid="4170964206728599693">"DJE, <xliff:g id="DATE">%1$s</xliff:g>"</string>
+    <string name="agenda_tomorrow" msgid="3893625470780723605">"NESËR, <xliff:g id="DATE">%1$s</xliff:g>"</string>
+    <string name="loading" msgid="3772533493214331230">"Po ngarkohet…"</string>
+    <string name="show_older_events" msgid="5140647493681439926">"Prek për të parë ngjarjet përpara <xliff:g id="OLDEST_SEARCH_RANGE">%1$s</xliff:g>"</string>
+    <string name="show_newer_events" msgid="2604638815440163080">"Prek për të parë ngjarjet pas <xliff:g id="NEWEST_SEARCH_RANGE">%1$s</xliff:g>"</string>
+    <string name="search_title" msgid="8898015280250716254">"Kërko kalendarët e mi"</string>
+    <string name="edit_event_label" msgid="7413222956349977161">"Detaje"</string>
+    <string name="edit_label" msgid="8934331258435656534">"Redakto"</string>
+    <!-- no translation found for delete_label (874742811918030739) -->
+    <skip />
+    <!-- no translation found for save_label (2133599104834432589) -->
+    <skip />
+    <!-- no translation found for discard_label (2394623883289782541) -->
+    <skip />
+    <!-- no translation found for snooze_all_label (4994488813124409077) -->
+    <skip />
+    <!-- no translation found for dismiss_all_label (1834400025868091301) -->
+    <skip />
+    <!-- no translation found for snooze_label (1515893621063224666) -->
+    <skip />
+    <!-- no translation found for does_not_repeat (1877681921029738999) -->
+    <skip />
+    <!-- no translation found for endByDate (7654221304929538201) -->
+    <skip />
+    <!-- no translation found for endByCount (8013128840623220306) -->
+    <!-- no translation found for daily (8835347097162749985) -->
+    <!-- no translation found for every_weekday (5896574838353902978) -->
+    <skip />
+    <!-- no translation found for weekly (6866376933378266880) -->
+    <!-- no translation found for monthly (4587116285383048586) -->
+    <skip />
+    <!-- no translation found for yearly_plain (3652692085322162449) -->
+    <skip />
+    <!-- no translation found for monthly_on_day (5370155265278821156) -->
+    <skip />
+    <!-- no translation found for yearly (8576208380302949002) -->
+    <skip />
+    <!-- no translation found for custom (3806817351377723249) -->
+    <skip />
+    <!-- no translation found for custom (4137468716966004993) -->
+    <skip />
+    <string name="modify_event" msgid="5982876409997142690">"Ndrysho vetëm këtë ngjarje"</string>
+    <string name="modify_all" msgid="4421657265864209041">"Ndrysho të gjitha ngjarjet në këtë seri"</string>
+    <string name="modify_all_following" msgid="3017428541066390380">"Ndrysho këtë dhe të gjitha ngjarjet e ardhshme"</string>
+    <string name="new_event_dialog_label" msgid="7553105224561147916">"Ngjarje e re"</string>
+    <string name="new_event_dialog_option" msgid="6154657379574669371">"Ngjarje e re"</string>
+    <string name="delete_this_event_title" msgid="518402946676919384">"Të fshihet kjo ngjarje?"</string>
+    <string name="delete_recurring_event_title" msgid="5609046778422180206">"Të fshihet <xliff:g id="EVENTTITLE">%s</xliff:g>?"</string>
+    <string name="change_response_title" msgid="7704714776070974984">"Ndrysho përgjigjen"</string>
+    <!-- no translation found for menu_general_preferences (2812705323334260708) -->
+    <skip />
+    <!-- no translation found for menu_about_preferences (6124375438237674973) -->
+    <skip />
+    <string name="preferences_title" msgid="8045855493262131773">"Cilësimet"</string>
+    <string name="preferences_general_title" msgid="2069075513760573117">"Cilësimi i pamjes së kalendarit"</string>
+    <string name="preferences_reminder_title" msgid="5199606534191180129">"Njoftime dhe alarme rikujtuese"</string>
+    <string name="preferences_hide_declined_title" msgid="1849295943669890034">"Fshih ngjarjet e refuzuara"</string>
+    <!-- no translation found for preferences_week_start_day_title (4619489296444901622) -->
+    <skip />
+    <!-- no translation found for preferences_week_start_day_dialog (5181634128884089113) -->
+    <skip />
+    <string name="preferences_clear_search_history_title" msgid="6619916370215282982">"Pastro historikun e kërkimit"</string>
+    <string name="preferences_clear_search_history_summary" msgid="7864674093455778158">"Hiqi të gjitha kërkimet që ke kryer"</string>
+    <string name="search_history_cleared" msgid="1536707558435227567">"Historiku i kërkimit u pastrua."</string>
+    <string name="preferences_alerts_title" msgid="6636088008103904020">"Njoftimet"</string>
+    <string name="preferences_alerts_vibrateWhen_title" msgid="8731372580674292759">"Dridhja"</string>
+    <string name="preferences_alerts_ringtone_title" msgid="1849706055052358346">"Tingulli"</string>
+    <!-- no translation found for preferences_alerts_popup_title (6643468203670475296) -->
+    <skip />
+    <string name="preferences_default_reminder_title" msgid="5188861433342733905">"Koha e paracaktuar e alarmit rikujtues"</string>
+    <string name="preferences_default_reminder_dialog" msgid="2490348857239323412">"Koha e paracaktuar e alarmit rikujtues"</string>
+    <string name="preferences_default_reminder_default" msgid="2903884416749959435">"10"</string>
+    <string name="preferences_use_home_tz_title" msgid="5597546849968598210">"Përdor brezin orar"</string>
+    <string name="preferences_use_home_tz_descrip" msgid="4835375381297413746">"Shfaq kalendarët dhe kohët e ngjarjes në zonën e brezit orar teksa udhëton"</string>
+    <string name="preferences_home_tz_title" msgid="6680000444088818578">"Brezi yt orar"</string>
+    <!-- no translation found for preferences_show_week_num_title (5280734329664503461) -->
+    <skip />
+    <!-- no translation found for preferences_about_title (2810624892412097879) -->
+    <skip />
+    <!-- no translation found for preferences_build_version (8242471883413502068) -->
+    <skip />
+    <string name="gadget_title" msgid="939918875331310945">"Kalendari"</string>
+    <plurals name="month_more_events" formatted="false" msgid="6064683102623394875">
+      <item quantity="other">+<xliff:g id="NUMBER">%d</xliff:g></item>
+      <item quantity="one">+1</item>
+    </plurals>
+    <!-- no translation found for gadget_no_events (5209110911088302855) -->
+    <skip />
+    <!-- no translation found for preferences_experimental_category (8111213192001230350) -->
+    <skip />
+    <!-- no translation found for preferences_reminders_category (3179315692653755740) -->
+    <skip />
+    <!-- no translation found for preferences_reminders_responded_label (1196570678238475838) -->
+    <skip />
+    <!-- no translation found for preferences_reminders_responded_dialog (1873289128793828352) -->
+    <skip />
+    <!-- no translation found for preferences_reminders_quiet_hours_label (8529712276644546893) -->
+    <skip />
+    <!-- no translation found for preferences_reminders_quiet_hours_description (65969073433791290) -->
+    <skip />
+    <!-- no translation found for preferences_reminders_quiet_hours_start (3433058529220285232) -->
+    <skip />
+    <!-- no translation found for preferences_reminders_quiet_hours_end (7492883554865119346) -->
+    <skip />
+    <!-- no translation found for preferences_debug_category (6203278208385095018) -->
+    <skip />
+    <!-- no translation found for copy_db (437691290566699292) -->
+    <skip />
+    <string name="directory_searching_fmt" msgid="1232037509095606687">"Po kërkon <xliff:g id="DOMAIN">%s</xliff:g>…"</string>
+    <!-- no translation found for accessibility_remove_attendee (7082751172654698863) -->
+    <skip />
+    <!-- no translation found for accessibility_pick_start_date (3926641487042699037) -->
+    <skip />
+    <!-- no translation found for accessibility_pick_start_time (4913428100936555149) -->
+    <skip />
+    <!-- no translation found for accessibility_pick_end_date (5624250196618643922) -->
+    <skip />
+    <!-- no translation found for accessibility_pick_end_time (7120310166355224941) -->
+    <skip />
+    <string name="accessibility_pick_time_zone" msgid="7155465783500323811">"Brezi orar"</string>
+    <string name="accessibility_pick_recurrence" msgid="1834311617874828931">"Përsërit ngjarjen"</string>
+    <string name="accessibility_add_reminder" msgid="2267950744060950152">"Shto alarm rikujtues"</string>
+    <!-- no translation found for accessibility_remove_reminder (5261609343259665139) -->
+    <skip />
+    <!-- no translation found for accessibility_add_attendee (5654014177472600916) -->
+    <skip />
+    <!-- no translation found for accessibility_sync_cal (6506181885764723383) -->
+    <skip />
+    <string name="accessibility_all_day" msgid="4146955438811915282">"Ngjarje gjithë ditën"</string>
+    <string name="accessibility_repeats" msgid="1629279916830919582">"Përsëritja"</string>
+    <string name="accessibility_reminder_time" msgid="3594100545814579575">"Koha e alarmit rikujtues"</string>
+    <string name="accessibility_reminder_type" msgid="5339120699701437227">"Lloji i alarmit rikujtues"</string>
+    <string name="accessibility_reminder_showmeas" msgid="6669129015980006570">"Më shfaq si"</string>
+    <!-- no translation found for accessibility_reminder_privacy (8669288484484022771) -->
+    <skip />
+    <string name="acessibility_cal_notification" msgid="7267601064994839394">"Njoftimi i kalendarit"</string>
+    <!-- no translation found for acessibility_snooze_notification (5007852779125102681) -->
+    <skip />
+    <string name="accessibility_email_notification" msgid="9124064701968129831">"Dërgo mail te të ftuarit"</string>
+    <string name="day_view_new_event_hint" msgid="2131483437911536229">"+ Ngjarje e re"</string>
+    <string name="template_announce_item_index" msgid="4067877800670753110">"Ngjarja <xliff:g id="ITEM_INDEX">%1$s</xliff:g> nga gjithsej <xliff:g id="ITEM_COUNT">%2$s</xliff:g>."</string>
+    <plurals name="Nevents" formatted="false" msgid="523806278273939134">
+      <item quantity="other"><xliff:g id="COUNT">%d</xliff:g> ngjarje</item>
+      <item quantity="one">1 ngjarje</item>
+    </plurals>
+    <plurals name="N_remaining_events" formatted="false" msgid="182179062497393883">
+      <item quantity="other">+<xliff:g id="COUNT">%d</xliff:g> ngjarje</item>
+      <item quantity="one">+1 ngjarje</item>
+    </plurals>
+    <string name="acessibility_selected_marker_description" msgid="3010149843148810768">"Ngjarja e zgjedhur"</string>
+    <!-- no translation found for do_not_check (7815441673853466129) -->
+    <skip />
+    <!-- no translation found for recurrence_dialog_title (8093909645557717483) -->
+    <skip />
+    <!-- no translation found for recurrence_dialog_title_never (2679396029776590130) -->
+    <skip />
+    <!-- no translation found for recurrence_interval_daily (4500420585186480085) -->
+    <!-- no translation found for recurrence_interval_weekly (3485667498625367983) -->
+    <!-- no translation found for recurrence_interval_monthly (6278422285680542608) -->
+    <!-- no translation found for recurrence_interval_yearly (5954975405814707742) -->
+    <!-- no translation found for recurrence_month_pattern_by_day (4400107556121003459) -->
+    <skip />
+    <!-- no translation found for recurrence_end_continously (6898950241634912991) -->
+    <skip />
+    <!-- no translation found for recurrence_end_date_label (4142791438636994952) -->
+    <skip />
+    <!-- no translation found for recurrence_end_date (3693751578164711701) -->
+    <skip />
+    <!-- no translation found for recurrence_end_count_label (1233883668293087977) -->
+    <skip />
+    <!-- no translation found for recurrence_end_count (6025427387167075860) -->
+    <!-- no translation found for acessibility_recurrence_choose_end_date_description (5899029840837836711) -->
+    <skip />
+</resources>

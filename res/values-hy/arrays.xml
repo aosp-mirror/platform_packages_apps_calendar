@@ -66,9 +66,9 @@
     <item msgid="5840983116375063739">"Երկուշաբթի"</item>
   </string-array>
   <string-array name="availability">
-    <item msgid="454869065893453189">"Զբաղված է"</item>
+    <item msgid="454869065893453189">"Զբաղված"</item>
     <item msgid="6228387173725732140">"Հասանելի է"</item>
-    <item msgid="2064426942462573474">"Նախնական"</item>
+    <item msgid="2064426942462573474">"Միգուցե"</item>
   </string-array>
   <string-array name="visibility">
     <item msgid="3035788428581513163">"Լռելյայն"</item>
@@ -85,27 +85,26 @@
   <string-array name="response_labels1">
     <item msgid="5605392595848194997">"Անպատասխան"</item>
     <item msgid="3724434080904437698">"Այո"</item>
-    <item msgid="8854145743148992583">"Գուցե"</item>
+    <item msgid="8854145743148992583">"Միգուցե"</item>
     <item msgid="6174292185978948873">"Ոչ"</item>
   </string-array>
   <string-array name="delete_repeating_labels">
-    <item msgid="4208432367651646938">"Միայն այս իրադարձությունը"</item>
+    <item msgid="4208432367651646938">"Միայն այս միջոցառումը"</item>
     <item msgid="1536401639805370405">"Այս և գալիք իրադարձությունները"</item>
-    <item msgid="7833229563617435430">"Բոլոր իրադարձությունները"</item>
+    <item msgid="7833229563617435430">"Բոլոր միջոցառումները"</item>
   </string-array>
   <string-array name="delete_repeating_labels_no_selected">
     <item msgid="1341910309321756150">"Այս &amp; գալիք իրադարձությունները"</item>
-    <item msgid="6315440193748139854">"Բոլոր իրադարձությունները"</item>
+    <item msgid="6315440193748139854">"Բոլոր միջոցառումները"</item>
   </string-array>
   <string-array name="change_response_labels">
-    <item msgid="3466644709343519437">"Միայն այս իրադարձությունը"</item>
-    <item msgid="140670561403965380">"Շարքի բոլոր իրադարձությունները"</item>
+    <item msgid="3466644709343519437">"Միայն այս միջոցառումը"</item>
+    <item msgid="140670561403965380">"Շարքի բոլոր միջոցառումները"</item>
   </string-array>
   <string-array name="buttons_list">
     <item msgid="5917946202321434335">"Օր"</item>
     <item msgid="6248480754959562740">"Շաբաթ"</item>
     <item msgid="4298472806133153766">"Ամիս"</item>
-    <item msgid="5033084974413793845">"Օրակարգ"</item>
   </string-array>
   <string-array name="preferences_skip_reminders_labels">
     <item msgid="2285927842308686988">"Միայն եթե մերժված է"</item>

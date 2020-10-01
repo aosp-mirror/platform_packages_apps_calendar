@@ -44,8 +44,6 @@ LOCAL_AAPT_FLAGS += --extra-packages com.android.ex.chips
 LOCAL_AAPT_FLAGS += --extra-packages com.android.colorpicker
 LOCAL_AAPT_FLAGS += --extra-packages com.android.timezonepicker
 
-LOCAL_AAPT_FLAGS += --legacy
-
 include $(BUILD_PACKAGE)
 
 # Use the following include to make our test apk.

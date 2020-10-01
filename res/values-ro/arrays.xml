@@ -90,11 +90,11 @@
   </string-array>
   <string-array name="delete_repeating_labels">
     <item msgid="4208432367651646938">"Doar acest eveniment"</item>
-    <item msgid="1536401639805370405">"Acest eveniment şi cele viitoare"</item>
+    <item msgid="1536401639805370405">"Acest eveniment și cele viitoare"</item>
     <item msgid="7833229563617435430">"Toate evenimentele"</item>
   </string-array>
   <string-array name="delete_repeating_labels_no_selected">
-    <item msgid="1341910309321756150">"Acesta şi evenimentele viitoare"</item>
+    <item msgid="1341910309321756150">"Acesta și evenimentele viitoare"</item>
     <item msgid="6315440193748139854">"Toate evenimentele"</item>
   </string-array>
   <string-array name="change_response_labels">
@@ -105,7 +105,6 @@
     <item msgid="5917946202321434335">"Zi"</item>
     <item msgid="6248480754959562740">"Săptămână"</item>
     <item msgid="4298472806133153766">"Lună"</item>
-    <item msgid="5033084974413793845">"Agendă"</item>
   </string-array>
   <string-array name="preferences_skip_reminders_labels">
     <item msgid="2285927842308686988">"Numai dacă sunt respinse"</item>

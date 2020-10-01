@@ -26,28 +26,23 @@
     <string name="tomorrow" msgid="614434811813859237">"भोलि"</string>
     <string name="today_at_time_fmt" msgid="1981279213130049736">"आज <xliff:g id="TIME_INTERVAL">%s</xliff:g>मा"</string>
     <string name="tomorrow_at_time_fmt" msgid="1330779112841767432">"भोलि<xliff:g id="TIME_INTERVAL">%s</xliff:g>मा"</string>
-    <string name="date_time_fmt" msgid="1642972650061946484">"<xliff:g id="DATE">%s</xliff:g>, <xliff:g id="TIME_INTERVAL">%s</xliff:g>"</string>
+    <string name="date_time_fmt" msgid="1642972650061946484">"<xliff:g id="DATE">%1$s</xliff:g>, <xliff:g id="TIME_INTERVAL">%2$s</xliff:g>"</string>
     <string name="repeats_label" msgid="7414023871434593196">"दोहोरिने कार्य"</string>
     <string name="no_title_label" msgid="302177118061368042">"(शीर्षक छैन)"</string>
-  <plurals name="Nminutes">
-    <item quantity="one" msgid="4871052965772159239">"१ मिनेट"</item>
-    <item quantity="other" msgid="5644461630927544936">"<xliff:g id="COUNT">%d</xliff:g> मिनेट"</item>
-  </plurals>
-  <plurals name="Nmins">
-    <item quantity="one" msgid="9191090668359663663">"१ मिनेट"</item>
-    <item quantity="other" msgid="9175648445939148974">"<xliff:g id="COUNT">%d</xliff:g> मिनेट"</item>
-  </plurals>
-  <plurals name="Nhours">
-    <item quantity="one" msgid="4793697728599296830">"१ घन्टा"</item>
-    <item quantity="other" msgid="4477841052001760620">"<xliff:g id="COUNT">%d</xliff:g> घटनाहरू"</item>
-  </plurals>
-  <plurals name="Ndays">
-    <item quantity="one" msgid="5988137255732166573">"१ दिन"</item>
-    <item quantity="other" msgid="1709378992389618261">"<xliff:g id="COUNT">%d</xliff:g> दिनहरू"</item>
-  </plurals>
-  <plurals name="weekN">
-    <item quantity="other" msgid="8085184869561028365">"हप्ता <xliff:g id="COUNT">%d</xliff:g>"</item>
-  </plurals>
+    <plurals name="Nminutes" formatted="false" msgid="7310648773807033278">
+      <item quantity="other"><xliff:g id="COUNT">%d</xliff:g> मिनेट</item>
+      <item quantity="one">1 मिनेट</item>
+    </plurals>
+    <!-- no translation found for Nmins (2710431271593652640) -->
+    <plurals name="Nhours" formatted="false" msgid="8998738602639204540">
+      <item quantity="other"><xliff:g id="COUNT">%d</xliff:g> घन्टा</item>
+      <item quantity="one">1 घन्टा</item>
+    </plurals>
+    <plurals name="Ndays" formatted="false" msgid="2502834794639322464">
+      <item quantity="other"><xliff:g id="COUNT">%d</xliff:g> दिन</item>
+      <item quantity="one">1 दिन</item>
+    </plurals>
+    <!-- no translation found for weekN (6682545863072873513) -->
     <string name="calendar_refresh" msgid="6172731193680500025">"पुनःताजा गर्नुहोस्"</string>
     <string name="show_day_view" msgid="5782512782605466016">"दिन देखाउनुहोस।"</string>
     <string name="agenda_view" msgid="5566084759423843245">"एजेन्डा"</string>
@@ -60,17 +55,17 @@
     <string name="event_delete" msgid="2386667193277770442">"घटना मेटाउनुहोस्"</string>
     <string name="goto_today" msgid="9162136434410891230">"आज"</string>
     <string name="menu_preferences" msgid="9120238479503233925">"सेटिङहरू"</string>
-    <string name="menu_select_visible_calendars" msgid="735670432781741817">"प्रदर्शन गर्नका लागि पात्राहरू"</string>
+    <string name="menu_select_visible_calendars" msgid="735670432781741817">"प्रदर्शन गर्नाका लागि पात्राहरू"</string>
     <string name="search" msgid="550656004486017426">"खोज्नुहोस्"</string>
     <string name="hide_controls" msgid="830320505938520882">"नियन्त्रणहरू लुकाउनुहोस्"</string>
     <string name="show_controls" msgid="715520586028062621">"नियन्त्रणहरू देखाउनुहोस्"</string>
     <string name="select_visible_calendars_title" msgid="7944393060991949882">"देखाउनु पर्ने पात्राहरू"</string>
-    <string name="synced" msgid="7913940305983383493">"सिङ्क गरिएको"</string>
-    <string name="not_synced" msgid="4275114941801829419">"सिङ्क गरिएको छैन"</string>
-    <string name="acct_not_synced" msgid="6126800985681230627">"यस खाता सिङ्क गरिएको छैन र तपाईँको पात्रो पछिल्लो नहुन सक्छ।"</string>
-    <string name="accounts" msgid="849401841083180306">"खाताहरू र सिङ्क"</string>
-    <string name="select_synced_calendars_title" msgid="7916084873075901448">"सिङ्क गर्नु पर्ने पात्राहरू"</string>
-    <string name="select_synced_calendars_button" msgid="8890542984949996251">"सिङ्क गर्नु पर्ने पात्राहरू"</string>
+    <string name="synced" msgid="7913940305983383493">"सिंक गरिएको"</string>
+    <string name="not_synced" msgid="4275114941801829419">"सिंक गरिएको छैन"</string>
+    <string name="acct_not_synced" msgid="6126800985681230627">"यस खाता सिंक गरिएको छैन र तपाईँको पात्रो पछिल्लो नहुन सक्छ।"</string>
+    <string name="accounts" msgid="849401841083180306">"खाताहरू र सिंक"</string>
+    <string name="select_synced_calendars_title" msgid="7916084873075901448">"सिंक गर्नु पर्ने पात्राहरू"</string>
+    <string name="select_synced_calendars_button" msgid="8890542984949996251">"सिंक गर्नु पर्ने पात्राहरू"</string>
     <string name="hint_what" msgid="709155115005044531">"घटना नाम"</string>
     <string name="hint_where" msgid="4972598001033801974">"स्थान"</string>
     <string name="hint_description" msgid="1910143586169033232">"वर्णन"</string>
@@ -97,9 +92,9 @@
     <string name="privacy_label" msgid="9215031965259597335">"गोपनीयता"</string>
     <string name="reminders_label" msgid="7292389181815525676">"रिमाइन्डर थप्नुहोस्"</string>
     <string name="no_syncable_calendars" msgid="7019488867045436129">"कुनै पात्राहरू छैनन्"</string>
-    <string name="no_calendars_found" msgid="8968682716053492187">"तपाईँले घटना थप्न पाउनुअघि उपकरणमा कम्तिमा एउटा पात्रो खाता थपी पात्रालाई देखिने बनाउनु पर्दछ। खाता थप्न \"खाता थप्नुहोस्\" मा छुनुहोस् (यदि खाता भरखरै थप्नु  भएको हो भने सिङ्क सकिन्जेल कुर्नुहोस् र पुनःप्रयास गर्नुहोस्)। अथवा \"रद्द गर्नुहोस्\" छुनुहोस् र यो निश्चित गर्नुहोस् कि कम्तिमा एउटा पात्रो देखिने अवस्थामा छ।"</string>
-    <string name="create_an_account_desc" msgid="7249605109240576895">"पात्राले गुगल खातासँग अझ राम्रो काम गर्छ। \n\n• कुनै वेब ब्राउजरबाट यसलाई पहुँच गर्ने हो?\n• तपाईँको घटनाहरूका सुरक्षित रूपले जगेडा गर्नुहोस्"</string>
-    <string name="add_account" msgid="1669072099756774952">"खाता थप गर्नुहोस्"</string>
+    <string name="no_calendars_found" msgid="8968682716053492187">"तपाईँले घटना थप्न पाउनुअघि उपकरणमा कम्तीमा एउटा पात्रो खाता थपी पात्रालाई देखिने बनाउनु पर्दछ। खाता थप्न \"खाता थप्नुहोस्\" मा छुनुहोस् (यदि खाता भरखरै थप्नु  भएको हो भने सिंक सकिन्जेल कुर्नुहोस् र पुनःप्रयास गर्नुहोस्)। अथवा \"रद्द गर्नुहोस्\" छुनुहोस् र यो निश्चित गर्नुहोस् कि कम्तीमा एउटा पात्रो देखिने अवस्थामा छ।"</string>
+    <string name="create_an_account_desc" msgid="7249605109240576895">"पात्राले Google खातासँग अझ राम्रो काम गर्छ। \n\n• कुनै वेब ब्राउजरबाट यसलाई पहुँच गर्ने हो?\n• तपाईँको घटनाहरूका सुरक्षित रूपले जगेडा गर्नुहोस्"</string>
+    <string name="add_account" msgid="1669072099756774952">"खाता थप्नुहोस्"</string>
     <string name="view_event_calendar_label" msgid="6126231656338241140">"पात्रो:"</string>
     <string name="view_event_organizer_label" msgid="2753151795647402277">"सञ्चालक:"</string>
     <string name="choose_event_color_label" msgid="2192923501857428854">"घटना रङ छान्नुहोस्"</string>
@@ -149,25 +144,16 @@
     <string name="snooze_label" msgid="1515893621063224666">"स्नुज गर्नुहोस्"</string>
     <string name="does_not_repeat" msgid="1877681921029738999">"एक पटक हुने घटना"</string>
     <string name="endByDate" msgid="7654221304929538201">"; <xliff:g id="DATE">%s</xliff:g>सम्म"</string>
-  <plurals name="endByCount">
-    <item quantity="one" msgid="3727754565990691816">"; एक पटकका लागि"</item>
-    <item quantity="other" msgid="4855496837834652446">"; <xliff:g id="NUMBER">%d</xliff:g> पटकका लागि"</item>
-  </plurals>
-  <plurals name="daily">
-    <item quantity="one" msgid="5169052946627480942">"दैनिक"</item>
-    <item quantity="other" msgid="5455230727715859264">"प्रत्येक <xliff:g id="NUMBER">%d</xliff:g> दिन"</item>
-  </plurals>
+    <!-- no translation found for endByCount (8013128840623220306) -->
+    <!-- no translation found for daily (8835347097162749985) -->
     <string name="every_weekday" msgid="5896574838353902978">"प्रत्यरक हप्ताका दिन (सोमबार-शुक्रबार)"</string>
-  <plurals name="weekly">
-    <item quantity="one" msgid="5463021019301453273">"हप्तै पिच्छे <xliff:g id="DAYS_OF_WEEK">%2$s</xliff:g>मा"</item>
-    <item quantity="other" msgid="2857390143157377867">"प्रत्येक <xliff:g id="NUMBER">%1$d</xliff:g> हप्ता <xliff:g id="DAYS_OF_WEEK">%2$s</xliff:g> मा"</item>
-  </plurals>
+    <!-- no translation found for weekly (6866376933378266880) -->
     <string name="monthly" msgid="4587116285383048586">"मासिक रूपमा"</string>
     <string name="yearly_plain" msgid="3652692085322162449">"वार्षिक रूपमा"</string>
     <string name="monthly_on_day" msgid="5370155265278821156">"मासिक रूपमा (<xliff:g id="DAY_OF_MONTH">%s</xliff:g> दिनमा)"</string>
     <string name="yearly" msgid="8576208380302949002">"वार्षिक रूपमा (<xliff:g id="DATES">%s</xliff:g> मा)"</string>
-    <string name="custom" product="tablet" msgid="3806817351377723249">"अनुकूलन (ट्याब्लेटमा अनुकूलन गर्न सक्दैन)"</string>
-    <string name="custom" product="default" msgid="4137468716966004993">"अनुकूलन (फोनमा अनुकूलन गर्न सक्दैन)"</string>
+    <string name="custom" product="tablet" msgid="3806817351377723249">"आफू अनुकूल (ट्याब्लेटमा आफू अनुकूल गर्न सक्दैन)"</string>
+    <string name="custom" product="default" msgid="4137468716966004993">"आफू अनुकूल (फोनमा आफू अनुकूल गर्न सक्दैन)"</string>
     <string name="modify_event" msgid="5982876409997142690">"केवल यो घटना बदल्नुहोस्"</string>
     <string name="modify_all" msgid="4421657265864209041">"क्रममा रहेका सबै घटनाहरू बदल्नुहोस्"</string>
     <string name="modify_all_following" msgid="3017428541066390380">"यो र भविष्यका सबै घटनाहरू बदल्नुहोस्"</string>
@@ -183,7 +169,7 @@
     <string name="preferences_reminder_title" msgid="5199606534191180129">"सूचना &amp; रिमाइन्डरहरू"</string>
     <string name="preferences_hide_declined_title" msgid="1849295943669890034">"अस्वीकृत घटनाहरू लुकाउनुहोस्"</string>
     <string name="preferences_week_start_day_title" msgid="4619489296444901622">"हप्ता सुरु हुन्छ"</string>
-    <string name="preferences_week_start_day_dialog" msgid="5181634128884089113">"हप्ता सुरू हुन्छ"</string>
+    <string name="preferences_week_start_day_dialog" msgid="5181634128884089113">"हप्ता सुरु हुन्छ"</string>
     <string name="preferences_clear_search_history_title" msgid="6619916370215282982">"खोज इतिहास हटाउनुहोस्"</string>
     <string name="preferences_clear_search_history_summary" msgid="7864674093455778158">"तपाईँले गर्नु भएका सम्पूर्ण खोजीहरू हटाउनुहोस्"</string>
     <string name="search_history_cleared" msgid="1536707558435227567">"खोजी इतिहास हटाइयो।"</string>
@@ -195,16 +181,16 @@
     <string name="preferences_default_reminder_dialog" msgid="2490348857239323412">"पूर्वनिर्धारित रिमाइन्डर समय"</string>
     <string name="preferences_default_reminder_default" msgid="2903884416749959435">"१०"</string>
     <string name="preferences_use_home_tz_title" msgid="5597546849968598210">"गृह समय क्षेत्र प्रयोग गर्नुहोस्"</string>
-    <string name="preferences_use_home_tz_descrip" msgid="4835375381297413746">"तपाईँ यात्रा गर्नुहुँदा पात्रो र घटना समय तपाईँको गृह समय क्षेत्रमा देखाउनुहोस्"</string>
+    <string name="preferences_use_home_tz_descrip" msgid="4835375381297413746">"तपाईं यात्रा गर्नुहुँदा पात्रो र घटना समय तपाईंको गृह समय क्षेत्रमा देखाउनुहोस्"</string>
     <string name="preferences_home_tz_title" msgid="6680000444088818578">"गृह समय क्षेत्र"</string>
     <string name="preferences_show_week_num_title" msgid="5280734329664503461">"हप्ता सङ्ख्या देखाउनुहोस्"</string>
     <string name="preferences_about_title" msgid="2810624892412097879">"बारेमा"</string>
     <string name="preferences_build_version" msgid="8242471883413502068">"निर्माण संस्करण"</string>
     <string name="gadget_title" msgid="939918875331310945">"पात्रो"</string>
-  <plurals name="month_more_events">
-    <item quantity="one" msgid="8971334808414201327">"+१"</item>
-    <item quantity="other" msgid="1997405398178470838">"(<xliff:g id="NUMBER">%d</xliff:g>)"</item>
-  </plurals>
+    <plurals name="month_more_events" formatted="false" msgid="6064683102623394875">
+      <item quantity="other">+<xliff:g id="NUMBER">%d</xliff:g></item>
+      <item quantity="one">+1</item>
+    </plurals>
     <string name="gadget_no_events" msgid="5209110911088302855">"कुनै पनि आउँदै गरेका पात्रा घटनाहरू छैनन्"</string>
     <string name="preferences_experimental_category" msgid="8111213192001230350">"प्रयोगात्मक"</string>
     <string name="preferences_reminders_category" msgid="3179315692653755740">"रिमाइन्डरहरू"</string>
@@ -227,7 +213,7 @@
     <string name="accessibility_add_reminder" msgid="2267950744060950152">"रिमाइन्डर थप्नुहोस्"</string>
     <string name="accessibility_remove_reminder" msgid="5261609343259665139">"रिमाइन्डर हटाउनुहोस्"</string>
     <string name="accessibility_add_attendee" msgid="5654014177472600916">"सहभागी थप्नुहोस्"</string>
-    <string name="accessibility_sync_cal" msgid="6506181885764723383">"पात्रो सिङ्क गर्नुहोस्"</string>
+    <string name="accessibility_sync_cal" msgid="6506181885764723383">"पात्रो सिंक गर्नुहोस्"</string>
     <string name="accessibility_all_day" msgid="4146955438811915282">"पूर्ण दिने कार्यक्रम"</string>
     <string name="accessibility_repeats" msgid="1629279916830919582">"दोहोर्याउने कार्य"</string>
     <string name="accessibility_reminder_time" msgid="3594100545814579575">"रिमाइन्डर समय"</string>
@@ -239,42 +225,27 @@
     <string name="accessibility_email_notification" msgid="9124064701968129831">"पाहुनाहरूलाई इमेल गर्नुहोस्"</string>
     <string name="day_view_new_event_hint" msgid="2131483437911536229">"+ नयाँ घटना"</string>
     <string name="template_announce_item_index" msgid="4067877800670753110">"<xliff:g id="ITEM_INDEX">%1$s</xliff:g> को <xliff:g id="ITEM_COUNT">%2$s</xliff:g> घटना"</string>
-  <plurals name="Nevents">
-    <item quantity="one" msgid="5230907142214104485">"१ घटना"</item>
-    <item quantity="other" msgid="6093072093209431078">"<xliff:g id="COUNT">%d</xliff:g> घटनाहरू"</item>
-  </plurals>
-  <plurals name="N_remaining_events">
-    <item quantity="one" msgid="431585781647034528">"+१ घटना"</item>
-    <item quantity="other" msgid="3609243840882275136">"+<xliff:g id="COUNT">%d</xliff:g> घटनाहरू"</item>
-  </plurals>
+    <plurals name="Nevents" formatted="false" msgid="523806278273939134">
+      <item quantity="other"><xliff:g id="COUNT">%d</xliff:g> कार्यक्रमहरू</item>
+      <item quantity="one">1 कार्यक्रम</item>
+    </plurals>
+    <plurals name="N_remaining_events" formatted="false" msgid="182179062497393883">
+      <item quantity="other">+<xliff:g id="COUNT">%d</xliff:g> कार्यक्रमहरू</item>
+      <item quantity="one">+1 कार्यक्रम</item>
+    </plurals>
     <string name="acessibility_selected_marker_description" msgid="3010149843148810768">"चयन गरिएको घटना"</string>
     <string name="do_not_check" msgid="7815441673853466129">"जाँच नगर्नुहोस् -&gt;"</string>
     <string name="recurrence_dialog_title" msgid="8093909645557717483">"दोहोर्याउनुहोस्"</string>
     <string name="recurrence_dialog_title_never" msgid="2679396029776590130">"कहिल्यै नदोहोर्याउनुहोस्"</string>
-  <plurals name="recurrence_interval_daily">
-    <item quantity="one" msgid="1205422710088692631">"प्रत्येक<xliff:g id="COUNT">%d</xliff:g> दिन"</item>
-    <item quantity="other" msgid="707566499994398250">"प्रत्येक <xliff:g id="COUNT">%d</xliff:g> दिन"</item>
-  </plurals>
-  <plurals name="recurrence_interval_weekly">
-    <item quantity="one" msgid="4948681635464488351">"प्रत्येक <xliff:g id="COUNT">%d</xliff:g> हप्ता"</item>
-    <item quantity="other" msgid="7094801039989237061">"प्रत्येक <xliff:g id="COUNT">%d</xliff:g> हप्ता"</item>
-  </plurals>
-  <plurals name="recurrence_interval_monthly">
-    <item quantity="one" msgid="4768178401603139718">"प्रत्येक <xliff:g id="COUNT">%d</xliff:g> महिना"</item>
-    <item quantity="other" msgid="5419723710346646523">"प्रत्येक <xliff:g id="COUNT">%d</xliff:g> महिना"</item>
-  </plurals>
-  <plurals name="recurrence_interval_yearly">
-    <item quantity="one" msgid="5819562634008179102">"प्रत्येक <xliff:g id="COUNT">%d</xliff:g> वर्ष"</item>
-    <item quantity="other" msgid="5678653649746562060">"प्रत्येक <xliff:g id="COUNT">%d</xliff:g> वर्ष"</item>
-  </plurals>
+    <!-- no translation found for recurrence_interval_daily (4500420585186480085) -->
+    <!-- no translation found for recurrence_interval_weekly (3485667498625367983) -->
+    <!-- no translation found for recurrence_interval_monthly (6278422285680542608) -->
+    <!-- no translation found for recurrence_interval_yearly (5954975405814707742) -->
     <string name="recurrence_month_pattern_by_day" msgid="4400107556121003459">"प्रत्येक महिनाको उही दिन"</string>
     <string name="recurrence_end_continously" msgid="6898950241634912991">"सदाका लागि"</string>
     <string name="recurrence_end_date_label" msgid="4142791438636994952">"यस मितिसम्म"</string>
     <string name="recurrence_end_date" msgid="3693751578164711701">"<xliff:g id="DATE">%s</xliff:g>सम्म"</string>
     <string name="recurrence_end_count_label" msgid="1233883668293087977">"केही घटनाहरूको नम्बर लागि"</string>
-  <plurals name="recurrence_end_count">
-    <item quantity="one" msgid="1400782968090516215">"<xliff:g id="EVENT_COUNT">%d</xliff:g> घटनाका लागि"</item>
-    <item quantity="other" msgid="8779598489398048259">"<xliff:g id="EVENT_COUNT">%d</xliff:g> घटनाहरूका लागि"</item>
-  </plurals>
+    <!-- no translation found for recurrence_end_count (6025427387167075860) -->
     <string name="acessibility_recurrence_choose_end_date_description" msgid="5899029840837836711">"समाप्त हुने मिति परिवर्तन गर्नुहोस्"</string>
 </resources>
