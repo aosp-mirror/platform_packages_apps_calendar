@@ -16,6 +16,10 @@ license {
 }
 
 // Include res dir from chips
+exclude_srcsd = []
+
+exclude_srcsm = []
+
 android_app {
     name: "Calendar",
 
@@ -24,7 +28,47 @@ android_app {
     },
 
     srcs: [
-        "src/**/*.java"
+        "src/**/*.java",
+        "src/**/*.kt",
+    ],
+
+    exclude_srcs: exclude_srcsd + exclude_srcsm,
+
+    // bundled
+    //LOCAL_STATIC_JAVA_LIBRARIES +=
+    //#        android-common
+    //#        libchips
+    //#        calendar-common
+
+    // unbundled
+    static_libs: [
+        "android-common",
+        "libchips",
+        "colorpicker",
+        "android-opt-timezonepicker",
+        "androidx.legacy_legacy-support-v4",
+        "calendar-common",
+    ],
+
+    sdk_version: "current",
+    optimize: {
+        proguard_flags_files: ["proguard.flags"],
+    },
+
+    product_specific: true,
+
+    aaptflags: ["--auto-add-overlay"],
+}
+
+android_app {
+    name: "CalendarJava",
+
+    jacoco: {
+        include_filter: ["com.android.calendar.**"],
+    },
+
+    srcs: [
+        "src/**/*.java",
     ],
 
     // bundled
@@ -50,5 +94,5 @@ android_app {
 
     product_specific: true,
 
-    aaptflags: ["--auto-add-overlay"]
+    aaptflags: ["--auto-add-overlay"],
 }
