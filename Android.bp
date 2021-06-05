@@ -18,7 +18,9 @@ license {
 // Include res dir from chips
 exclude_srcsd = []
 
-exclude_srcsm = []
+exclude_srcsm = [
+    "src/**/calendar/GoogleCalendarUriIntentFilter.java",
+]
 
 android_app {
     name: "Calendar",
