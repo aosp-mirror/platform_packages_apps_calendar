@@ -1,5 +1,5 @@
 /*
-** Copyright 2009, The Android Open Source Project
+** Copyright 2021, The Android Open Source Project
 **
 ** Licensed under the Apache License, Version 2.0 (the "License");
 ** you may not use this file except in compliance with the License.
@@ -13,28 +13,25 @@
 ** WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 ** limitations under the License.
 */
+package com.android.calendar
 
-package com.android.calendar;
+import android.app.Activity
+import android.content.ActivityNotFoundException
+import android.content.Intent
+import android.os.Bundle
 
-import android.app.Activity;
-import android.content.ActivityNotFoundException;
-import android.content.Intent;
-import android.os.Bundle;
-
-public class GoogleCalendarUriIntentFilter extends Activity {
-    @Override
-    protected void onCreate(Bundle icicle) {
-        super.onCreate(icicle);
-
-        Intent intent = getIntent();
+class GoogleCalendarUriIntentFilter : Activity() {
+    protected override fun onCreate(icicle: Bundle?) {
+        super.onCreate(icicle)
+        val intent: Intent = getIntent()
         if (intent != null) {
             // Pass it on to the next Activity.
             try {
-                startNextMatchingActivity(intent);
-            } catch (ActivityNotFoundException ex) {
+                startNextMatchingActivity(intent)
+            } catch (ex: ActivityNotFoundException) {
                 // no browser installed? Just drop it.
             }
         }
-        finish();
+        finish()
     }
 }
