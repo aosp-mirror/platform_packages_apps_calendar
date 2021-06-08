@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,71 +13,52 @@
  * See the License for the specific language governing permissions and
  * limitations under the License
  */
+package com.android.calendar.alerts
 
-package com.android.calendar.alerts;
+import android.app.AlarmManager
+import android.app.PendingIntent
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.provider.CalendarContract
+import com.android.calendar.EventInfoActivity
+import com.android.calendar.Utils
 
-import android.app.AlarmManager;
-import android.app.PendingIntent;
-import android.content.ContentUris;
-import android.content.ContentValues;
-import android.content.Context;
-import android.content.Intent;
-import android.content.SharedPreferences;
-import android.net.Uri;
-import android.provider.CalendarContract;
-import android.provider.CalendarContract.CalendarAlerts;
-import android.text.TextUtils;
-import android.text.format.DateFormat;
-import android.text.format.DateUtils;
-import android.text.format.Time;
-import android.util.Log;
-
-import com.android.calendar.EventInfoActivity;
-import com.android.calendar.R;
-import com.android.calendar.Utils;
-
-import java.util.Locale;
-import java.util.Map;
-import java.util.TimeZone;
-
-public class AlertUtils {
-    private static final String TAG = "AlertUtils";
-    static final boolean DEBUG = true;
-
-    public static final long SNOOZE_DELAY = 5 * 60 * 1000L;
+object AlertUtils {
+    private const val TAG = "AlertUtils"
+    const val DEBUG = true
+    const val SNOOZE_DELAY = 5 * 60 * 1000L
 
     // We use one notification id for the expired events notification.  All
     // other notifications (the 'active' future/concurrent ones) use a unique ID.
-    public static final int EXPIRED_GROUP_NOTIFICATION_ID = 0;
-
-    public static final String EVENT_ID_KEY = "eventid";
-    public static final String EVENT_START_KEY = "eventstart";
-    public static final String EVENT_END_KEY = "eventend";
-    public static final String NOTIFICATION_ID_KEY = "notificationid";
-    public static final String EVENT_IDS_KEY = "eventids";
-    public static final String EVENT_STARTS_KEY = "starts";
+    const val EXPIRED_GROUP_NOTIFICATION_ID = 0
+    const val EVENT_ID_KEY = "eventid"
+    const val EVENT_START_KEY = "eventstart"
+    const val EVENT_END_KEY = "eventend"
+    const val NOTIFICATION_ID_KEY = "notificationid"
+    const val EVENT_IDS_KEY = "eventids"
+    const val EVENT_STARTS_KEY = "starts"
 
     // A flag for using local storage to save alert state instead of the alerts DB table.
     // This allows the unbundled app to run alongside other calendar apps without eating
     // alerts from other apps.
-    static boolean BYPASS_DB = true;
+    var BYPASS_DB = true
 
     /**
      * Creates an AlarmManagerInterface that wraps a real AlarmManager.  The alarm code
      * was abstracted to an interface to make it testable.
      */
-    public static AlarmManagerInterface createAlarmManager(Context context) {
-        final AlarmManager mgr = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-        return new AlarmManagerInterface() {
-            @Override
-            public void set(int type, long triggerAtMillis, PendingIntent operation) {
-                if (Utils.isKeyLimePieOrLater()) {
-                    mgr.setExact(type, triggerAtMillis, operation);
+    @JvmStatic fun createAlarmManager(context: Context): AlarmManagerInterface {
+        val mgr: AlarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        return object : AlarmManagerInterface {
+            override operator fun set(type: Int, triggerAtMillis: Long, operation: PendingIntent?) {
+                if (com.android.calendar.Utils.isKeyLimePieOrLater()) {
+                    mgr.setExact(type, triggerAtMillis, operation)
                 } else {
-                    mgr.set(type, triggerAtMillis, operation);
+                    mgr.set(type, triggerAtMillis, operation)
                 }
             }
-        };
+        }
     }
 
     /**
@@ -91,18 +72,21 @@ public class AlertUtils {
      * @param manager The AlarmManager to use or null
      * @param alarmTime The time to fire the intent in UTC millis since epoch
      */
-    public static void scheduleAlarm(Context context, AlarmManagerInterface manager,
-            long alarmTime) {
+    @JvmStatic fun scheduleAlarm(
+        context: Context?,
+        manager: AlarmManagerInterface?,
+        alarmTime: Long
+    ) {
     }
 
-    public static Intent buildEventViewIntent(Context c, long eventId, long begin, long end) {
-        Intent i = new Intent(Intent.ACTION_VIEW);
-        Uri.Builder builder = CalendarContract.CONTENT_URI.buildUpon();
-        builder.appendEncodedPath("events/" + eventId);
-        i.setData(builder.build());
-        i.setClass(c, EventInfoActivity.class);
-        i.putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME, begin);
-        i.putExtra(CalendarContract.EXTRA_EVENT_END_TIME, end);
-        return i;
+    @JvmStatic fun buildEventViewIntent(c: Context, eventId: Long, begin: Long, end: Long): Intent {
+        val i = Intent(Intent.ACTION_VIEW)
+        val builder: Uri.Builder = CalendarContract.CONTENT_URI.buildUpon()
+        builder.appendEncodedPath("events/$eventId")
+        i.setData(builder.build())
+        i.setClass(c, EventInfoActivity::class.java)
+        i.putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME, begin)
+        i.putExtra(CalendarContract.EXTRA_EVENT_END_TIME, end)
+        return i
     }
 }
