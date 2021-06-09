@@ -20,6 +20,7 @@ exclude_srcsd = []
 
 exclude_srcsm = [
     "src/**/calendar/GoogleCalendarUriIntentFilter.java",
+    "src/**/calendar/UpgradeReceiver.java",
 ]
 
 android_app {
