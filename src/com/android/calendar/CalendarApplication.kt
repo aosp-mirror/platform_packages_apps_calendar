@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,20 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.android.calendar
 
-package com.android.calendar;
+import android.app.Application
 
-import android.app.Application;
-
-public class CalendarApplication extends Application {
-    @Override
-    public void onCreate() {
-        super.onCreate();
+class CalendarApplication : Application() {
+    override fun onCreate() {
+        super.onCreate()
 
         /*
          * Ensure the default values are set for any receiver, activity,
          * service, etc. of Calendar
          */
-        GeneralPreferences.setDefaultValues(this);
+        GeneralPreferences.setDefaultValues(this)
     }
 }

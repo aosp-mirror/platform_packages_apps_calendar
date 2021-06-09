@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,29 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.android.calendar
 
-package com.android.calendar;
+import android.app.backup.BackupAgentHelper
+import android.app.backup.BackupDataInput
+import android.app.backup.SharedPreferencesBackupHelper
+import android.content.Context
+import android.content.SharedPreferences.Editor
+import android.os.ParcelFileDescriptor
 
-import android.app.backup.BackupAgentHelper;
-import android.app.backup.BackupDataInput;
-import android.app.backup.SharedPreferencesBackupHelper;
-import android.content.Context;
-import android.content.SharedPreferences.Editor;
-import android.os.ParcelFileDescriptor;
+import java.io.IOException
 
-import java.io.IOException;
-
-public class CalendarBackupAgent extends BackupAgentHelper
-{
-    static final String SHARED_KEY = "shared_pref";
-
-    @Override
-    public void onCreate() {
+class CalendarBackupAgent : BackupAgentHelper() {
+    override fun onCreate() {
     }
 
-    @Override
-    public void onRestore(BackupDataInput data, int appVersionCode, ParcelFileDescriptor newState)
-            throws IOException {
-        super.onRestore(data, appVersionCode, newState);
+    @Throws(IOException::class)
+    override fun onRestore(data: BackupDataInput?, appVersionCode: Int,
+                           newState: ParcelFileDescriptor?) {
+        super.onRestore(data, appVersionCode, newState)
+    }
+
+    companion object {
+        const val SHARED_KEY = "shared_pref"
     }
 }
