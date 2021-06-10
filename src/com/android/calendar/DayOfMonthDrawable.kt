@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,65 +13,62 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.android.calendar
 
-package com.android.calendar;
-
-import android.content.Context;
-import android.graphics.Canvas;
-import android.graphics.ColorFilter;
-import android.graphics.Paint;
-import android.graphics.PixelFormat;
-import android.graphics.Rect;
-import android.graphics.Typeface;
-import android.graphics.drawable.Drawable;
+import android.content.Context
+import android.graphics.Canvas
+import android.graphics.ColorFilter
+import android.graphics.Paint
+import android.graphics.PixelFormat
+import android.graphics.Rect
+import android.graphics.Typeface
+import android.graphics.drawable.Drawable
 
 /**
  * A custom view to draw the day of the month in the today button in the options menu
  */
-
-public class DayOfMonthDrawable extends Drawable {
-
-    private String mDayOfMonth = "1";
-    private final Paint mPaint;
-    private final Rect mTextBounds = new Rect();
-    private static float mTextSize = 14;
-
-    public DayOfMonthDrawable(Context c) {
-        mTextSize = c.getResources().getDimension(R.dimen.today_icon_text_size);
-        mPaint = new Paint();
-        mPaint.setAlpha(255);
-        mPaint.setColor(0xFF777777);
-        mPaint.setTypeface(Typeface.DEFAULT_BOLD);
-        mPaint.setTextSize(mTextSize);
-        mPaint.setTextAlign(Paint.Align.CENTER);
+class DayOfMonthDrawable(c: Context) : Drawable() {
+    private var mDayOfMonth = "1"
+    private val mPaint: Paint
+    private val mTextBounds: Rect = Rect()
+    override fun draw(canvas: Canvas) {
+        mPaint.getTextBounds(mDayOfMonth, 0, mDayOfMonth.length, mTextBounds)
+        val textHeight: Int = mTextBounds.bottom - mTextBounds.top
+        val bounds: Rect = getBounds()
+        canvas.drawText(
+            mDayOfMonth, (bounds.right).toFloat() / 2f, ((bounds.bottom).toFloat() +
+                textHeight + 1) / 2f, mPaint
+        )
     }
 
-    @Override
-    public void draw(Canvas canvas) {
-        mPaint.getTextBounds(mDayOfMonth, 0, mDayOfMonth.length(), mTextBounds);
-        int textHeight = mTextBounds.bottom - mTextBounds.top;
-        Rect bounds = getBounds();
-        canvas.drawText(mDayOfMonth, bounds.right / 2, ((float) bounds.bottom + textHeight + 1) / 2,
-                mPaint);
+    override fun setAlpha(alpha: Int) {
+        mPaint.setAlpha(alpha)
     }
 
-    @Override
-    public void setAlpha(int alpha) {
-        mPaint.setAlpha(alpha);
-    }
-
-    @Override
-    public void setColorFilter(ColorFilter cf) {
+    override fun setColorFilter(cf: ColorFilter?) {
         // Ignore
     }
 
-    @Override
-    public int getOpacity() {
-        return PixelFormat.UNKNOWN;
+    override fun getOpacity(): Int {
+        return PixelFormat.UNKNOWN
     }
 
-    public void setDayOfMonth(int day) {
-        mDayOfMonth = Integer.toString(day);
-        invalidateSelf();
+    fun setDayOfMonth(day: Int) {
+        mDayOfMonth = Integer.toString(day)
+        invalidateSelf()
+    }
+
+    companion object {
+        private var mTextSize = 14f
+    }
+
+    init {
+        mTextSize = c.getResources().getDimension(R.dimen.today_icon_text_size)
+        mPaint = Paint()
+        mPaint.setAlpha(255)
+        mPaint.setColor(-0x888889)
+        mPaint.setTypeface(Typeface.DEFAULT_BOLD)
+        mPaint.setTextSize(mTextSize)
+        mPaint.setTextAlign(Paint.Align.CENTER)
     }
 }
