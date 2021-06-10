@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.android.calendar.alerts
 
-package com.android.calendar.alerts;
-
-import android.app.PendingIntent;
+import android.app.PendingIntent
 
 /**
  * AlarmManager abstracted to an interface for testability.
  */
-public interface AlarmManagerInterface {
-    public void set(int type, long triggerAtMillis, PendingIntent operation);
+interface AlarmManagerInterface {
+    operator fun set(type: Int, triggerAtMillis: Long, operation: PendingIntent?)
 }
