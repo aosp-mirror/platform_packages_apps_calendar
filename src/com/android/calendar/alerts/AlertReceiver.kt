@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,43 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.android.calendar.alerts
 
-package com.android.calendar.alerts;
-
-import android.app.Notification;
-import android.app.PendingIntent;
-import android.app.Service;
-import android.content.BroadcastReceiver;
-import android.content.ContentUris;
-import android.content.Context;
-import android.content.Intent;
-import android.content.res.Resources;
-import android.database.Cursor;
-import android.net.Uri;
-import android.os.Handler;
-import android.os.HandlerThread;
-import android.os.PowerManager;
-import android.provider.CalendarContract.Attendees;
-import android.provider.CalendarContract.Calendars;
-import android.provider.CalendarContract.Events;
-import android.telephony.TelephonyManager;
-import android.text.Spannable;
-import android.text.SpannableStringBuilder;
-import android.text.TextUtils;
-import android.text.style.RelativeSizeSpan;
-import android.text.style.TextAppearanceSpan;
-import android.text.style.URLSpan;
-import android.util.Log;
-import android.view.View;
-import android.widget.RemoteViews;
-
-import com.android.calendar.R;
-import com.android.calendar.Utils;
-import com.android.calendar.alerts.AlertService.NotificationWrapper;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.regex.Pattern;
+import android.app.Notification
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.res.Resources
+import android.util.Log
+import com.android.calendar.R
+import com.android.calendar.Utils
+import com.android.calendar.alerts.AlertService.NotificationWrapper
 
 /**
  * Receives android.intent.action.EVENT_REMINDER intents and handles
@@ -63,61 +37,88 @@ import java.util.regex.Pattern;
  *
  * To trigger this code after pushing the apk to device:
  * adb shell am broadcast -a "android.intent.action.EVENT_REMINDER"
- *    -n "com.android.calendar/.alerts.AlertReceiver"
+ * -n "com.android.calendar/.alerts.AlertReceiver"
  */
-public class AlertReceiver extends BroadcastReceiver {
-    private static final String TAG = "AlertReceiver";
-
-    // The broadcast for notification refreshes scheduled by the app. This is to
-    // distinguish the EVENT_REMINDER broadcast sent by the provider.
-    public static final String EVENT_REMINDER_APP_ACTION =
-            "com.android.calendar.EVENT_REMINDER_APP";
-
-    public static final String ACTION_DISMISS_OLD_REMINDERS = "removeOldReminders";
-
+class AlertReceiver : BroadcastReceiver() {
     @Override
-    public void onReceive(final Context context, final Intent intent) {
+    override fun onReceive(context: Context, intent: Intent) {
         if (AlertService.DEBUG) {
-            Log.d(TAG, "onReceive: a=" + intent.getAction() + " " + intent.toString());
+            Log.d(TAG, "onReceive: a=" + intent.getAction().toString() + " " + intent.toString())
         }
-        closeNotificationShade(context);
+        closeNotificationShade(context)
     }
 
-    public static NotificationWrapper makeBasicNotification(Context context, String title,
-            String summaryText, long startMillis, long endMillis, long eventId,
-            int notificationId, boolean doPopup, int priority) {
-        Notification n = buildBasicNotification(new Notification.Builder(context),
-                context, title, summaryText, startMillis, endMillis, eventId, notificationId,
-                doPopup, priority, false);
-        return new NotificationWrapper(n, notificationId, eventId, startMillis, endMillis, doPopup);
+    private fun closeNotificationShade(context: Context) {
+        val closeNotificationShadeIntent = Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS)
+        context.sendBroadcast(closeNotificationShadeIntent)
     }
 
-    private static Notification buildBasicNotification(Notification.Builder notificationBuilder,
-            Context context, String title, String summaryText, long startMillis, long endMillis,
-            long eventId, int notificationId, boolean doPopup, int priority,
-            boolean addActionButtons) {
-        Resources resources = context.getResources();
-        if (title == null || title.length() == 0) {
-            title = resources.getString(R.string.no_title_label);
+    companion object {
+        private const val TAG = "AlertReceiver"
+
+        // The broadcast for notification refreshes scheduled by the app. This is to
+        // distinguish the EVENT_REMINDER broadcast sent by the provider.
+        const val EVENT_REMINDER_APP_ACTION = "com.android.calendar.EVENT_REMINDER_APP"
+        const val ACTION_DISMISS_OLD_REMINDERS = "removeOldReminders"
+        fun makeBasicNotification(
+            context: Context,
+            title: String,
+            summaryText: String,
+            startMillis: Long,
+            endMillis: Long,
+            eventId: Long,
+            notificationId: Int,
+            doPopup: Boolean,
+            priority: Int
+        ): NotificationWrapper {
+            val n: Notification = buildBasicNotification(
+                Notification.Builder(context),
+                context,
+                title,
+                summaryText,
+                startMillis,
+                endMillis,
+                eventId,
+                notificationId,
+                doPopup,
+                priority, false
+            )
+            return NotificationWrapper(n, notificationId, eventId, startMillis, endMillis, doPopup)
         }
 
-        // Create the base notification.
-        notificationBuilder.setContentTitle(title);
-        notificationBuilder.setContentText(summaryText);
-        notificationBuilder.setSmallIcon(R.drawable.stat_notify_calendar);
-        if (Utils.isJellybeanOrLater()) {
-            // Turn off timestamp.
-            notificationBuilder.setWhen(0);
+        private fun buildBasicNotification(
+            notificationBuilder: Notification.Builder,
+            context: Context,
+            title: String,
+            summaryText: String,
+            startMillis: Long,
+            endMillis: Long,
+            eventId: Long,
+            notificationId: Int,
+            doPopup: Boolean,
+            priority: Int,
+            addActionButtons: Boolean
+        ): Notification {
+            var title: String? = title
+            val resources: Resources = context.getResources()
+            if (title == null || title.length == 0) {
+                title = resources.getString(R.string.no_title_label)
+            }
 
-            // Should be one of the values in Notification (ie. Notification.PRIORITY_HIGH, etc).
-            // A higher priority will encourage notification manager to expand it.
-            notificationBuilder.setPriority(priority);
+            // Create the base notification.
+            notificationBuilder.setContentTitle(title)
+            notificationBuilder.setContentText(summaryText)
+            notificationBuilder.setSmallIcon(R.drawable.stat_notify_calendar)
+            if (Utils.isJellybeanOrLater()) {
+                // Turn off timestamp.
+                notificationBuilder.setWhen(0)
+
+                // Should be one of the values in Notification
+                // (ie. Notification.PRIORITY_HIGH, etc).
+                // A higher priority will encourage notification manager to expand it.
+                notificationBuilder.setPriority(priority)
+            }
+            return notificationBuilder.getNotification()
         }
-        return notificationBuilder.getNotification();
-    }
-
-    private void closeNotificationShade(Context context) {
-        Intent closeNotificationShadeIntent = new Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS);
-        context.sendBroadcast(closeNotificationShadeIntent);
     }
 }
