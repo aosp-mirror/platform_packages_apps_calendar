@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,71 +13,55 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.calendar;
+package com.android.calendar
 
-import android.content.Context;
-import android.graphics.Canvas;
-import android.graphics.drawable.Drawable;
-import android.util.AttributeSet;
-import android.util.Log;
-import android.view.Gravity;
-import android.widget.Button;
+import android.content.Context
+import android.graphics.Canvas
+import android.graphics.drawable.Drawable
+import android.util.AttributeSet
+import android.util.Log
+import android.view.Gravity
+import android.widget.Button
 
 /**
- * <p>
  * A button with more than two states. When the button is pressed
  * or clicked, the state transitions automatically.
- * </p>
  *
- * <p><strong>XML attributes</strong></p>
- * <p>
- * See {@link R.styleable#MultiStateButton
- * MultiStateButton Attributes}, {@link android.R.styleable#Button Button
- * Attributes}, {@link android.R.styleable#TextView TextView Attributes}, {@link
- * android.R.styleable#View View Attributes}
- * </p>
+ * **XML attributes**
+ * See [ MultiStateButton Attributes][R.styleable.MultiStateButton],
+ * [Button][android.R.styleable.Button], [TextView Attributes][android.R.styleable.TextView],
+ * [ ][android.R.styleable.View]
+ *
  */
-
-public class MultiStateButton extends Button {
+class MultiStateButton(context: Context?, attrs: AttributeSet?, defStyle: Int) :
+                       Button(context, attrs, defStyle) {
     //The current state for this button, ranging from 0 to maxState-1
-    private int mState;
+    var mState = 0
+        private set
+
     //The maximum number of states allowed for this button.
-    private int mMaxStates;
+    private var mMaxStates = 1
+
     //The currently displaying resource ID. This gets set to a default on creation and remains
     //on the last set if the resources get set to null.
-    private int mButtonResource;
+    private var mButtonResource = 0
+
     //A list of all drawable resources used by this button in the order it uses them.
-    private int[] mButtonResources;
-    private Drawable mButtonDrawable;
+    private var mButtonResources: IntArray
+    private var mButtonDrawable: Drawable? = null
 
-    public MultiStateButton(Context context) {
-        this(context, null);
-    }
+    constructor(context: Context?) : this(context, null) {}
+    constructor(context: Context?, attrs: AttributeSet?) : this(context, attrs, 0) {}
 
-    public MultiStateButton(Context context, AttributeSet attrs) {
-        this(context, attrs, 0);
-    }
-
-    public MultiStateButton(Context context, AttributeSet attrs, int defStyle) {
-        //Currently using the standard buttonStyle, will update when new resources are added.
-        super(context, attrs, defStyle);
-        mMaxStates = 1;
-        mState = 0;
-        //TODO add a more generic default button
-        mButtonResources = new int[] { R.drawable.widget_show };
-        setButtonDrawable(mButtonResources[mState]);
-    }
-
-    @Override
-    public boolean performClick() {
+    override fun performClick(): Boolean {
         /* When clicked, toggle the state */
-        transitionState();
-        return super.performClick();
+        transitionState()
+        return super.performClick()
     }
 
-    public void transitionState() {
-        mState = (mState + 1) % mMaxStates;
-        setButtonDrawable(mButtonResources[mState]);
+    fun transitionState() {
+        mState = (mState + 1) % mMaxStates
+        setButtonDrawable(mButtonResources[mState])
     }
 
     /**
@@ -86,33 +70,30 @@ public class MultiStateButton extends Button {
      * This sets the maximum states allowed to the length of the resources array. It will also
      * set the current state to the maximum allowed if it's greater than the new max.
      */
-    public void setButtonResources(int[] resources) throws IllegalArgumentException {
-        if(resources == null) {
-            throw new IllegalArgumentException("Button resources cannot be null");
+    //@Throws(IllegalArgumentException::class)
+    fun setButtonResources(resources: IntArray?) {
+        if (resources == null) {
+            throw IllegalArgumentException("Button resources cannot be null")
         }
-        mMaxStates = resources.length;
-        if(mState >= mMaxStates) {
-            mState = mMaxStates - 1;
+        mMaxStates = resources.size
+        if (mState >= mMaxStates) {
+            mState = mMaxStates - 1
         }
-        mButtonResources = resources;
+        mButtonResources = resources
     }
 
     /**
      * Attempts to set the state. Returns true if successful, false otherwise.
      */
-    public boolean setState(int state){
-        if(state >= mMaxStates || state < 0) {
+    fun setState(state: Int): Boolean {
+        if (state >= mMaxStates || state < 0) {
             //When moved out of Calendar the tag should be changed.
-            Log.w("Cal", "MultiStateButton state set to value greater than maxState or < 0");
-            return false;
+            Log.w("Cal", "MultiStateButton state set to value greater than maxState or < 0")
+            return false
         }
-        mState = state;
-        setButtonDrawable(mButtonResources[mState]);
-        return true;
-    }
-
-    public int getState() {
-        return mState;
+        mState = state
+        setButtonDrawable(mButtonResources[mState])
+        return true
     }
 
     /**
@@ -120,18 +101,16 @@ public class MultiStateButton extends Button {
      *
      * @param resid the resource id of the drawable to use as the background
      */
-    public void setButtonDrawable(int resid) {
+    fun setButtonDrawable(resid: Int) {
         if (resid != 0 && resid == mButtonResource) {
-            return;
+            return
         }
-
-        mButtonResource = resid;
-
-        Drawable d = null;
+        mButtonResource = resid
+        var d: Drawable? = null
         if (mButtonResource != 0) {
-            d = getResources().getDrawable(mButtonResource);
+            d = getResources().getDrawable(mButtonResource)
         }
-        setButtonDrawable(d);
+        setButtonDrawable(d)
     }
 
     /**
@@ -139,54 +118,49 @@ public class MultiStateButton extends Button {
      *
      * @param d The Drawable to use as the background
      */
-    public void setButtonDrawable(Drawable d) {
+    fun setButtonDrawable(d: Drawable?) {
         if (d != null) {
             if (mButtonDrawable != null) {
-                mButtonDrawable.setCallback(null);
-                unscheduleDrawable(mButtonDrawable);
+                mButtonDrawable?.setCallback(null)
+                unscheduleDrawable(mButtonDrawable)
             }
-            d.setCallback(this);
-            d.setState(getDrawableState());
-            d.setVisible(getVisibility() == VISIBLE, false);
-            mButtonDrawable = d;
-            mButtonDrawable.setState(null);
-            setMinHeight(mButtonDrawable.getIntrinsicHeight());
-            setWidth(mButtonDrawable.getIntrinsicWidth());
+            d.setCallback(this)
+            d.setState(getDrawableState())
+            d.setVisible(getVisibility() === VISIBLE, false)
+            mButtonDrawable = d
+            mButtonDrawable?.setState(getDrawableState())
+            setMinHeight(mButtonDrawable?.getIntrinsicHeight() ?: 0)
+            setWidth(mButtonDrawable?.getIntrinsicWidth() ?: 0)
         }
-        refreshDrawableState();
+        refreshDrawableState()
     }
 
-    @Override
-    protected void onDraw(Canvas canvas) {
-        super.onDraw(canvas);
+    protected override fun onDraw(canvas: Canvas) {
+        super.onDraw(canvas)
         if (mButtonDrawable != null) {
-            final int verticalGravity = getGravity() & Gravity.VERTICAL_GRAVITY_MASK;
-            final int horizontalGravity = getGravity() & Gravity.HORIZONTAL_GRAVITY_MASK;
-            final int height = mButtonDrawable.getIntrinsicHeight();
-            final int width = mButtonDrawable.getIntrinsicWidth();
-
-            int y = 0;
-            int x = 0;
-
-            switch (verticalGravity) {
-                case Gravity.BOTTOM:
-                    y = getHeight() - height;
-                    break;
-                case Gravity.CENTER_VERTICAL:
-                    y = (getHeight() - height) / 2;
-                    break;
+            val verticalGravity: Int = getGravity() and Gravity.VERTICAL_GRAVITY_MASK
+            val horizontalGravity: Int = getGravity() and Gravity.HORIZONTAL_GRAVITY_MASK
+            val height: Int = mButtonDrawable?.getIntrinsicHeight() ?: 0
+            val width: Int = mButtonDrawable?.getIntrinsicWidth() ?: 0
+            var y = 0
+            var x = 0
+            when (verticalGravity) {
+                Gravity.BOTTOM -> y = getHeight() - height
+                Gravity.CENTER_VERTICAL -> y = (getHeight() - height) / 2
             }
-            switch (horizontalGravity) {
-                case Gravity.RIGHT:
-                    x = getWidth() - width;
-                    break;
-                case Gravity.CENTER_HORIZONTAL:
-                    x = (getWidth() - width) / 2;
-                    break;
+            when (horizontalGravity) {
+                Gravity.RIGHT -> x = getWidth() - width
+                Gravity.CENTER_HORIZONTAL -> x = (getWidth() - width) / 2
             }
-
-            mButtonDrawable.setBounds(x, y, x + width, y + height);
-            mButtonDrawable.draw(canvas);
+            mButtonDrawable?.setBounds(x, y, x + width, y + height)
+            mButtonDrawable?.draw(canvas)
         }
+    }
+
+    init {
+        //Currently using the standard buttonStyle, will update when new resources are added.
+        //TODO add a more generic default button
+        mButtonResources = intArrayOf(R.drawable.widget_show)
+        setButtonDrawable(mButtonResources[mState])
     }
 }
