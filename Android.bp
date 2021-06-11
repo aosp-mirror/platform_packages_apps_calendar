@@ -18,6 +18,7 @@ license {
 // Include res dir from chips
 exclude_srcsd = [
     "src/**/calendar/alerts/AlertUtils.java",
+    "src/**/calendar/alerts/AlertService.java",
     "src/**/calendar/DayOfMonthDrawable.java",
 ]
 
