@@ -19,6 +19,7 @@ license {
 exclude_srcsd = [
     "src/**/calendar/alerts/AlertReceiver.java",
     "src/**/calendar/alerts/AlertUtils.java",
+    "src/**/calendar/alerts/AlertService.java",
     "src/**/calendar/DayOfMonthDrawable.java",
 ]
 
@@ -26,7 +27,9 @@ exclude_srcsm = [
     "src/**/calendar/AsyncQueryServiceHelper.java",
     "src/**/calendar/CalendarApplication.java",
     "src/**/calendar/CalendarBackupAgent.java",
+    "src/**/calendar/EventGeometry.java",
     "src/**/calendar/GoogleCalendarUriIntentFilter.java",
+    "src/**/calendar/MultiStateButton.java",
     "src/**/calendar/UpgradeReceiver.java",
 ]
 
