@@ -19,6 +19,7 @@ license {
 exclude_srcsd = [
     "src/**/calendar/alerts/AlertReceiver.java",
     "src/**/calendar/alerts/AlertUtils.java",
+    "src/**/calendar/alerts/AlertService.java",
     "src/**/calendar/DayOfMonthDrawable.java",
 ]
 
