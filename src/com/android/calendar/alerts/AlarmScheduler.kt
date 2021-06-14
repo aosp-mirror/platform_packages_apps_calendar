@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,61 +13,54 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.android.calendar.alerts
 
-package com.android.calendar.alerts;
-
-import android.app.AlarmManager;
-import android.app.PendingIntent;
-import android.content.ContentResolver;
-import android.content.ContentUris;
-import android.content.Context;
-import android.content.Intent;
-import android.database.Cursor;
-import android.net.Uri;
-import android.provider.CalendarContract;
-import android.provider.CalendarContract.Events;
-import android.provider.CalendarContract.Instances;
-import android.provider.CalendarContract.Reminders;
-import android.text.format.DateUtils;
-import android.text.format.Time;
-import android.util.Log;
-
-import com.android.calendar.Utils;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import android.app.AlarmManager
+import android.app.PendingIntent
+import android.content.ContentResolver
+import android.content.ContentUris
+import android.content.Context
+import android.content.Intent
+import android.database.Cursor
+import android.net.Uri
+import android.provider.CalendarContract
+import android.provider.CalendarContract.Events
+import android.provider.CalendarContract.Instances
+import android.provider.CalendarContract.Reminders
+import android.text.format.DateUtils
+import android.text.format.Time
+import android.util.Log
+import com.android.calendar.Utils
+import java.util.HashMap
+import java.util.List
 
 /**
  * Schedules the next EVENT_REMINDER_APP broadcast with AlarmManager, by querying the events
  * and reminders tables for the next upcoming alert.
  */
-public class AlarmScheduler {
-    private static final String TAG = "AlarmScheduler";
-
-    private static final String INSTANCES_WHERE = Events.VISIBLE + "=? AND "
-            + Instances.BEGIN + ">=? AND " + Instances.BEGIN + "<=? AND "
-            + Events.ALL_DAY + "=?";
-    static final String[] INSTANCES_PROJECTION = new String[] {
+object AlarmScheduler {
+    private const val TAG = "AlarmScheduler"
+    private val INSTANCES_WHERE: String = (Events.VISIBLE.toString() + "=? AND " +
+        Instances.BEGIN + ">=? AND " + Instances.BEGIN + "<=? AND " +
+        Events.ALL_DAY + "=?")
+    val INSTANCES_PROJECTION = arrayOf<String>(
         Instances.EVENT_ID,
         Instances.BEGIN,
-        Instances.ALL_DAY,
-    };
-    private static final int INSTANCES_INDEX_EVENTID = 0;
-    private static final int INSTANCES_INDEX_BEGIN = 1;
-    private static final int INSTANCES_INDEX_ALL_DAY = 2;
-
-    private static final String REMINDERS_WHERE = Reminders.METHOD + "=1 AND "
-            + Reminders.EVENT_ID + " IN ";
-    static final String[] REMINDERS_PROJECTION = new String[] {
+        Instances.ALL_DAY
+    )
+    private const val INSTANCES_INDEX_EVENTID = 0
+    private const val INSTANCES_INDEX_BEGIN = 1
+    private const val INSTANCES_INDEX_ALL_DAY = 2
+    private val REMINDERS_WHERE: String = (Reminders.METHOD.toString() + "=1 AND " +
+        Reminders.EVENT_ID + " IN ")
+    val REMINDERS_PROJECTION = arrayOf<String>(
         Reminders.EVENT_ID,
         Reminders.MINUTES,
-        Reminders.METHOD,
-    };
-    private static final int REMINDERS_INDEX_EVENT_ID = 0;
-    private static final int REMINDERS_INDEX_MINUTES = 1;
-    private static final int REMINDERS_INDEX_METHOD = 2;
+        Reminders.METHOD
+    )
+    private const val REMINDERS_INDEX_EVENT_ID = 0
+    private const val REMINDERS_INDEX_MINUTES = 1
+    private const val REMINDERS_INDEX_METHOD = 2
 
     // Add a slight delay for the EVENT_REMINDER_APP broadcast for a couple reasons:
     // (1) so that the concurrent reminder broadcast from the provider doesn't result
@@ -75,12 +68,12 @@ public class AlarmScheduler {
     // the CalendarAlerts table until the alert time, so for the unbundled app's
     // notifications to work on these devices, a delay ensures that AlertService won't
     // read from the CalendarAlerts table until the alert is present.
-    static final int ALARM_DELAY_MS = 1000;
+    const val ALARM_DELAY_MS = 1000
 
     // The reminders query looks like "SELECT ... AND eventId IN 101,102,202,...".  This
     // sets the max # of events in the query before batching into multiple queries, to
     // limit the SQL query length.
-    private static final int REMINDER_QUERY_BATCH_SIZE = 50;
+    private const val REMINDER_QUERY_BATCH_SIZE = 50
 
     // We really need to query for reminder times that fall in some interval, but
     // the Reminders table only stores the reminder interval (10min, 15min, etc), and
@@ -89,8 +82,8 @@ public class AlarmScheduler {
     // whose start times begin within some interval (ie. 1 week out).  This means
     // reminders which are configured for more than 1 week out won't fire on time.  We
     // can minimize this to being only 1 day late by putting a 1 day max on the alarm time.
-    private static final long EVENT_LOOKAHEAD_WINDOW_MS = DateUtils.WEEK_IN_MILLIS;
-    private static final long MAX_ALARM_ELAPSED_MS = DateUtils.DAY_IN_MILLIS;
+    private val EVENT_LOOKAHEAD_WINDOW_MS: Long = DateUtils.WEEK_IN_MILLIS
+    private val MAX_ALARM_ELAPSED_MS: Long = DateUtils.DAY_IN_MILLIS
 
     /**
      * Schedules the nearest upcoming alarm, to refresh notifications.
@@ -101,25 +94,39 @@ public class AlarmScheduler {
      * reminders for all events occurring in the next week).  This means for example,
      * a 2 week notification will not fire on time.
      */
-    public static void scheduleNextAlarm(Context context) {
-        scheduleNextAlarm(context, AlertUtils.createAlarmManager(context),
-                REMINDER_QUERY_BATCH_SIZE, System.currentTimeMillis());
+    @JvmStatic fun scheduleNextAlarm(context: Context) {
+        scheduleNextAlarm(
+            context, AlertUtils.createAlarmManager(context),
+            REMINDER_QUERY_BATCH_SIZE, System.currentTimeMillis()
+        )
     }
 
     // VisibleForTesting
-    static void scheduleNextAlarm(Context context, AlarmManagerInterface alarmManager,
-            int batchSize, long currentMillis) {
-        Cursor instancesCursor = null;
+    @JvmStatic fun scheduleNextAlarm(
+        context: Context,
+        alarmManager: AlarmManagerInterface?,
+        batchSize: Int,
+        currentMillis: Long
+    ) {
+        var instancesCursor: Cursor? = null
         try {
-            instancesCursor = queryUpcomingEvents(context, context.getContentResolver(),
-                    currentMillis);
+            instancesCursor = queryUpcomingEvents(
+                context, context.getContentResolver(),
+                currentMillis
+            )
             if (instancesCursor != null) {
-                queryNextReminderAndSchedule(instancesCursor, context,
-                        context.getContentResolver(), alarmManager, batchSize, currentMillis);
+                queryNextReminderAndSchedule(
+                    instancesCursor,
+                    context,
+                    context.getContentResolver(),
+                    alarmManager as AlarmManagerInterface,
+                    batchSize,
+                    currentMillis
+                )
             }
         } finally {
             if (instancesCursor != null) {
-                instancesCursor.close();
+                instancesCursor.close()
             }
         }
     }
@@ -127,158 +134,174 @@ public class AlarmScheduler {
     /**
      * Queries events starting within a fixed interval from now.
      */
-    private static Cursor queryUpcomingEvents(Context context, ContentResolver contentResolver,
-            long currentMillis) {
-        Time time = new Time();
-        time.normalize(false);
-        long localOffset = time.gmtoff * 1000;
-        final long localStartMin = currentMillis;
-        final long localStartMax = localStartMin + EVENT_LOOKAHEAD_WINDOW_MS;
-        final long utcStartMin = localStartMin - localOffset;
-        final long utcStartMax = utcStartMin + EVENT_LOOKAHEAD_WINDOW_MS;
+    @JvmStatic private fun queryUpcomingEvents(
+        context: Context,
+        contentResolver: ContentResolver,
+        currentMillis: Long
+    ): Cursor? {
+        val time = Time()
+        time.normalize(false)
+        val localOffset: Long = time.gmtoff * 1000
+        val localStartMax =
+            currentMillis + EVENT_LOOKAHEAD_WINDOW_MS
+        val utcStartMin = currentMillis - localOffset
+        val utcStartMax =
+            utcStartMin + EVENT_LOOKAHEAD_WINDOW_MS
 
         // Expand Instances table range by a day on either end to account for
         // all-day events.
-        Uri.Builder uriBuilder = Instances.CONTENT_URI.buildUpon();
-        ContentUris.appendId(uriBuilder, localStartMin - DateUtils.DAY_IN_MILLIS);
-        ContentUris.appendId(uriBuilder, localStartMax + DateUtils.DAY_IN_MILLIS);
+        val uriBuilder: Uri.Builder = Instances.CONTENT_URI.buildUpon()
+        ContentUris.appendId(uriBuilder, currentMillis - DateUtils.DAY_IN_MILLIS)
+        ContentUris.appendId(uriBuilder, localStartMax + DateUtils.DAY_IN_MILLIS)
 
         // Build query for all events starting within the fixed interval.
-        StringBuilder queryBuilder = new StringBuilder();
-        queryBuilder.append("(");
-        queryBuilder.append(INSTANCES_WHERE);
-        queryBuilder.append(") OR (");
-        queryBuilder.append(INSTANCES_WHERE);
-        queryBuilder.append(")");
-        String[] queryArgs = new String[] {
-                // allday selection
-                "1",                           /* visible = ? */
-                String.valueOf(utcStartMin),   /* begin >= ? */
-                String.valueOf(utcStartMax),   /* begin <= ? */
-                "1",                           /* allDay = ? */
+        val queryBuilder = StringBuilder()
+        queryBuilder.append("(")
+        queryBuilder.append(INSTANCES_WHERE)
+        queryBuilder.append(") OR (")
+        queryBuilder.append(INSTANCES_WHERE)
+        queryBuilder.append(")")
+        val queryArgs = arrayOf(
+            // allday selection
+            "1", /* visible = ? */
+            utcStartMin.toString(),  /* begin >= ? */
+            utcStartMax.toString(),  /* begin <= ? */
+            "1", /* allDay = ? */ // non-allday selection
+            "1", /* visible = ? */
+            currentMillis.toString(),  /* begin >= ? */
+            localStartMax.toString(),  /* begin <= ? */
+            "0" /* allDay = ? */
+        )
 
-                // non-allday selection
-                "1",                           /* visible = ? */
-                String.valueOf(localStartMin), /* begin >= ? */
-                String.valueOf(localStartMax), /* begin <= ? */
-                "0"                            /* allDay = ? */
-        };
-
-        Cursor cursor = contentResolver.query(uriBuilder.build(), INSTANCES_PROJECTION,
-                queryBuilder.toString(), queryArgs, null);
-        return cursor;
+        val cursor: Cursor? = contentResolver.query(uriBuilder.build(), INSTANCES_PROJECTION,
+        queryBuilder.toString(), queryArgs, null)
+        return cursor
     }
 
     /**
      * Queries for all the reminders of the events in the instancesCursor, and schedules
      * the alarm for the next upcoming reminder.
      */
-    private static void queryNextReminderAndSchedule(Cursor instancesCursor, Context context,
-            ContentResolver contentResolver, AlarmManagerInterface alarmManager,
-            int batchSize, long currentMillis) {
+    @JvmStatic private fun queryNextReminderAndSchedule(
+        instancesCursor: Cursor,
+        context: Context,
+        contentResolver: ContentResolver,
+        alarmManager: AlarmManagerInterface,
+        batchSize: Int,
+        currentMillis: Long
+    ) {
         if (AlertService.DEBUG) {
-            int eventCount = instancesCursor.getCount();
+            val eventCount: Int = instancesCursor.getCount()
             if (eventCount == 0) {
-                Log.d(TAG, "No events found starting within 1 week.");
+                Log.d(TAG, "No events found starting within 1 week.")
             } else {
-                Log.d(TAG, "Query result count for events starting within 1 week: " + eventCount);
+                Log.d(TAG, "Query result count for events starting within 1 week: $eventCount")
             }
         }
 
         // Put query results of all events starting within some interval into map of event ID to
         // local start time.
-        Map<Integer, List<Long>> eventMap = new HashMap<Integer, List<Long>>();
-        Time timeObj = new Time();
-        long nextAlarmTime = Long.MAX_VALUE;
-        int nextAlarmEventId = 0;
-        instancesCursor.moveToPosition(-1);
+        val eventMap: HashMap<Int?, List<Long>?> = HashMap<Int?, List<Long>?>()
+        val timeObj = Time()
+        var nextAlarmTime = Long.MAX_VALUE
+        var nextAlarmEventId = 0
+        instancesCursor.moveToPosition(-1)
         while (!instancesCursor.isAfterLast()) {
-            int index = 0;
-            eventMap.clear();
-            StringBuilder eventIdsForQuery = new StringBuilder();
-            eventIdsForQuery.append('(');
+            var index = 0
+            eventMap.clear()
+            val eventIdsForQuery = StringBuilder()
+            eventIdsForQuery.append('(')
             while (index++ < batchSize && instancesCursor.moveToNext()) {
-                int eventId = instancesCursor.getInt(INSTANCES_INDEX_EVENTID);
-                long begin = instancesCursor.getLong(INSTANCES_INDEX_BEGIN);
-                boolean allday = instancesCursor.getInt(INSTANCES_INDEX_ALL_DAY) != 0;
-                long localStartTime;
-                if (allday) {
+                val eventId: Int = instancesCursor.getInt(INSTANCES_INDEX_EVENTID)
+                val begin: Long = instancesCursor.getLong(INSTANCES_INDEX_BEGIN)
+                val allday = instancesCursor.getInt(INSTANCES_INDEX_ALL_DAY) != 0
+                var localStartTime: Long
+                localStartTime = if (allday) {
                     // Adjust allday to local time.
-                    localStartTime = Utils.convertAlldayUtcToLocal(timeObj, begin,
-                            Time.getCurrentTimezone());
+                    Utils.convertAlldayUtcToLocal(
+                        timeObj, begin,
+                        Time.getCurrentTimezone()
+                    )
                 } else {
-                    localStartTime = begin;
+                    begin
                 }
-                List<Long> startTimes = eventMap.get(eventId);
+                var startTimes: List<Long>? = eventMap.get(eventId)
                 if (startTimes == null) {
-                    startTimes = new ArrayList<Long>();
-                    eventMap.put(eventId, startTimes);
-                    eventIdsForQuery.append(eventId);
-                    eventIdsForQuery.append(",");
+                    startTimes = mutableListOf<Long>() as List<Long>
+                    eventMap.put(eventId, startTimes)
+                    eventIdsForQuery.append(eventId)
+                    eventIdsForQuery.append(",")
                 }
-                startTimes.add(localStartTime);
+                startTimes.add(localStartTime)
 
                 // Log for debugging.
                 if (Log.isLoggable(TAG, Log.DEBUG)) {
-                    timeObj.set(localStartTime);
-                    StringBuilder msg = new StringBuilder();
-                    msg.append("Events cursor result -- eventId:").append(eventId);
-                    msg.append(", allDay:").append(allday);
-                    msg.append(", start:").append(localStartTime);
-                    msg.append(" (").append(timeObj.format("%a, %b %d, %Y %I:%M%P")).append(")");
-                    Log.d(TAG, msg.toString());
+                    timeObj.set(localStartTime)
+                    val msg = StringBuilder()
+                    msg.append("Events cursor result -- eventId:").append(eventId)
+                    msg.append(", allDay:").append(allday)
+                    msg.append(", start:").append(localStartTime)
+                    msg.append(" (").append(timeObj.format("%a, %b %d, %Y %I:%M%P")).append(")")
+                    Log.d(TAG, msg.toString())
                 }
             }
-            if (eventIdsForQuery.charAt(eventIdsForQuery.length() - 1) == ',') {
-                eventIdsForQuery.deleteCharAt(eventIdsForQuery.length() - 1);
+            if (eventIdsForQuery[eventIdsForQuery.length - 1] == ',') {
+                eventIdsForQuery.deleteCharAt(eventIdsForQuery.length - 1)
             }
-            eventIdsForQuery.append(')');
+            eventIdsForQuery.append(')')
 
             // Query the reminders table for the events found.
-            Cursor cursor = null;
+            var cursor: Cursor? = null
             try {
-                cursor = contentResolver.query(Reminders.CONTENT_URI, REMINDERS_PROJECTION,
-                        REMINDERS_WHERE + eventIdsForQuery, null, null);
+                cursor = contentResolver.query(
+                    Reminders.CONTENT_URI, REMINDERS_PROJECTION,
+                    REMINDERS_WHERE + eventIdsForQuery, null, null
+                )
 
                 // Process the reminders query results to find the next reminder time.
-                cursor.moveToPosition(-1);
-                while (cursor.moveToNext()) {
-                    int eventId = cursor.getInt(REMINDERS_INDEX_EVENT_ID);
-                    int reminderMinutes = cursor.getInt(REMINDERS_INDEX_MINUTES);
-                    List<Long> startTimes = eventMap.get(eventId);
+                cursor?.moveToPosition(-1)
+                while (cursor!!.moveToNext()) {
+                    val eventId: Int = cursor.getInt(REMINDERS_INDEX_EVENT_ID)
+                    val reminderMinutes: Int = cursor.getInt(REMINDERS_INDEX_MINUTES)
+                    val startTimes: List<Long>? = eventMap.get(eventId)
                     if (startTimes != null) {
-                        for (Long startTime : startTimes) {
-                            long alarmTime = startTime -
-                                    reminderMinutes * DateUtils.MINUTE_IN_MILLIS;
+                        for (startTime in startTimes) {
+                            val alarmTime: Long = startTime -
+                                reminderMinutes * DateUtils.MINUTE_IN_MILLIS
                             if (alarmTime > currentMillis && alarmTime < nextAlarmTime) {
-                                nextAlarmTime = alarmTime;
-                                nextAlarmEventId = eventId;
+                                nextAlarmTime = alarmTime
+                                nextAlarmEventId = eventId
                             }
-
                             if (Log.isLoggable(TAG, Log.DEBUG)) {
-                                timeObj.set(alarmTime);
-                                StringBuilder msg = new StringBuilder();
-                                msg.append("Reminders cursor result -- eventId:").append(eventId);
-                                msg.append(", startTime:").append(startTime);
-                                msg.append(", minutes:").append(reminderMinutes);
-                                msg.append(", alarmTime:").append(alarmTime);
+                                timeObj.set(alarmTime)
+                                val msg = StringBuilder()
+                                msg.append("Reminders cursor result -- eventId:").append(eventId)
+                                msg.append(", startTime:").append(startTime)
+                                msg.append(", minutes:").append(reminderMinutes)
+                                msg.append(", alarmTime:").append(alarmTime)
                                 msg.append(" (").append(timeObj.format("%a, %b %d, %Y %I:%M%P"))
-                                        .append(")");
-                                Log.d(TAG, msg.toString());
+                                    .append(")")
+                                Log.d(TAG, msg.toString())
                             }
                         }
                     }
                 }
             } finally {
                 if (cursor != null) {
-                    cursor.close();
+                    cursor.close()
                 }
             }
         }
 
         // Schedule the alarm for the next reminder time.
         if (nextAlarmTime < Long.MAX_VALUE) {
-            scheduleAlarm(context, nextAlarmEventId, nextAlarmTime, currentMillis, alarmManager);
+            scheduleAlarm(
+                context,
+                nextAlarmEventId.toLong(),
+                nextAlarmTime,
+                currentMillis,
+                alarmManager
+            )
         }
     }
 
@@ -287,25 +310,32 @@ public class AlarmScheduler {
      * alarm time with a slight delay (to account for the possible duplicate broadcast
      * from the provider).
      */
-    private static void scheduleAlarm(Context context, long eventId, long alarmTime,
-            long currentMillis, AlarmManagerInterface alarmManager) {
+    @JvmStatic private fun scheduleAlarm(
+        context: Context,
+        eventId: Long,
+        alarmTimeInput: Long,
+        currentMillis: Long,
+        alarmManager: AlarmManagerInterface
+    ) {
         // Max out the alarm time to 1 day out, so an alert for an event far in the future
         // (not present in our event query results for a limited range) can only be at
         // most 1 day late.
-        long maxAlarmTime = currentMillis + MAX_ALARM_ELAPSED_MS;
+        var alarmTime = alarmTimeInput
+        val maxAlarmTime = currentMillis + MAX_ALARM_ELAPSED_MS
         if (alarmTime > maxAlarmTime) {
-            alarmTime = maxAlarmTime;
+            alarmTime = maxAlarmTime
         }
 
         // Add a slight delay (see comments on the member var).
-        alarmTime += ALARM_DELAY_MS;
-
+        alarmTime += ALARM_DELAY_MS.toLong()
         if (AlertService.DEBUG) {
-            Time time = new Time();
-            time.set(alarmTime);
-            String schedTime = time.format("%a, %b %d, %Y %I:%M%P");
-            Log.d(TAG, "Scheduling alarm for EVENT_REMINDER_APP broadcast for event " + eventId
-                    + " at " + alarmTime + " (" + schedTime + ")");
+            val time = Time()
+            time.set(alarmTime)
+            val schedTime: String = time.format("%a, %b %d, %Y %I:%M%P")
+            Log.d(
+                TAG, "Scheduling alarm for EVENT_REMINDER_APP broadcast for event " + eventId +
+                    " at " + alarmTime + " (" + schedTime + ")"
+            )
         }
 
         // Schedule an EVENT_REMINDER_APP broadcast with AlarmManager.  The extra is
@@ -313,10 +343,10 @@ public class AlarmScheduler {
         // so this scheduling will still overwrite the alarm that was previously pending.
         // Note that the 'setClass' is required, because otherwise it seems the broadcast
         // can be eaten by other apps and we somehow may never receive it.
-        Intent intent = new Intent(AlertReceiver.EVENT_REMINDER_APP_ACTION);
-        intent.setClass(context, AlertReceiver.class);
-        intent.putExtra(CalendarContract.CalendarAlerts.ALARM_TIME, alarmTime);
-        PendingIntent pi = PendingIntent.getBroadcast(context, 0, intent, 0);
-        alarmManager.set(AlarmManager.RTC_WAKEUP, alarmTime, pi);
+        val intent = Intent(AlertReceiver.EVENT_REMINDER_APP_ACTION)
+        intent.setClass(context, AlertReceiver::class.java)
+        intent.putExtra(CalendarContract.CalendarAlerts.ALARM_TIME, alarmTime)
+        val pi: PendingIntent = PendingIntent.getBroadcast(context, 0, intent, 0)
+        alarmManager.set(AlarmManager.RTC_WAKEUP, alarmTime, pi)
     }
 }
