@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,142 +13,138 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.android.calendar
 
-package com.android.calendar;
+import android.content.AsyncQueryHandler
+import android.content.ContentResolver
+import android.content.ContentValues
+import android.content.Context
+import android.content.SharedPreferences
+import android.database.Cursor
+import android.os.Looper
+import android.provider.CalendarContract.CalendarCache
+import android.text.TextUtils
+import android.text.format.DateUtils
+import android.text.format.Time
+import android.util.Log
 
-import android.content.AsyncQueryHandler;
-import android.content.ContentResolver;
-import android.content.ContentValues;
-import android.content.Context;
-import android.content.SharedPreferences;
-import android.database.Cursor;
-import android.os.Looper;
-import android.provider.CalendarContract.CalendarCache;
-import android.text.TextUtils;
-import android.text.format.DateUtils;
-import android.text.format.Time;
-import android.util.Log;
-
-import java.util.Formatter;
-import java.util.HashSet;
-import java.util.Locale;
+import java.util.Formatter
+import java.util.HashSet
+import java.util.Locale
 
 /**
  * A class containing utility methods related to Calendar apps.
  *
  * This class is expected to move into the app framework eventually.
  */
-public class CalendarUtils {
-    private static final boolean DEBUG = false;
-    private static final String TAG = "CalendarUtils";
+class CalendarUtils {
+
+    companion object {
+        private const val DEBUG = false
+        private const val TAG = "CalendarUtils"
+
+        /**
+         * A helper method for writing a boolean value to the preferences
+         * asynchronously.
+         *
+         * @param context A context with access to the correct preferences
+         * @param key The preference to write to
+         * @param value The value to write
+         */
+        @JvmStatic
+        fun setSharedPreference(prefs: SharedPreferences, key: String?, value: Boolean) {
+            val editor: SharedPreferences.Editor = prefs.edit()
+            editor.putBoolean(key, value)
+            editor.apply()
+        }
+
+        /** Return a properly configured SharedPreferences instance  */
+        @JvmStatic
+        fun getSharedPreferences(context: Context, prefsName: String?): SharedPreferences {
+            return context.getSharedPreferences(prefsName, Context.MODE_PRIVATE)
+        }
+
+        /**
+         * A helper method for writing a String value to the preferences
+         * asynchronously.
+         *
+         * @param context A context with access to the correct preferences
+         * @param key The preference to write to
+         * @param value The value to write
+         */
+        @JvmStatic
+        fun setSharedPreference(prefs: SharedPreferences, key: String?, value: String?) {
+            val editor: SharedPreferences.Editor = prefs.edit()
+            editor.putString(key, value)
+            editor.apply()
+        }
+    }
 
     /**
      * This class contains methods specific to reading and writing time zone
      * values.
      */
-    public static class TimeZoneUtils {
-        private static final String[] TIMEZONE_TYPE_ARGS = { CalendarCache.KEY_TIMEZONE_TYPE };
-        private static final String[] TIMEZONE_INSTANCES_ARGS =
-                { CalendarCache.KEY_TIMEZONE_INSTANCES };
-        public static final String[] CALENDAR_CACHE_POJECTION = {
-                CalendarCache.KEY, CalendarCache.VALUE
-        };
-
-        private static StringBuilder mSB = new StringBuilder(50);
-        private static Formatter mF = new Formatter(mSB, Locale.getDefault());
-        private volatile static boolean mFirstTZRequest = true;
-        private volatile static boolean mTZQueryInProgress = false;
-
-        private volatile static boolean mUseHomeTZ = false;
-        private volatile static String mHomeTZ = Time.getCurrentTimezone();
-
-        private static HashSet<Runnable> mTZCallbacks = new HashSet<Runnable>();
-        private static int mToken = 1;
-        private static AsyncTZHandler mHandler;
-
-        // The name of the shared preferences file. This name must be maintained for historical
-        // reasons, as it's what PreferenceManager assigned the first time the file was created.
-        private final String mPrefsName;
-
-        /**
-         * This is the key used for writing whether or not a home time zone should
-         * be used in the Calendar app to the Calendar Preferences.
-         */
-        public static final String KEY_HOME_TZ_ENABLED = "preferences_home_tz_enabled";
-        /**
-         * This is the key used for writing the time zone that should be used if
-         * home time zones are enabled for the Calendar app.
-         */
-        public static final String KEY_HOME_TZ = "preferences_home_tz";
-
+    class TimeZoneUtils
+    /**
+     * The name of the file where the shared prefs for Calendar are stored
+     * must be provided. All activities within an app should provide the
+     * same preferences name or behavior may become erratic.
+     *
+     * @param prefsName
+     */(  // The name of the shared preferences file. This name must be maintained for historical
+            // reasons, as it's what PreferenceManager assigned the first time the file was created.
+            private val mPrefsName: String) {
         /**
          * This is a helper class for handling the async queries and updates for the
          * time zone settings in Calendar.
          */
-        private class AsyncTZHandler extends AsyncQueryHandler {
-            public AsyncTZHandler(ContentResolver cr) {
-                super(cr);
-            }
-
-            @Override
-            protected void onQueryComplete(int token, Object cookie, Cursor cursor) {
-                synchronized (mTZCallbacks) {
+        private inner class AsyncTZHandler(cr: ContentResolver?) : AsyncQueryHandler(cr) {
+            protected override fun onQueryComplete(token: Int, cookie: Any?, cursor: Cursor?) {
+                synchronized(mTZCallbacks) {
                     if (cursor == null) {
-                        mTZQueryInProgress = false;
-                        mFirstTZRequest = true;
-                        return;
+                        mTZQueryInProgress = false
+                        mFirstTZRequest = true
+                        return
                     }
-
-                    boolean writePrefs = false;
+                    var writePrefs = false
                     // Check the values in the db
-                    int keyColumn = cursor.getColumnIndexOrThrow(CalendarCache.KEY);
-                    int valueColumn = cursor.getColumnIndexOrThrow(CalendarCache.VALUE);
-                    while(cursor.moveToNext()) {
-                        String key = cursor.getString(keyColumn);
-                        String value = cursor.getString(valueColumn);
+                    val keyColumn: Int = cursor.getColumnIndexOrThrow(CalendarCache.KEY)
+                    val valueColumn: Int = cursor.getColumnIndexOrThrow(CalendarCache.VALUE)
+                    while (cursor.moveToNext()) {
+                        val key: String = cursor.getString(keyColumn)
+                        val value: String = cursor.getString(valueColumn)
                         if (TextUtils.equals(key, CalendarCache.KEY_TIMEZONE_TYPE)) {
-                            boolean useHomeTZ = !TextUtils.equals(
-                                    value, CalendarCache.TIMEZONE_TYPE_AUTO);
+                            val useHomeTZ: Boolean = !TextUtils.equals(
+                                    value, CalendarCache.TIMEZONE_TYPE_AUTO)
                             if (useHomeTZ != mUseHomeTZ) {
-                                writePrefs = true;
-                                mUseHomeTZ = useHomeTZ;
+                                writePrefs = true
+                                mUseHomeTZ = useHomeTZ
                             }
                         } else if (TextUtils.equals(
-                                key, CalendarCache.KEY_TIMEZONE_INSTANCES_PREVIOUS)) {
+                                        key, CalendarCache.KEY_TIMEZONE_INSTANCES_PREVIOUS)) {
                             if (!TextUtils.isEmpty(value) && !TextUtils.equals(mHomeTZ, value)) {
-                                writePrefs = true;
-                                mHomeTZ = value;
+                                writePrefs = true
+                                mHomeTZ = value
                             }
                         }
                     }
-                    cursor.close();
+                    cursor.close()
                     if (writePrefs) {
-                        SharedPreferences prefs = getSharedPreferences((Context)cookie, mPrefsName);
+                        val prefs: SharedPreferences =
+                        getSharedPreferences(cookie as Context, mPrefsName)
                         // Write the prefs
-                        setSharedPreference(prefs, KEY_HOME_TZ_ENABLED, mUseHomeTZ);
-                        setSharedPreference(prefs, KEY_HOME_TZ, mHomeTZ);
+                        setSharedPreference(prefs, KEY_HOME_TZ_ENABLED, mUseHomeTZ)
+                        setSharedPreference(prefs, KEY_HOME_TZ, mHomeTZ)
                     }
-
-                    mTZQueryInProgress = false;
-                    for (Runnable callback : mTZCallbacks) {
+                    mTZQueryInProgress = false
+                    for (callback in mTZCallbacks) {
                         if (callback != null) {
-                            callback.run();
+                            callback.run()
                         }
                     }
-                    mTZCallbacks.clear();
+                    mTZCallbacks.clear()
                 }
             }
-        }
-
-        /**
-         * The name of the file where the shared prefs for Calendar are stored
-         * must be provided. All activities within an app should provide the
-         * same preferences name or behavior may become erratic.
-         *
-         * @param prefsName
-         */
-        public TimeZoneUtils(String prefsName) {
-            mPrefsName = prefsName;
         }
 
         /**
@@ -157,31 +153,31 @@ public class CalendarUtils {
          * This formats a date/time range using Calendar's time zone and the
          * local conventions for the region of the device.
          *
-         * If the {@link DateUtils#FORMAT_UTC} flag is used it will pass in
+         * If the [DateUtils.FORMAT_UTC] flag is used it will pass in
          * the UTC time zone instead.
          *
          * @param context the context is required only if the time is shown
          * @param startMillis the start time in UTC milliseconds
          * @param endMillis the end time in UTC milliseconds
          * @param flags a bit mask of options See
-         * {@link DateUtils#formatDateRange(Context, Formatter, long, long, int, String) formatDateRange}
+         * [formatDateRange][DateUtils.formatDateRange]
          * @return a string containing the formatted date/time range.
          */
-        public String formatDateRange(Context context, long startMillis,
-                long endMillis, int flags) {
-            String date;
-            String tz;
-            if ((flags & DateUtils.FORMAT_UTC) != 0) {
-                tz = Time.TIMEZONE_UTC;
+        fun formatDateRange(context: Context, startMillis: Long,
+                            endMillis: Long, flags: Int): String {
+            var date: String
+            val tz: String
+            tz = if (flags and DateUtils.FORMAT_UTC !== 0) {
+                Time.TIMEZONE_UTC
             } else {
-                tz = getTimeZone(context, null);
+                getTimeZone(context, null)
             }
-            synchronized (mSB) {
-                mSB.setLength(0);
+            synchronized(mSB) {
+                mSB.setLength(0)
                 date = DateUtils.formatDateRange(context, mF, startMillis, endMillis, flags,
-                        tz).toString();
+                        tz).toString()
             }
-            return date;
+            return date
         }
 
         /**
@@ -189,66 +185,65 @@ public class CalendarUtils {
          *
          * Updates the home time zone in the db asynchronously and updates
          * the local cache. Sending a time zone of
-         * {@link CalendarCache#TIMEZONE_TYPE_AUTO} will cause it to be set
+         * [CalendarCache.TIMEZONE_TYPE_AUTO] will cause it to be set
          * to the device's time zone. null or empty tz will be ignored.
          *
          * @param context The calling activity
          * @param timeZone The time zone to set Calendar to, or
-         * {@link CalendarCache#TIMEZONE_TYPE_AUTO}
+         * [CalendarCache.TIMEZONE_TYPE_AUTO]
          */
-        public void setTimeZone(Context context, String timeZone) {
+        fun setTimeZone(context: Context, timeZone: String) {
             if (TextUtils.isEmpty(timeZone)) {
                 if (DEBUG) {
-                    Log.d(TAG, "Empty time zone, nothing to be done.");
+                    Log.d(TAG, "Empty time zone, nothing to be done.")
                 }
-                return;
+                return
             }
-            boolean updatePrefs = false;
-            synchronized (mTZCallbacks) {
+            var updatePrefs = false
+            synchronized(mTZCallbacks) {
                 if (CalendarCache.TIMEZONE_TYPE_AUTO.equals(timeZone)) {
                     if (mUseHomeTZ) {
-                        updatePrefs = true;
+                        updatePrefs = true
                     }
-                    mUseHomeTZ = false;
+                    mUseHomeTZ = false
                 } else {
                     if (!mUseHomeTZ || !TextUtils.equals(mHomeTZ, timeZone)) {
-                        updatePrefs = true;
+                        updatePrefs = true
                     }
-                    mUseHomeTZ = true;
-                    mHomeTZ = timeZone;
+                    mUseHomeTZ = true
+                    mHomeTZ = timeZone
                 }
             }
             if (updatePrefs) {
                 // Write the prefs
-                SharedPreferences prefs = getSharedPreferences(context, mPrefsName);
-                setSharedPreference(prefs, KEY_HOME_TZ_ENABLED, mUseHomeTZ);
-                setSharedPreference(prefs, KEY_HOME_TZ, mHomeTZ);
+                val prefs: SharedPreferences = getSharedPreferences(context, mPrefsName)
+                setSharedPreference(prefs, KEY_HOME_TZ_ENABLED, mUseHomeTZ)
+                setSharedPreference(prefs, KEY_HOME_TZ, mHomeTZ)
 
                 // Update the db
-                ContentValues values = new ContentValues();
+                val values = ContentValues()
                 if (mHandler != null) {
-                    mHandler.cancelOperation(mToken);
+                    mHandler?.cancelOperation(mToken)
                 }
-
-                mHandler = new AsyncTZHandler(context.getContentResolver());
+                mHandler = AsyncTZHandler(context.getContentResolver())
 
                 // skip 0 so query can use it
                 if (++mToken == 0) {
-                    mToken = 1;
+                    mToken = 1
                 }
 
                 // Write the use home tz setting
-                values.put(CalendarCache.VALUE, mUseHomeTZ ? CalendarCache.TIMEZONE_TYPE_HOME
-                        : CalendarCache.TIMEZONE_TYPE_AUTO);
-                mHandler.startUpdate(mToken, null, CalendarCache.URI, values, "key=?",
-                        TIMEZONE_TYPE_ARGS);
+                values.put(CalendarCache.VALUE, if (mUseHomeTZ) CalendarCache.TIMEZONE_TYPE_HOME
+                           else CalendarCache.TIMEZONE_TYPE_AUTO)
+                mHandler?.startUpdate(mToken, null, CalendarCache.URI, values, "key=?",
+                        TIMEZONE_TYPE_ARGS)
 
                 // If using a home tz write it to the db
                 if (mUseHomeTZ) {
-                    ContentValues values2 = new ContentValues();
-                    values2.put(CalendarCache.VALUE, mHomeTZ);
-                    mHandler.startUpdate(mToken, null, CalendarCache.URI, values2,
-                            "key=?", TIMEZONE_INSTANCES_ARGS);
+                    val values2 = ContentValues()
+                    values2.put(CalendarCache.VALUE, mHomeTZ)
+                    mHandler?.startUpdate(mToken, null, CalendarCache.URI, values2,
+                            "key=?", TIMEZONE_INSTANCES_ARGS)
                 }
             }
         }
@@ -267,34 +262,34 @@ public class CalendarUtils {
          * @param callback The runnable that should execute if a query returns new values
          * @return The string value representing the time zone Calendar should display
          */
-        public String getTimeZone(Context context, Runnable callback) {
-            synchronized (mTZCallbacks){
+        fun getTimeZone(context: Context, callback: Runnable?): String {
+            synchronized(mTZCallbacks) {
                 if (mFirstTZRequest) {
-                    SharedPreferences prefs = getSharedPreferences(context, mPrefsName);
-                    mUseHomeTZ = prefs.getBoolean(KEY_HOME_TZ_ENABLED, false);
-                    mHomeTZ = prefs.getString(KEY_HOME_TZ, Time.getCurrentTimezone());
+                    val prefs: SharedPreferences = getSharedPreferences(context, mPrefsName)
+                    mUseHomeTZ = prefs.getBoolean(KEY_HOME_TZ_ENABLED, false)
+                    mHomeTZ = prefs.getString(KEY_HOME_TZ, Time.getCurrentTimezone()) ?: String()
 
                     // Only check content resolver if we have a looper to attach to use
                     if (Looper.myLooper() != null) {
-                        mTZQueryInProgress = true;
-                        mFirstTZRequest = false;
+                        mTZQueryInProgress = true
+                        mFirstTZRequest = false
 
                         // When the async query returns it should synchronize on
                         // mTZCallbacks, update mUseHomeTZ, mHomeTZ, and the
                         // preferences, set mTZQueryInProgress to false, and call all
                         // the runnables in mTZCallbacks.
                         if (mHandler == null) {
-                            mHandler = new AsyncTZHandler(context.getContentResolver());
+                            mHandler = AsyncTZHandler(context.getContentResolver())
                         }
-                        mHandler.startQuery(0, context, CalendarCache.URI, CALENDAR_CACHE_POJECTION,
-                                null, null, null);
+                        mHandler?.startQuery(0, context, CalendarCache.URI,
+                                             CALENDAR_CACHE_POJECTION, null, null, null)
                     }
                 }
-                if (mTZQueryInProgress) {
-                    mTZCallbacks.add(callback);
+                if (mTZQueryInProgress && callback != null) {
+                    mTZCallbacks.add(callback)
                 }
             }
-            return mUseHomeTZ ? mHomeTZ : Time.getCurrentTimezone();
+            return if (mUseHomeTZ) mHomeTZ else Time.getCurrentTimezone()
         }
 
         /**
@@ -305,52 +300,55 @@ public class CalendarUtils {
          *
          * @param context The calling activity
          * @param callback The runnable that should execute if a query returns
-         *            new values
+         * new values
          */
-        public void forceDBRequery(Context context, Runnable callback) {
-            synchronized (mTZCallbacks){
+        fun forceDBRequery(context: Context, callback: Runnable) {
+            synchronized(mTZCallbacks) {
                 if (mTZQueryInProgress) {
-                    mTZCallbacks.add(callback);
-                    return;
+                    mTZCallbacks.add(callback)
+                    return
                 }
-                mFirstTZRequest = true;
-                getTimeZone(context, callback);
+                mFirstTZRequest = true
+                getTimeZone(context, callback)
             }
         }
+
+        companion object {
+            private val TIMEZONE_TYPE_ARGS = arrayOf<String>(CalendarCache.KEY_TIMEZONE_TYPE)
+            private val TIMEZONE_INSTANCES_ARGS =
+            arrayOf<String>(CalendarCache.KEY_TIMEZONE_INSTANCES)
+            val CALENDAR_CACHE_POJECTION = arrayOf<String>(
+                    CalendarCache.KEY, CalendarCache.VALUE
+            )
+            private val mSB: StringBuilder = StringBuilder(50)
+            private val mF: Formatter = Formatter(mSB, Locale.getDefault())
+
+            @Volatile
+            private var mFirstTZRequest = true
+
+            @Volatile
+            private var mTZQueryInProgress = false
+
+            @Volatile
+            private var mUseHomeTZ = false
+
+            @Volatile
+            private var mHomeTZ: String = Time.getCurrentTimezone()
+            private val mTZCallbacks: HashSet<Runnable> = HashSet<Runnable>()
+            private var mToken = 1
+            private var mHandler: AsyncTZHandler? = null
+
+            /**
+             * This is the key used for writing whether or not a home time zone should
+             * be used in the Calendar app to the Calendar Preferences.
+             */
+            const val KEY_HOME_TZ_ENABLED = "preferences_home_tz_enabled"
+
+            /**
+             * This is the key used for writing the time zone that should be used if
+             * home time zones are enabled for the Calendar app.
+             */
+            const val KEY_HOME_TZ = "preferences_home_tz"
+        }
     }
-
-        /**
-         * A helper method for writing a String value to the preferences
-         * asynchronously.
-         *
-         * @param context A context with access to the correct preferences
-         * @param key The preference to write to
-         * @param value The value to write
-         */
-        public static void setSharedPreference(SharedPreferences prefs, String key, String value) {
-//            SharedPreferences prefs = getSharedPreferences(context);
-            SharedPreferences.Editor editor = prefs.edit();
-            editor.putString(key, value);
-            editor.apply();
-        }
-
-        /**
-         * A helper method for writing a boolean value to the preferences
-         * asynchronously.
-         *
-         * @param context A context with access to the correct preferences
-         * @param key The preference to write to
-         * @param value The value to write
-         */
-        public static void setSharedPreference(SharedPreferences prefs, String key, boolean value) {
-//            SharedPreferences prefs = getSharedPreferences(context, prefsName);
-            SharedPreferences.Editor editor = prefs.edit();
-            editor.putBoolean(key, value);
-            editor.apply();
-        }
-
-        /** Return a properly configured SharedPreferences instance */
-        public static SharedPreferences getSharedPreferences(Context context, String prefsName) {
-            return context.getSharedPreferences(prefsName, Context.MODE_PRIVATE);
-        }
 }
