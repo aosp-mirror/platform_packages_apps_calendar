@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,29 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.android.calendar.alerts
 
-package com.android.calendar.alerts;
+import com.android.calendar.alerts.AlertService.NotificationWrapper
 
-import com.android.calendar.alerts.AlertService.NotificationWrapper;
-
-public abstract class NotificationMgr {
-    public abstract void notify(int id, NotificationWrapper notification);
-    public abstract void cancel(int id);
+abstract class NotificationMgr {
+    abstract fun notify(id: Int, notification: NotificationWrapper?)
+    abstract fun cancel(id: Int)
 
     /**
      * Don't actually use the notification framework's cancelAll since the SyncAdapter
      * might post notifications and we don't want to affect those.
      */
-    public void cancelAll() {
-        cancelAllBetween(0, AlertService.MAX_NOTIFICATIONS);
+    fun cancelAll() {
+        cancelAllBetween(0, AlertService.MAX_NOTIFICATIONS)
     }
 
     /**
      * Cancels IDs between the specified bounds, inclusively.
      */
-    public void cancelAllBetween(int from, int to) {
-        for (int i = from; i <= to; i++) {
-            cancel(i);
+    fun cancelAllBetween(from: Int, to: Int) {
+        for (i in from..to) {
+            cancel(i)
         }
     }
 }

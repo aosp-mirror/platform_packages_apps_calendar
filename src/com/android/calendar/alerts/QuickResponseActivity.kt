@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,23 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.android.calendar.alerts
 
-package com.android.calendar.alerts;
-
-import android.app.ListActivity;
-import android.content.ActivityNotFoundException;
-import android.content.Intent;
-import android.os.Bundle;
-import android.view.View;
-import android.widget.AdapterView;
-import android.widget.AdapterView.OnItemClickListener;
-import android.widget.ArrayAdapter;
-import android.widget.Toast;
-
-import com.android.calendar.R;
-import com.android.calendar.Utils;
-
-import java.util.Arrays;
+import android.app.ListActivity
+import android.content.Intent
+import android.os.Bundle
+import android.view.View
+import android.widget.AdapterView
+import android.widget.AdapterView.OnItemClickListener
+import android.widget.ArrayAdapter
+import com.android.calendar.R
+import com.android.calendar.Utils
+import java.util.Arrays
 
 /**
  * Activity which displays when the user wants to email guests from notifications.
@@ -38,71 +33,64 @@ import java.util.Arrays;
  * to minimize typing.
  *
  */
-public class QuickResponseActivity extends ListActivity implements OnItemClickListener {
-    private static final String TAG = "QuickResponseActivity";
-    public static final String EXTRA_EVENT_ID = "eventId";
-
-    private String[] mResponses = null;
-    static long mEventId;
-
+class QuickResponseActivity : ListActivity(), OnItemClickListener {
+    private var mResponses: Array<String?>? = null
     @Override
-    protected void onCreate(Bundle icicle) {
-        super.onCreate(icicle);
-
-        Intent intent = getIntent();
+    protected override fun onCreate(icicle: Bundle?) {
+        super.onCreate(icicle)
+        val intent: Intent = getIntent()
         if (intent == null) {
-            finish();
-            return;
+            finish()
+            return
         }
-
-        mEventId = intent.getLongExtra(EXTRA_EVENT_ID, -1);
-        if (mEventId == -1) {
-            finish();
-            return;
+        mEventId = intent.getLongExtra(EXTRA_EVENT_ID, -1)
+        if (mEventId == -1L) {
+            finish()
+            return
         }
 
         // Set listener
-        getListView().setOnItemClickListener(QuickResponseActivity.this);
+        getListView().setOnItemClickListener(this@QuickResponseActivity)
 
         // Populate responses
-        String[] responses = Utils.getQuickResponses(this);
-        Arrays.sort(responses);
+        val responses: Array<String> = Utils.getQuickResponses(this)
+        Arrays.sort(responses)
 
         // Add "Custom response..."
-        mResponses = new String[responses.length + 1];
-        int i;
-        for (i = 0; i < responses.length; i++) {
-            mResponses[i] = responses[i];
+        mResponses = arrayOfNulls(responses.size + 1)
+        var i: Int
+        i = 0
+        while (i < responses.size) {
+            mResponses!![i] = responses[i]
+            i++
         }
-        mResponses[i] = getResources().getString(R.string.quick_response_custom_msg);
-
-        setListAdapter(new ArrayAdapter<String>(this, R.layout.quick_response_item, mResponses));
+        mResponses!![i] = getResources().getString(R.string.quick_response_custom_msg)
+        setListAdapter(ArrayAdapter<String>(this, R.layout.quick_response_item,
+                                                mResponses as Array<String?>))
     }
 
     // implements OnItemClickListener
     @Override
-    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-
-        String body = null;
-        if (mResponses != null && position < mResponses.length - 1) {
-            body = mResponses[position];
+    override fun onItemClick(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+        var body: String? = null
+        if (mResponses != null && position < mResponses!!.size - 1) {
+            body = mResponses!![position]
         }
 
         // Start thread to query provider and send mail
-        new QueryThread(mEventId, body).start();
+        QueryThread(mEventId, body).start()
     }
 
-    private class QueryThread extends Thread {
-        long mEventId;
-        String mBody;
-
-        QueryThread(long eventId, String body) {
-            mEventId = eventId;
-            mBody = body;
-        }
-
+    private inner class QueryThread internal constructor(var mEventId: Long, var mBody: String?) :
+        Thread() {
         @Override
-        public void run() {
+        override fun run() {
         }
+    }
+
+    companion object {
+        private const val TAG = "QuickResponseActivity"
+        const val EXTRA_EVENT_ID = "eventId"
+        var mEventId: Long = 0
     }
 }
