@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,72 +13,46 @@
  * See the License for the specific language governing permissions and
  * limitations under the License
  */
+package com.android.calendar.alerts
 
-package com.android.calendar.alerts;
-
-import android.content.BroadcastReceiver;
-import android.content.ContentResolver;
-import android.content.ContentValues;
-import android.content.Context;
-import android.content.Intent;
-import android.content.SharedPreferences;
-import android.database.Cursor;
-import android.net.Uri;
-import android.os.AsyncTask;
-import android.os.Bundle;
-import android.provider.CalendarContract.CalendarAlerts;
-import android.provider.CalendarContract.Calendars;
-import android.provider.CalendarContract.Events;
-import android.util.Log;
-import android.util.Pair;
-
-import com.android.calendar.R;
-
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.os.AsyncTask
+import android.util.Pair
+import java.util.HashSet
+import java.util.List
 
 /**
  * Utilities for managing notification dismissal across devices.
  */
-public class GlobalDismissManager extends BroadcastReceiver {
-    public static class AlarmId {
-        public long mEventId;
-        public long mStart;
-
-        public AlarmId(long id, long start) {
-            mEventId = id;
-            mStart = start;
-        }
-    }
-
-    /**
-     * Globally dismiss notifications that are backed by the same events.
-     *
-     * @param context application context
-     * @param alarmIds Unique identifiers for events that have been dismissed by the user.
-     * @return true if notification_sender_id is available
-     */
-    public static void dismissGlobally(Context context, List<AlarmId> alarmIds) {
-        Set<Long> eventIds = new HashSet<Long>(alarmIds.size());
-        for (AlarmId alarmId: alarmIds) {
-            eventIds.add(alarmId.mEventId);
-        }
-    }
+class GlobalDismissManager : BroadcastReceiver() {
+    class AlarmId(var mEventId: Long, var mStart: Long)
 
     @Override
     @SuppressWarnings("unchecked")
-    public void onReceive(Context context, Intent intent) {
-        new AsyncTask<Pair<Context, Intent>, Void, Void>() {
+    override fun onReceive(context: Context?, intent: Intent?) {
+        object : AsyncTask<Pair<Context?, Intent?>?, Void?, Void?>() {
             @Override
-            protected Void doInBackground(Pair<Context, Intent>... params) {
-                return null;
+            protected override fun doInBackground(vararg params: Pair<Context?, Intent?>?): Void? {
+                return null
             }
-        }.execute(new Pair<Context, Intent>(context, intent));
+        }.execute(Pair<Context?, Intent?>(context, intent))
+    }
+
+    companion object {
+        /**
+         * Globally dismiss notifications that are backed by the same events.
+         *
+         * @param context application context
+         * @param alarmIds Unique identifiers for events that have been dismissed by the user.
+         * @return true if notification_sender_id is available
+         */
+        @JvmStatic fun dismissGlobally(context: Context?, alarmIds: List<AlarmId>) {
+            val eventIds: HashSet<Long> = HashSet<Long>(alarmIds.size)
+            for (alarmId in alarmIds) {
+                eventIds.add(alarmId.mEventId)
+            }
+        }
     }
 }
