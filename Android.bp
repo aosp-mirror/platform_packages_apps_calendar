@@ -18,9 +18,10 @@ license {
 // Include res dir from chips
 exclude_srcsd = [
     "src/**/calendar/alerts/AlarmManagerInterface.java",
+    "src/**/calendar/alerts/AlarmScheduler.java",
     "src/**/calendar/alerts/AlertReceiver.java",
-    "src/**/calendar/alerts/AlertUtils.java",
     "src/**/calendar/alerts/AlertService.java",
+    "src/**/calendar/alerts/AlertUtils.java",
     "src/**/calendar/DayOfMonthDrawable.java",
 ]
 
@@ -28,6 +29,7 @@ exclude_srcsm = [
     "src/**/calendar/AsyncQueryServiceHelper.java",
     "src/**/calendar/CalendarApplication.java",
     "src/**/calendar/CalendarBackupAgent.java",
+    "src/**/calendar/CalendarUtils.java",
     "src/**/calendar/EventGeometry.java",
     "src/**/calendar/GoogleCalendarUriIntentFilter.java",
     "src/**/calendar/MultiStateButton.java",
