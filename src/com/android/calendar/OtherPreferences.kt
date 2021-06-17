@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,184 +13,129 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.android.calendar
 
-package com.android.calendar;
+import android.app.Activity
+import android.app.Dialog
+import android.app.TimePickerDialog
+import android.content.ComponentName
+import android.content.Intent
+import android.content.SharedPreferences
+import android.os.Bundle
+import android.preference.CheckBoxPreference
+import android.preference.ListPreference
+import android.preference.Preference
+import android.preference.Preference.OnPreferenceChangeListener
+import android.preference.PreferenceFragment
+import android.preference.PreferenceManager
+import android.preference.PreferenceScreen
+import android.text.format.DateFormat
+import android.text.format.Time
+import android.util.Log
+import android.widget.TimePicker
 
-import android.app.Activity;
-import android.app.Dialog;
-import android.app.TimePickerDialog;
-import android.content.ComponentName;
-import android.content.Intent;
-import android.content.SharedPreferences;
-import android.os.Bundle;
-import android.preference.CheckBoxPreference;
-import android.preference.ListPreference;
-import android.preference.Preference;
-import android.preference.Preference.OnPreferenceChangeListener;
-import android.preference.PreferenceFragment;
-import android.preference.PreferenceManager;
-import android.preference.PreferenceScreen;
-import android.text.format.DateFormat;
-import android.text.format.Time;
-import android.util.Log;
-import android.widget.TimePicker;
-
-public class OtherPreferences extends PreferenceFragment  implements OnPreferenceChangeListener{
-    private static final String TAG = "CalendarOtherPreferences";
-
-    // The name of the shared preferences file. This name must be maintained for
-    // historical reasons, as it's what PreferenceManager assigned the first
-    // time the file was created.
-    static final String SHARED_PREFS_NAME = "com.android.calendar_preferences";
-
-    // Must be the same keys that are used in the other_preferences.xml file.
-    public static final String KEY_OTHER_COPY_DB = "preferences_copy_db";
-    public static final String KEY_OTHER_QUIET_HOURS = "preferences_reminders_quiet_hours";
-    public static final String KEY_OTHER_REMINDERS_RESPONDED = "preferences_reminders_responded";
-    public static final String KEY_OTHER_QUIET_HOURS_START =
-            "preferences_reminders_quiet_hours_start";
-    public static final String KEY_OTHER_QUIET_HOURS_START_HOUR =
-            "preferences_reminders_quiet_hours_start_hour";
-    public static final String KEY_OTHER_QUIET_HOURS_START_MINUTE =
-            "preferences_reminders_quiet_hours_start_minute";
-    public static final String KEY_OTHER_QUIET_HOURS_END =
-            "preferences_reminders_quiet_hours_end";
-    public static final String KEY_OTHER_QUIET_HOURS_END_HOUR =
-            "preferences_reminders_quiet_hours_end_hour";
-    public static final String KEY_OTHER_QUIET_HOURS_END_MINUTE =
-            "preferences_reminders_quiet_hours_end_minute";
-    public static final String KEY_OTHER_1 = "preferences_tardis_1";
-
-    public static final int QUIET_HOURS_DEFAULT_START_HOUR = 22;
-    public static final int QUIET_HOURS_DEFAULT_START_MINUTE = 0;
-    public static final int QUIET_HOURS_DEFAULT_END_HOUR = 8;
-    public static final int QUIET_HOURS_DEFAULT_END_MINUTE = 0;
-
-    private static final int START_LISTENER = 1;
-    private static final int END_LISTENER = 2;
-    private static final String format24Hour = "%H:%M";
-    private static final String format12Hour = "%I:%M%P";
-
-    private Preference mCopyDb;
-    private CheckBoxPreference mQuietHours;
-    private Preference mQuietHoursStart;
-    private Preference mQuietHoursEnd;
-
-    private TimePickerDialog mTimePickerDialog;
-    private TimeSetListener mQuietHoursStartListener;
-    private TimePickerDialog mQuietHoursStartDialog;
-    private TimeSetListener mQuietHoursEndListener;
-    private TimePickerDialog mQuietHoursEndDialog;
-    private boolean mIs24HourMode;
-
-    public OtherPreferences() {
-    }
+class OtherPreferences : PreferenceFragment(), OnPreferenceChangeListener {
+    private var mCopyDb: Preference? = null
+    private var mQuietHours: CheckBoxPreference? = null
+    private var mQuietHoursStart: Preference? = null
+    private var mQuietHoursEnd: Preference? = null
+    private var mTimePickerDialog: TimePickerDialog? = null
+    private var mQuietHoursStartListener: TimeSetListener? = null
+    private var mQuietHoursStartDialog: TimePickerDialog? = null
+    private var mQuietHoursEndListener: TimeSetListener? = null
+    private var mQuietHoursEndDialog: TimePickerDialog? = null
+    private var mIs24HourMode = false
 
     @Override
-    public void onCreate(Bundle icicle) {
-        super.onCreate(icicle);
-        PreferenceManager manager = getPreferenceManager();
-        manager.setSharedPreferencesName(SHARED_PREFS_NAME);
-        SharedPreferences prefs = manager.getSharedPreferences();
-
-        addPreferencesFromResource(R.xml.other_preferences);
-        mCopyDb = findPreference(KEY_OTHER_COPY_DB);
-
-        Activity activity = getActivity();
+    override fun onCreate(icicle: Bundle?) {
+        super.onCreate(icicle)
+        val manager: PreferenceManager = getPreferenceManager()
+        manager.setSharedPreferencesName(SHARED_PREFS_NAME)
+        val prefs: SharedPreferences = manager.getSharedPreferences()
+        addPreferencesFromResource(R.xml.other_preferences)
+        mCopyDb = findPreference(KEY_OTHER_COPY_DB)
+        val activity: Activity = getActivity()
         if (activity == null) {
-            Log.d(TAG, "Activity was null");
+            Log.d(TAG, "Activity was null")
         }
-        mIs24HourMode = DateFormat.is24HourFormat(activity);
-
-        mQuietHours =
-                (CheckBoxPreference) findPreference(KEY_OTHER_QUIET_HOURS);
-
-        int startHour = prefs.getInt(KEY_OTHER_QUIET_HOURS_START_HOUR,
-                QUIET_HOURS_DEFAULT_START_HOUR);
-        int startMinute = prefs.getInt(KEY_OTHER_QUIET_HOURS_START_MINUTE,
-                QUIET_HOURS_DEFAULT_START_MINUTE);
-        mQuietHoursStart = findPreference(KEY_OTHER_QUIET_HOURS_START);
-        mQuietHoursStartListener = new TimeSetListener(START_LISTENER);
-        mQuietHoursStartDialog = new TimePickerDialog(
+        mIs24HourMode = DateFormat.is24HourFormat(activity)
+        mQuietHours = findPreference(KEY_OTHER_QUIET_HOURS) as CheckBoxPreference?
+        val startHour: Int = prefs.getInt(KEY_OTHER_QUIET_HOURS_START_HOUR,
+                QUIET_HOURS_DEFAULT_START_HOUR)
+        val startMinute: Int = prefs.getInt(KEY_OTHER_QUIET_HOURS_START_MINUTE,
+                QUIET_HOURS_DEFAULT_START_MINUTE)
+        mQuietHoursStart = findPreference(KEY_OTHER_QUIET_HOURS_START)
+        mQuietHoursStartListener = TimeSetListener(START_LISTENER)
+        mQuietHoursStartDialog = TimePickerDialog(
                 activity, mQuietHoursStartListener,
-                startHour, startMinute, mIs24HourMode);
-        mQuietHoursStart.setSummary(formatTime(startHour, startMinute));
-
-        int endHour = prefs.getInt(KEY_OTHER_QUIET_HOURS_END_HOUR,
-                QUIET_HOURS_DEFAULT_END_HOUR);
-        int endMinute = prefs.getInt(KEY_OTHER_QUIET_HOURS_END_MINUTE,
-                QUIET_HOURS_DEFAULT_END_MINUTE);
-        mQuietHoursEnd = findPreference(KEY_OTHER_QUIET_HOURS_END);
-        mQuietHoursEndListener = new TimeSetListener(END_LISTENER);
-        mQuietHoursEndDialog = new TimePickerDialog(
+                startHour, startMinute, mIs24HourMode)
+        mQuietHoursStart?.setSummary(formatTime(startHour, startMinute))
+        val endHour: Int = prefs.getInt(KEY_OTHER_QUIET_HOURS_END_HOUR,
+                QUIET_HOURS_DEFAULT_END_HOUR)
+        val endMinute: Int = prefs.getInt(KEY_OTHER_QUIET_HOURS_END_MINUTE,
+                QUIET_HOURS_DEFAULT_END_MINUTE)
+        mQuietHoursEnd = findPreference(KEY_OTHER_QUIET_HOURS_END)
+        mQuietHoursEndListener = TimeSetListener(END_LISTENER)
+        mQuietHoursEndDialog = TimePickerDialog(
                 activity, mQuietHoursEndListener,
-                endHour, endMinute, mIs24HourMode);
-        mQuietHoursEnd.setSummary(formatTime(endHour, endMinute));
+                endHour, endMinute, mIs24HourMode)
+        mQuietHoursEnd?.setSummary(formatTime(endHour, endMinute))
     }
 
     @Override
-    public boolean onPreferenceChange(Preference preference, Object objValue) {
-        return true;
+    override fun onPreferenceChange(preference: Preference?, objValue: Any?): Boolean {
+        return true
     }
 
     @Override
-    public boolean onPreferenceTreeClick(PreferenceScreen screen, Preference preference) {
-        if (preference == mCopyDb) {
-            Intent intent = new Intent(Intent.ACTION_MAIN);
-            intent.setComponent(new ComponentName("com.android.providers.calendar",
-                    "com.android.providers.calendar.CalendarDebugActivity"));
-            startActivity(intent);
-        } else if (preference == mQuietHoursStart) {
+    override fun onPreferenceTreeClick(screen: PreferenceScreen?, preference: Preference): Boolean {
+        if (preference === mCopyDb) {
+            val intent = Intent(Intent.ACTION_MAIN)
+            intent.setComponent(ComponentName("com.android.providers.calendar",
+                    "com.android.providers.calendar.CalendarDebugActivity"))
+            startActivity(intent)
+        } else if (preference === mQuietHoursStart) {
             if (mTimePickerDialog == null) {
-                mTimePickerDialog = mQuietHoursStartDialog;
-                mTimePickerDialog.show();
+                mTimePickerDialog = mQuietHoursStartDialog
+                mTimePickerDialog?.show()
             } else {
-                Log.v(TAG, "not null");
+                Log.v(TAG, "not null")
             }
-        } else if (preference == mQuietHoursEnd) {
+        } else if (preference === mQuietHoursEnd) {
             if (mTimePickerDialog == null) {
-                mTimePickerDialog = mQuietHoursEndDialog;
-                mTimePickerDialog.show();
+                mTimePickerDialog = mQuietHoursEndDialog
+                mTimePickerDialog?.show()
             } else {
-                Log.v(TAG, "not null");
+                Log.v(TAG, "not null")
             }
         } else {
-            return super.onPreferenceTreeClick(screen, preference);
+            return super.onPreferenceTreeClick(screen, preference)
         }
-        return true;
+        return true
     }
 
-    private class TimeSetListener implements TimePickerDialog.OnTimeSetListener {
-        private int mListenerId;
-
-        public TimeSetListener(int listenerId) {
-            mListenerId = listenerId;
-        }
-
+    private inner class TimeSetListener(private val mListenerId: Int) :
+            TimePickerDialog.OnTimeSetListener {
         @Override
-        public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
-            mTimePickerDialog = null;
-
-            SharedPreferences prefs = getPreferenceManager().getSharedPreferences();
-            SharedPreferences.Editor editor = prefs.edit();
-
-            String summary = formatTime(hourOfDay, minute);
-            switch (mListenerId) {
-                case (START_LISTENER):
-                    mQuietHoursStart.setSummary(summary);
-                    editor.putInt(KEY_OTHER_QUIET_HOURS_START_HOUR, hourOfDay);
-                    editor.putInt(KEY_OTHER_QUIET_HOURS_START_MINUTE, minute);
-                    break;
-                case (END_LISTENER):
-                    mQuietHoursEnd.setSummary(summary);
-                    editor.putInt(KEY_OTHER_QUIET_HOURS_END_HOUR, hourOfDay);
-                    editor.putInt(KEY_OTHER_QUIET_HOURS_END_MINUTE, minute);
-                    break;
-                default:
-                    Log.d(TAG, "Set time for unknown listener: "+mListenerId);
+        override fun onTimeSet(view: TimePicker?, hourOfDay: Int, minute: Int) {
+            mTimePickerDialog = null
+            val prefs: SharedPreferences = getPreferenceManager().getSharedPreferences()
+            val editor: SharedPreferences.Editor = prefs.edit()
+            val summary = formatTime(hourOfDay, minute)
+            when (mListenerId) {
+                START_LISTENER -> {
+                    mQuietHoursStart?.setSummary(summary)
+                    editor.putInt(KEY_OTHER_QUIET_HOURS_START_HOUR, hourOfDay)
+                    editor.putInt(KEY_OTHER_QUIET_HOURS_START_MINUTE, minute)
+                }
+                END_LISTENER -> {
+                    mQuietHoursEnd?.setSummary(summary)
+                    editor.putInt(KEY_OTHER_QUIET_HOURS_END_HOUR, hourOfDay)
+                    editor.putInt(KEY_OTHER_QUIET_HOURS_END_MINUTE, minute)
+                }
+                else -> Log.d(TAG, "Set time for unknown listener: $mListenerId")
             }
-
-            editor.commit();
+            editor.commit()
         }
     }
 
@@ -199,12 +144,41 @@ public class OtherPreferences extends PreferenceFragment  implements OnPreferenc
      * @param minute
      * @return human-readable string formatted based on 24-hour mode.
      */
-    private String formatTime(int hourOfDay, int minute) {
-        Time time = new Time();
-        time.hour = hourOfDay;
-        time.minute = minute;
+    private fun formatTime(hourOfDay: Int, minute: Int): String {
+        val time = Time()
+        time.hour = hourOfDay
+        time.minute = minute
+        val format = if (mIs24HourMode) format24Hour else format12Hour
+        return time.format(format)
+    }
 
-        String format = mIs24HourMode? format24Hour : format12Hour;
-        return time.format(format);
+    companion object {
+        private const val TAG = "CalendarOtherPreferences"
+
+        // The name of the shared preferences file. This name must be maintained for
+        // historical reasons, as it's what PreferenceManager assigned the first
+        // time the file was created.
+        const val SHARED_PREFS_NAME = "com.android.calendar_preferences"
+
+        // Must be the same keys that are used in the other_preferences.xml file.
+        const val KEY_OTHER_COPY_DB = "preferences_copy_db"
+        const val KEY_OTHER_QUIET_HOURS = "preferences_reminders_quiet_hours"
+        const val KEY_OTHER_REMINDERS_RESPONDED = "preferences_reminders_responded"
+        const val KEY_OTHER_QUIET_HOURS_START = "preferences_reminders_quiet_hours_start"
+        const val KEY_OTHER_QUIET_HOURS_START_HOUR = "preferences_reminders_quiet_hours_start_hour"
+        const val KEY_OTHER_QUIET_HOURS_START_MINUTE =
+                "preferences_reminders_quiet_hours_start_minute"
+        const val KEY_OTHER_QUIET_HOURS_END = "preferences_reminders_quiet_hours_end"
+        const val KEY_OTHER_QUIET_HOURS_END_HOUR = "preferences_reminders_quiet_hours_end_hour"
+        const val KEY_OTHER_QUIET_HOURS_END_MINUTE = "preferences_reminders_quiet_hours_end_minute"
+        const val KEY_OTHER_1 = "preferences_tardis_1"
+        const val QUIET_HOURS_DEFAULT_START_HOUR = 22
+        const val QUIET_HOURS_DEFAULT_START_MINUTE = 0
+        const val QUIET_HOURS_DEFAULT_END_HOUR = 8
+        const val QUIET_HOURS_DEFAULT_END_MINUTE = 0
+        private const val START_LISTENER = 1
+        private const val END_LISTENER = 2
+        private const val format24Hour = "%H:%M"
+        private const val format12Hour = "%I:%M%P"
     }
 }

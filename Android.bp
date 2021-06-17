@@ -38,6 +38,7 @@ exclude_srcsm = [
     "src/**/calendar/EventGeometry.java",
     "src/**/calendar/GoogleCalendarUriIntentFilter.java",
     "src/**/calendar/MultiStateButton.java",
+    "src/**/calendar/OtherPreferences.java",
     "src/**/calendar/UpgradeReceiver.java",
 ]
 
