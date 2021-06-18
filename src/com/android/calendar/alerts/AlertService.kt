@@ -78,8 +78,8 @@ class AlertService : Service() {
         }
 
         @Override
-        override fun notify(id: Int, nw: NotificationWrapper) {
-            mNm.notify(id, nw.mNotification)
+        override fun notify(id: Int, nw: NotificationWrapper?) {
+            mNm.notify(id, nw?.mNotification)
         }
 
         init {
