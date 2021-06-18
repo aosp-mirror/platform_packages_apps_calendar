@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,145 +13,119 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.android.calendar
 
-package com.android.calendar;
+import android.provider.CalendarContract.EXTRA_EVENT_BEGIN_TIME
+import android.provider.CalendarContract.EXTRA_EVENT_END_TIME
+import android.provider.CalendarContract.Attendees.ATTENDEE_STATUS
+import android.content.ComponentName
+import android.content.ContentUris
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.provider.CalendarContract.Attendees
+import android.provider.CalendarContract.Events
+import android.text.format.Time
+import android.util.Log
+import android.util.Pair
+import java.lang.ref.WeakReference
+import java.util.LinkedHashMap
+import java.util.LinkedList
+import java.util.WeakHashMap
 
-import static android.provider.CalendarContract.EXTRA_EVENT_ALL_DAY;
-import static android.provider.CalendarContract.EXTRA_EVENT_BEGIN_TIME;
-import static android.provider.CalendarContract.EXTRA_EVENT_END_TIME;
-import static android.provider.CalendarContract.Attendees.ATTENDEE_STATUS;
-
-import android.accounts.Account;
-import android.accounts.AccountManager;
-import android.app.Activity;
-import android.content.ComponentName;
-import android.content.ContentResolver;
-import android.content.ContentUris;
-import android.content.Context;
-import android.content.Intent;
-import android.net.Uri;
-import android.os.Bundle;
-import android.provider.CalendarContract.Attendees;
-import android.provider.CalendarContract.Calendars;
-import android.provider.CalendarContract.Events;
-import android.text.format.Time;
-import android.util.Log;
-import android.util.Pair;
-
-import java.lang.ref.WeakReference;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.Map.Entry;
-import java.util.WeakHashMap;
-
-public class CalendarController {
-    private static final boolean DEBUG = false;
-    private static final String TAG = "CalendarController";
-
-    public static final String EVENT_EDIT_ON_LAUNCH = "editMode";
-
-    public static final int MIN_CALENDAR_YEAR = 1970;
-    public static final int MAX_CALENDAR_YEAR = 2036;
-    public static final int MIN_CALENDAR_WEEK = 0;
-    public static final int MAX_CALENDAR_WEEK = 3497; // weeks between 1/1/1970 and 1/1/2037
-
-    private final Context mContext;
+class CalendarController private constructor(context: Context) {
+    private var mContext: Context? = null
 
     // This uses a LinkedHashMap so that we can replace fragments based on the
     // view id they are being expanded into since we can't guarantee a reference
     // to the handler will be findable
-    private final LinkedHashMap<Integer,EventHandler> eventHandlers =
-            new LinkedHashMap<Integer,EventHandler>(5);
-    private final LinkedList<Integer> mToBeRemovedEventHandlers = new LinkedList<Integer>();
-    private final LinkedHashMap<Integer, EventHandler> mToBeAddedEventHandlers = new LinkedHashMap<
-            Integer, EventHandler>();
-    private Pair<Integer, EventHandler> mFirstEventHandler;
-    private Pair<Integer, EventHandler> mToBeAddedFirstEventHandler;
-    private volatile int mDispatchInProgressCounter = 0;
+    private val eventHandlers: LinkedHashMap<Integer, EventHandler> =
+        LinkedHashMap<Integer, EventHandler>(5)
+    private val mToBeRemovedEventHandlers: LinkedList<Integer> = LinkedList<Integer>()
+    private val mToBeAddedEventHandlers: LinkedHashMap<Integer, EventHandler> =
+        LinkedHashMap<Integer, EventHandler>()
+    private var mFirstEventHandler: Pair<Integer, EventHandler>? = null
+    private var mToBeAddedFirstEventHandler: Pair<Integer, EventHandler>? = null
 
-    private static WeakHashMap<Context, WeakReference<CalendarController>> instances =
-        new WeakHashMap<Context, WeakReference<CalendarController>>();
+    @Volatile
+    private var mDispatchInProgressCounter = 0
+    private val filters: WeakHashMap<Object, Long> = WeakHashMap<Object, Long>(1)
 
-    private final WeakHashMap<Object, Long> filters = new WeakHashMap<Object, Long>(1);
+    // Forces the viewType. Should only be used for initialization.
+    var viewType = -1
+    private var mDetailViewType = -1
+    var previousViewType = -1
+        private set
 
-    private int mViewType = -1;
-    private int mDetailViewType = -1;
-    private int mPreviousViewType = -1;
-    private long mEventId = -1;
-    private final Time mTime = new Time();
-    private long mDateFlags = 0;
+    // The last event ID the edit view was launched with
+    var eventId: Long = -1
+    private val mTime: Time? = Time()
 
-    private final Runnable mUpdateTimezone = new Runnable() {
+    // The last set of date flags sent with
+    var dateFlags: Long = 0
+        private set
+    private val mUpdateTimezone: Runnable = object : Runnable {
         @Override
-        public void run() {
-            mTime.switchTimezone(Utils.getTimeZone(mContext, this));
+        override fun run() {
+            mTime?.switchTimezone(Utils.getTimeZone(mContext, this))
         }
-    };
+    }
 
     /**
      * One of the event types that are sent to or from the controller
      */
-    public interface EventType {
-        // Simple view of an event
-        final long VIEW_EVENT = 1L << 1;
+    interface EventType {
+        companion object {
+            // Simple view of an event
+            const val VIEW_EVENT = 1L shl 1
 
-        // Full detail view in read only mode
-        final long VIEW_EVENT_DETAILS = 1L << 2;
+            // Full detail view in read only mode
+            const val VIEW_EVENT_DETAILS = 1L shl 2
 
-        // full detail view in edit mode
-        final long EDIT_EVENT = 1L << 3;
+            // full detail view in edit mode
+            const val EDIT_EVENT = 1L shl 3
+            const val GO_TO = 1L shl 5
+            const val EVENTS_CHANGED = 1L shl 7
+            const val USER_HOME = 1L shl 9
 
-        final long GO_TO = 1L << 5;
-
-        final long EVENTS_CHANGED = 1L << 7;
-
-        final long USER_HOME = 1L << 9;
-
-        // date range has changed, update the title
-        final long UPDATE_TITLE = 1L << 10;
+            // date range has changed, update the title
+            const val UPDATE_TITLE = 1L shl 10
+        }
     }
 
     /**
      * One of the Agenda/Day/Week/Month view types
      */
-    public interface ViewType {
-        final int DETAIL = -1;
-        final int CURRENT = 0;
-        final int AGENDA = 1;
-        final int DAY = 2;
-        final int WEEK = 3;
-        final int MONTH = 4;
-        final int EDIT = 5;
-        final int MAX_VALUE = 5;
+    interface ViewType {
+        companion object {
+            const val DETAIL = -1
+            const val CURRENT = 0
+            const val AGENDA = 1
+            const val DAY = 2
+            const val WEEK = 3
+            const val MONTH = 4
+            const val EDIT = 5
+            const val MAX_VALUE = 5
+        }
     }
 
-    public static class EventInfo {
-
-        private static final long ATTENTEE_STATUS_MASK = 0xFF;
-        private static final long ALL_DAY_MASK = 0x100;
-        private static final int ATTENDEE_STATUS_NONE_MASK = 0x01;
-        private static final int ATTENDEE_STATUS_ACCEPTED_MASK = 0x02;
-        private static final int ATTENDEE_STATUS_DECLINED_MASK = 0x04;
-        private static final int ATTENDEE_STATUS_TENTATIVE_MASK = 0x08;
-
-        public long eventType; // one of the EventType
-        public int viewType; // one of the ViewType
-        public long id; // event id
-        public Time selectedTime; // the selected time in focus
+    class EventInfo {
+        @JvmField var eventType: Long = 0 // one of the EventType
+        @JvmField var viewType = 0 // one of the ViewType
+        @JvmField var id: Long = 0 // event id
+        @JvmField var selectedTime: Time? = null // the selected time in focus
 
         // Event start and end times.  All-day events are represented in:
         // - local time for GO_TO commands
         // - UTC time for VIEW_EVENT and other event-related commands
-        public Time startTime;
-        public Time endTime;
-
-        public int x; // x coordinate in the activity space
-        public int y; // y coordinate in the activity space
-        public String query; // query for a user search
-        public ComponentName componentName;  // used in combination with query
-        public String eventTitle;
-        public long calendarId;
+        @JvmField var startTime: Time? = null
+        @JvmField var endTime: Time? = null
+        @JvmField var x = 0 // x coordinate in the activity space
+        @JvmField var y = 0 // y coordinate in the activity space
+        @JvmField var query: String? = null // query for a user search
+        @JvmField var componentName: ComponentName? = null // used in combination with query
+        @JvmField var eventTitle: String? = null
+        @JvmField var calendarId: Long = 0
 
         /**
          * For EventType.VIEW_EVENT:
@@ -160,396 +134,424 @@ public class CalendarController {
          * Attendees.ATTENDEE_STATUS_DECLINED, or Attendees.ATTENDEE_STATUS_TENTATIVE.
          * To signal the event is an all-day event, "or" ALL_DAY_MASK with the response.
          * Alternatively, use buildViewExtraLong(), getResponse(), and isAllDay().
-         * <p>
+         *
+         *
          * For EventType.GO_TO:
-         * Set to {@link #EXTRA_GOTO_TIME} to go to the specified date/time.
-         * Set to {@link #EXTRA_GOTO_DATE} to consider the date but ignore the time.
-         * Set to {@link #EXTRA_GOTO_BACK_TO_PREVIOUS} if back should bring back previous view.
-         * Set to {@link #EXTRA_GOTO_TODAY} if this is a user request to go to the current time.
-         * <p>
+         * Set to [.EXTRA_GOTO_TIME] to go to the specified date/time.
+         * Set to [.EXTRA_GOTO_DATE] to consider the date but ignore the time.
+         * Set to [.EXTRA_GOTO_BACK_TO_PREVIOUS] if back should bring back previous view.
+         * Set to [.EXTRA_GOTO_TODAY] if this is a user request to go to the current time.
+         *
+         *
          * For EventType.UPDATE_TITLE:
          * Set formatting flags for Utils.formatDateRange
          */
-        public long extraLong;
-
-        public boolean isAllDay() {
-            if (eventType != EventType.VIEW_EVENT) {
-                Log.wtf(TAG, "illegal call to isAllDay , wrong event type " + eventType);
-                return false;
+        @JvmField var extraLong: Long = 0
+        val isAllDay: Boolean
+            get() {
+                if (eventType != EventType.VIEW_EVENT) {
+                    Log.wtf(TAG, "illegal call to isAllDay , wrong event type $eventType")
+                    return false
+                }
+                return if (extraLong and ALL_DAY_MASK != 0L) true else false
             }
-            return ((extraLong & ALL_DAY_MASK) != 0) ? true : false;
-        }
-
-        public  int getResponse() {
-            if (eventType != EventType.VIEW_EVENT) {
-                Log.wtf(TAG, "illegal call to getResponse , wrong event type " + eventType);
-                return Attendees.ATTENDEE_STATUS_NONE;
+        val response: Int
+            get() {
+                if (eventType != EventType.VIEW_EVENT) {
+                    Log.wtf(TAG, "illegal call to getResponse , wrong event type $eventType")
+                    return Attendees.ATTENDEE_STATUS_NONE
+                }
+                val response = (extraLong and ATTENTEE_STATUS_MASK).toInt()
+                when (response) {
+                    ATTENDEE_STATUS_NONE_MASK -> return Attendees.ATTENDEE_STATUS_NONE
+                    ATTENDEE_STATUS_ACCEPTED_MASK -> return Attendees.ATTENDEE_STATUS_ACCEPTED
+                    ATTENDEE_STATUS_DECLINED_MASK -> return Attendees.ATTENDEE_STATUS_DECLINED
+                    ATTENDEE_STATUS_TENTATIVE_MASK -> return Attendees.ATTENDEE_STATUS_TENTATIVE
+                    else -> Log.wtf(TAG, "Unknown attendee response $response")
+                }
+                return ATTENDEE_STATUS_NONE_MASK
             }
 
-            int response = (int)(extraLong & ATTENTEE_STATUS_MASK);
-            switch (response) {
-                case ATTENDEE_STATUS_NONE_MASK:
-                    return Attendees.ATTENDEE_STATUS_NONE;
-                case ATTENDEE_STATUS_ACCEPTED_MASK:
-                    return Attendees.ATTENDEE_STATUS_ACCEPTED;
-                case ATTENDEE_STATUS_DECLINED_MASK:
-                    return Attendees.ATTENDEE_STATUS_DECLINED;
-                case ATTENDEE_STATUS_TENTATIVE_MASK:
-                    return Attendees.ATTENDEE_STATUS_TENTATIVE;
-                default:
-                    Log.wtf(TAG,"Unknown attendee response " + response);
-            }
-            return ATTENDEE_STATUS_NONE_MASK;
-        }
+        companion object {
+            private const val ATTENTEE_STATUS_MASK: Long = 0xFF
+            private const val ALL_DAY_MASK: Long = 0x100
+            private const val ATTENDEE_STATUS_NONE_MASK = 0x01
+            private const val ATTENDEE_STATUS_ACCEPTED_MASK = 0x02
+            private const val ATTENDEE_STATUS_DECLINED_MASK = 0x04
+            private const val ATTENDEE_STATUS_TENTATIVE_MASK = 0x08
 
-        // Used to build the extra long for a VIEW event.
-        public static long buildViewExtraLong(int response, boolean allDay) {
-            long extra = allDay ? ALL_DAY_MASK : 0;
-
-            switch (response) {
-                case Attendees.ATTENDEE_STATUS_NONE:
-                    extra |= ATTENDEE_STATUS_NONE_MASK;
-                    break;
-                case Attendees.ATTENDEE_STATUS_ACCEPTED:
-                    extra |= ATTENDEE_STATUS_ACCEPTED_MASK;
-                    break;
-                case Attendees.ATTENDEE_STATUS_DECLINED:
-                    extra |= ATTENDEE_STATUS_DECLINED_MASK;
-                    break;
-                case Attendees.ATTENDEE_STATUS_TENTATIVE:
-                    extra |= ATTENDEE_STATUS_TENTATIVE_MASK;
-                    break;
-                default:
-                    Log.wtf(TAG,"Unknown attendee response " + response);
-                    extra |= ATTENDEE_STATUS_NONE_MASK;
-                    break;
+            // Used to build the extra long for a VIEW event.
+            @JvmStatic fun buildViewExtraLong(response: Int, allDay: Boolean): Long {
+                var extra = if (allDay) ALL_DAY_MASK else 0
+                extra = when (response) {
+                    Attendees.ATTENDEE_STATUS_NONE -> extra or
+                        ATTENDEE_STATUS_NONE_MASK.toLong()
+                    Attendees.ATTENDEE_STATUS_ACCEPTED -> extra or
+                        ATTENDEE_STATUS_ACCEPTED_MASK.toLong()
+                    Attendees.ATTENDEE_STATUS_DECLINED -> extra or
+                        ATTENDEE_STATUS_DECLINED_MASK.toLong()
+                    Attendees.ATTENDEE_STATUS_TENTATIVE -> extra or
+                        ATTENDEE_STATUS_TENTATIVE_MASK.toLong()
+                    else -> {
+                        Log.wtf(
+                            TAG,
+                            "Unknown attendee response $response"
+                        )
+                        extra or ATTENDEE_STATUS_NONE_MASK.toLong()
+                    }
+                }
+                return extra
             }
-            return extra;
         }
     }
 
-    /**
-     * Pass to the ExtraLong parameter for EventType.GO_TO to signal the time
-     * can be ignored
-     */
-    public static final long EXTRA_GOTO_DATE = 1;
-    public static final long EXTRA_GOTO_TIME = 2;
-    public static final long EXTRA_GOTO_BACK_TO_PREVIOUS = 4;
-    public static final long EXTRA_GOTO_TODAY = 8;
-
-    public interface EventHandler {
-        long getSupportedEventTypes();
-        void handleEvent(EventInfo event);
+    interface EventHandler {
+        val supportedEventTypes: Long
+        fun handleEvent(event: EventInfo?)
 
         /**
          * This notifies the handler that the database has changed and it should
          * update its view.
          */
-        void eventsChanged();
+        fun eventsChanged()
     }
 
-    /**
-     * Creates and/or returns an instance of CalendarController associated with
-     * the supplied context. It is best to pass in the current Activity.
-     *
-     * @param context The activity if at all possible.
-     */
-    public static CalendarController getInstance(Context context) {
-        synchronized (instances) {
-            CalendarController controller = null;
-            WeakReference<CalendarController> weakController = instances.get(context);
-            if (weakController != null) {
-                controller = weakController.get();
-            }
-
-            if (controller == null) {
-                controller = new CalendarController(context);
-                instances.put(context, new WeakReference(controller));
-            }
-            return controller;
-        }
-    }
-
-    /**
-     * Removes an instance when it is no longer needed. This should be called in
-     * an activity's onDestroy method.
-     *
-     * @param context The activity used to create the controller
-     */
-    public static void removeInstance(Context context) {
-        instances.remove(context);
-    }
-
-    private CalendarController(Context context) {
-        mContext = context;
-        mUpdateTimezone.run();
-        mTime.setToNow();
-        mDetailViewType = Utils.getSharedPreference(mContext,
-                GeneralPreferences.KEY_DETAILED_VIEW,
-                GeneralPreferences.DEFAULT_DETAILED_VIEW);
-    }
-
-    public void sendEventRelatedEvent(Object sender, long eventType, long eventId, long startMillis,
-            long endMillis, int x, int y, long selectedMillis) {
+    fun sendEventRelatedEvent(
+        sender: Object?,
+        eventType: Long,
+        eventId: Long,
+        startMillis: Long,
+        endMillis: Long,
+        x: Int,
+        y: Int,
+        selectedMillis: Long
+    ) {
         // TODO: pass the real allDay status or at least a status that says we don't know the
         // status and have the receiver query the data.
         // The current use of this method for VIEW_EVENT is by the day view to show an EventInfo
         // so currently the missing allDay status has no effect.
-        sendEventRelatedEventWithExtra(sender, eventType, eventId, startMillis, endMillis, x, y,
-                EventInfo.buildViewExtraLong(Attendees.ATTENDEE_STATUS_NONE, false),
-                selectedMillis);
+        sendEventRelatedEventWithExtra(
+            sender, eventType, eventId, startMillis, endMillis, x, y,
+            EventInfo.buildViewExtraLong(Attendees.ATTENDEE_STATUS_NONE, false),
+            selectedMillis
+        )
     }
 
     /**
      * Helper for sending New/View/Edit/Delete events
      *
      * @param sender object of the caller
-     * @param eventType one of {@link EventType}
+     * @param eventType one of [EventType]
      * @param eventId event id
      * @param startMillis start time
      * @param endMillis end time
      * @param x x coordinate in the activity space
      * @param y y coordinate in the activity space
      * @param extraLong default response value for the "simple event view" and all day indication.
-     *        Use Attendees.ATTENDEE_STATUS_NONE for no response.
+     * Use Attendees.ATTENDEE_STATUS_NONE for no response.
      * @param selectedMillis The time to specify as selected
      */
-    public void sendEventRelatedEventWithExtra(Object sender, long eventType, long eventId,
-            long startMillis, long endMillis, int x, int y, long extraLong, long selectedMillis) {
-        sendEventRelatedEventWithExtraWithTitleWithCalendarId(sender, eventType, eventId,
-            startMillis, endMillis, x, y, extraLong, selectedMillis, null, -1);
+    fun sendEventRelatedEventWithExtra(
+        sender: Object?,
+        eventType: Long,
+        eventId: Long,
+        startMillis: Long,
+        endMillis: Long,
+        x: Int,
+        y: Int,
+        extraLong: Long,
+        selectedMillis: Long
+    ) {
+        sendEventRelatedEventWithExtraWithTitleWithCalendarId(
+            sender, eventType, eventId,
+            startMillis, endMillis, x, y, extraLong, selectedMillis, null, -1
+        )
     }
 
     /**
      * Helper for sending New/View/Edit/Delete events
      *
      * @param sender object of the caller
-     * @param eventType one of {@link EventType}
+     * @param eventType one of [EventType]
      * @param eventId event id
      * @param startMillis start time
      * @param endMillis end time
      * @param x x coordinate in the activity space
      * @param y y coordinate in the activity space
      * @param extraLong default response value for the "simple event view" and all day indication.
-     *        Use Attendees.ATTENDEE_STATUS_NONE for no response.
+     * Use Attendees.ATTENDEE_STATUS_NONE for no response.
      * @param selectedMillis The time to specify as selected
      * @param title The title of the event
      * @param calendarId The id of the calendar which the event belongs to
      */
-    public void sendEventRelatedEventWithExtraWithTitleWithCalendarId(Object sender, long eventType,
-          long eventId, long startMillis, long endMillis, int x, int y, long extraLong,
-          long selectedMillis, String title, long calendarId) {
-        EventInfo info = new EventInfo();
-        info.eventType = eventType;
+    fun sendEventRelatedEventWithExtraWithTitleWithCalendarId(
+        sender: Object?,
+        eventType: Long,
+        eventId: Long,
+        startMillis: Long,
+        endMillis: Long,
+        x: Int,
+        y: Int,
+        extraLong: Long,
+        selectedMillis: Long,
+        title: String?,
+        calendarId: Long
+    ) {
+        val info = EventInfo()
+        info.eventType = eventType
         if (eventType == EventType.VIEW_EVENT_DETAILS) {
-            info.viewType = ViewType.CURRENT;
+            info.viewType = ViewType.CURRENT
         }
-
-        info.id = eventId;
-        info.startTime = new Time(Utils.getTimeZone(mContext, mUpdateTimezone));
-        info.startTime.set(startMillis);
-        if (selectedMillis != -1) {
-            info.selectedTime = new Time(Utils.getTimeZone(mContext, mUpdateTimezone));
-            info.selectedTime.set(selectedMillis);
+        info.id = eventId
+        info.startTime = Time(Utils.getTimeZone(mContext, mUpdateTimezone))
+        (info.startTime as Time).set(startMillis)
+        if (selectedMillis != -1L) {
+            info.selectedTime = Time(Utils.getTimeZone(mContext, mUpdateTimezone))
+            (info.selectedTime as Time).set(selectedMillis)
         } else {
-            info.selectedTime = info.startTime;
+            info.selectedTime = info.startTime
         }
-        info.endTime = new Time(Utils.getTimeZone(mContext, mUpdateTimezone));
-        info.endTime.set(endMillis);
-        info.x = x;
-        info.y = y;
-        info.extraLong = extraLong;
-        info.eventTitle = title;
-        info.calendarId = calendarId;
-        this.sendEvent(sender, info);
+        info.endTime = Time(Utils.getTimeZone(mContext, mUpdateTimezone))
+        (info.endTime as Time).set(endMillis)
+        info.x = x
+        info.y = y
+        info.extraLong = extraLong
+        info.eventTitle = title
+        info.calendarId = calendarId
+        this.sendEvent(sender, info)
     }
+
     /**
      * Helper for sending non-calendar-event events
      *
      * @param sender object of the caller
-     * @param eventType one of {@link EventType}
+     * @param eventType one of [EventType]
      * @param start start time
      * @param end end time
      * @param eventId event id
-     * @param viewType {@link ViewType}
+     * @param viewType [ViewType]
      */
-    public void sendEvent(Object sender, long eventType, Time start, Time end, long eventId,
-            int viewType) {
-        sendEvent(sender, eventType, start, end, start, eventId, viewType, EXTRA_GOTO_TIME, null,
-                null);
+    fun sendEvent(
+        sender: Object?,
+        eventType: Long,
+        start: Time?,
+        end: Time?,
+        eventId: Long,
+        viewType: Int
+    ) {
+        sendEvent(
+            sender, eventType, start, end, start, eventId, viewType, EXTRA_GOTO_TIME, null,
+            null
+        )
     }
 
     /**
      * sendEvent() variant with extraLong, search query, and search component name.
      */
-    public void sendEvent(Object sender, long eventType, Time start, Time end, long eventId,
-            int viewType, long extraLong, String query, ComponentName componentName) {
-        sendEvent(sender, eventType, start, end, start, eventId, viewType, extraLong, query,
-                componentName);
+    fun sendEvent(
+        sender: Object?,
+        eventType: Long,
+        start: Time?,
+        end: Time?,
+        eventId: Long,
+        viewType: Int,
+        extraLong: Long,
+        query: String?,
+        componentName: ComponentName?
+    ) {
+        sendEvent(
+            sender, eventType, start, end, start, eventId, viewType, extraLong, query,
+            componentName
+        )
     }
 
-    public void sendEvent(Object sender, long eventType, Time start, Time end, Time selected,
-            long eventId, int viewType, long extraLong, String query, ComponentName componentName) {
-        EventInfo info = new EventInfo();
-        info.eventType = eventType;
-        info.startTime = start;
-        info.selectedTime = selected;
-        info.endTime = end;
-        info.id = eventId;
-        info.viewType = viewType;
-        info.query = query;
-        info.componentName = componentName;
-        info.extraLong = extraLong;
-        this.sendEvent(sender, info);
+    fun sendEvent(
+        sender: Object?,
+        eventType: Long,
+        start: Time?,
+        end: Time?,
+        selected: Time?,
+        eventId: Long,
+        viewType: Int,
+        extraLong: Long,
+        query: String?,
+        componentName: ComponentName?
+    ) {
+        val info = EventInfo()
+        info.eventType = eventType
+        info.startTime = start
+        info.selectedTime = selected
+        info.endTime = end
+        info.id = eventId
+        info.viewType = viewType
+        info.query = query
+        info.componentName = componentName
+        info.extraLong = extraLong
+        this.sendEvent(sender, info)
     }
 
-    public void sendEvent(Object sender, final EventInfo event) {
+    fun sendEvent(sender: Object?, event: EventInfo) {
         // TODO Throw exception on invalid events
-
         if (DEBUG) {
-            Log.d(TAG, eventInfoToString(event));
+            Log.d(TAG, eventInfoToString(event))
         }
-
-        Long filteredTypes = filters.get(sender);
-        if (filteredTypes != null && (filteredTypes.longValue() & event.eventType) != 0) {
+        val filteredTypes: Long? = filters.get(sender)
+        if (filteredTypes != null && filteredTypes.toLong() and event.eventType != 0L) {
             // Suppress event per filter
             if (DEBUG) {
-                Log.d(TAG, "Event suppressed");
+                Log.d(TAG, "Event suppressed")
             }
-            return;
+            return
         }
-
-        mPreviousViewType = mViewType;
+        previousViewType = viewType
 
         // Fix up view if not specified
         if (event.viewType == ViewType.DETAIL) {
-            event.viewType = mDetailViewType;
-            mViewType = mDetailViewType;
+            event.viewType = mDetailViewType
+            viewType = mDetailViewType
         } else if (event.viewType == ViewType.CURRENT) {
-            event.viewType = mViewType;
+            event.viewType = viewType
         } else if (event.viewType != ViewType.EDIT) {
-            mViewType = event.viewType;
-
-            if (event.viewType == ViewType.AGENDA || event.viewType == ViewType.DAY
-                    || (Utils.getAllowWeekForDetailView() && event.viewType == ViewType.WEEK)) {
-                mDetailViewType = mViewType;
+            viewType = event.viewType
+            if (event.viewType == ViewType.AGENDA || event.viewType == ViewType.DAY ||
+                Utils.getAllowWeekForDetailView() && event.viewType == ViewType.WEEK) {
+                mDetailViewType = viewType
             }
         }
-
         if (DEBUG) {
-            Log.d(TAG, "vvvvvvvvvvvvvvv");
-            Log.d(TAG, "Start  " + (event.startTime == null ? "null" : event.startTime.toString()));
-            Log.d(TAG, "End    " + (event.endTime == null ? "null" : event.endTime.toString()));
-            Log.d(TAG, "Select " + (event.selectedTime == null ? "null" : event.selectedTime.toString()));
-            Log.d(TAG, "mTime  " + (mTime == null ? "null" : mTime.toString()));
+            Log.d(TAG, "vvvvvvvvvvvvvvv")
+            Log.d(
+                TAG,
+                "Start  " + if (event.startTime == null) "null" else event.startTime.toString()
+            )
+            Log.d(TAG, "End    " + if (event.endTime == null) "null" else event.endTime.toString())
+            Log.d(
+                TAG,
+                "Select " + if (event.selectedTime == null) "null"
+                else event.selectedTime.toString()
+            )
+            Log.d(TAG, "mTime  " + if (mTime == null) "null" else mTime.toString())
         }
-
-        long startMillis = 0;
-        if (event.startTime != null) {
-            startMillis = event.startTime.toMillis(false);
+        var startMillis: Long = 0
+        val temp = event.startTime
+        if (temp != null) {
+            startMillis = (event.startTime as Time).toMillis(false)
         }
 
         // Set mTime if selectedTime is set
-        if (event.selectedTime != null && event.selectedTime.toMillis(false) != 0) {
-            mTime.set(event.selectedTime);
+        val temp1 = event.selectedTime
+        if (temp1 != null && temp1?.toMillis(false) != 0L) {
+            mTime?.set(event.selectedTime)
         } else {
-            if (startMillis != 0) {
+            if (startMillis != 0L) {
                 // selectedTime is not set so set mTime to startTime iff it is not
                 // within start and end times
-                long mtimeMillis = mTime.toMillis(false);
-                if (mtimeMillis < startMillis
-                        || (event.endTime != null && mtimeMillis > event.endTime.toMillis(false))) {
-                    mTime.set(event.startTime);
+                val mtimeMillis: Long = mTime?.toMillis(false) as Long
+                val temp2 = event.endTime
+                if (mtimeMillis < startMillis ||
+                    temp2 != null && mtimeMillis > temp2.toMillis(false)) {
+                    mTime?.set(event.startTime)
                 }
             }
-            event.selectedTime = mTime;
+            event.selectedTime = mTime
         }
         // Store the formatting flags if this is an update to the title
         if (event.eventType == EventType.UPDATE_TITLE) {
-            mDateFlags = event.extraLong;
+            dateFlags = event.extraLong
         }
 
         // Fix up start time if not specified
-        if (startMillis == 0) {
-            event.startTime = mTime;
+        if (startMillis == 0L) {
+            event.startTime = mTime
         }
         if (DEBUG) {
-            Log.d(TAG, "Start  " + (event.startTime == null ? "null" : event.startTime.toString()));
-            Log.d(TAG, "End    " + (event.endTime == null ? "null" : event.endTime.toString()));
-            Log.d(TAG, "Select " + (event.selectedTime == null ? "null" : event.selectedTime.toString()));
-            Log.d(TAG, "mTime  " + (mTime == null ? "null" : mTime.toString()));
-            Log.d(TAG, "^^^^^^^^^^^^^^^");
+            Log.d(
+                TAG,
+                "Start  " + if (event.startTime == null) "null" else
+                    event.startTime.toString()
+            )
+            Log.d(TAG, "End    " + if (event.endTime == null) "null" else
+                event.endTime.toString())
+            Log.d(
+                TAG,
+                "Select " + if (event.selectedTime == null) "null" else
+                    event.selectedTime.toString()
+            )
+            Log.d(TAG, "mTime  " + if (mTime == null) "null" else mTime.toString())
+            Log.d(TAG, "^^^^^^^^^^^^^^^")
         }
 
         // Store the eventId if we're entering edit event
-        if ((event.eventType
-                & (EventType.VIEW_EVENT_DETAILS))
-                != 0) {
+        if ((event.eventType and EventType.VIEW_EVENT_DETAILS) != 0L) {
             if (event.id > 0) {
-                mEventId = event.id;
+                eventId = event.id
             } else {
-                mEventId = -1;
+                eventId = -1
             }
         }
-
-        boolean handled = false;
-        synchronized (this) {
-            mDispatchInProgressCounter ++;
-
+        var handled = false
+        synchronized(this) {
+            mDispatchInProgressCounter++
             if (DEBUG) {
-                Log.d(TAG, "sendEvent: Dispatching to " + eventHandlers.size() + " handlers");
+                Log.d(
+                    TAG,
+                    "sendEvent: Dispatching to " + eventHandlers.size.toString() + " handlers"
+                )
             }
             // Dispatch to event handler(s)
-            if (mFirstEventHandler != null) {
+            val temp3 = mFirstEventHandler
+            if (temp3 != null) {
                 // Handle the 'first' one before handling the others
-                EventHandler handler = mFirstEventHandler.second;
-                if (handler != null && (handler.getSupportedEventTypes() & event.eventType) != 0
-                        && !mToBeRemovedEventHandlers.contains(mFirstEventHandler.first)) {
-                    handler.handleEvent(event);
-                    handled = true;
+                val handler: EventHandler? = mFirstEventHandler?.second
+                if (handler != null && handler.supportedEventTypes and event.eventType != 0L &&
+                    !mToBeRemovedEventHandlers.contains(mFirstEventHandler?.first)) {
+                    handler.handleEvent(event)
+                    handled = true
                 }
             }
-            for (Iterator<Entry<Integer, EventHandler>> handlers =
-                    eventHandlers.entrySet().iterator(); handlers.hasNext();) {
-                Entry<Integer, EventHandler> entry = handlers.next();
-                int key = entry.getKey();
-                if (mFirstEventHandler != null && key == mFirstEventHandler.first) {
+            val handlers: MutableIterator<MutableMap.MutableEntry<Integer,
+                CalendarController.EventHandler>> = eventHandlers.entries.iterator()
+            while (handlers.hasNext()) {
+                val entry: MutableMap.MutableEntry<Integer,
+                    CalendarController.EventHandler> = handlers.next()
+                val key: Int = entry.key.toInt()
+                val temp4 = mFirstEventHandler
+                if (temp4 != null && key.toInt() == temp4.first.toInt()) {
                     // If this was the 'first' handler it was already handled
-                    continue;
+                    continue
                 }
-                EventHandler eventHandler = entry.getValue();
-                if (eventHandler != null
-                        && (eventHandler.getSupportedEventTypes() & event.eventType) != 0) {
-                    if (mToBeRemovedEventHandlers.contains(key)) {
-                        continue;
+                val eventHandler: EventHandler = entry.value
+                if (eventHandler != null &&
+                    eventHandler.supportedEventTypes and event.eventType != 0L) {
+                    if (mToBeRemovedEventHandlers.contains(key as Integer)) {
+                        continue
                     }
-                    eventHandler.handleEvent(event);
-                    handled = true;
+                    eventHandler.handleEvent(event)
+                    handled = true
                 }
             }
-
-            mDispatchInProgressCounter --;
-
+            mDispatchInProgressCounter--
             if (mDispatchInProgressCounter == 0) {
 
                 // Deregister removed handlers
-                if (mToBeRemovedEventHandlers.size() > 0) {
-                    for (Integer zombie : mToBeRemovedEventHandlers) {
-                        eventHandlers.remove(zombie);
-                        if (mFirstEventHandler != null && zombie.equals(mFirstEventHandler.first)) {
-                            mFirstEventHandler = null;
+                if (mToBeRemovedEventHandlers.size > 0) {
+                    for (zombie in mToBeRemovedEventHandlers) {
+                        eventHandlers.remove(zombie)
+                        val temp5 = mFirstEventHandler
+                        if (temp5 != null && zombie.equals(temp5.first)) {
+                            mFirstEventHandler = null
                         }
                     }
-                    mToBeRemovedEventHandlers.clear();
+                    mToBeRemovedEventHandlers.clear()
                 }
                 // Add new handlers
                 if (mToBeAddedFirstEventHandler != null) {
-                    mFirstEventHandler = mToBeAddedFirstEventHandler;
-                    mToBeAddedFirstEventHandler = null;
+                    mFirstEventHandler = mToBeAddedFirstEventHandler
+                    mToBeAddedFirstEventHandler = null
                 }
-                if (mToBeAddedEventHandlers.size() > 0) {
-                    for (Entry<Integer, EventHandler> food : mToBeAddedEventHandlers.entrySet()) {
-                        eventHandlers.put(food.getKey(), food.getValue());
+                if (mToBeAddedEventHandlers.size > 0) {
+                    for (food in mToBeAddedEventHandlers.entries) {
+                        eventHandlers.put(food.key, food.value)
                     }
                 }
             }
@@ -563,151 +565,179 @@ public class CalendarController {
      * @param key The view id or placeholder for this handler
      * @param eventHandler Typically a fragment or activity in the calendar app
      */
-    public void registerEventHandler(int key, EventHandler eventHandler) {
-        synchronized (this) {
+    fun registerEventHandler(key: Integer, eventHandler: EventHandler?) {
+        synchronized(this) {
             if (mDispatchInProgressCounter > 0) {
-                mToBeAddedEventHandlers.put(key, eventHandler);
+                mToBeAddedEventHandlers.put(key,
+                                            eventHandler as CalendarController.EventHandler)
             } else {
-                eventHandlers.put(key, eventHandler);
+                eventHandlers.put(key, eventHandler as CalendarController.EventHandler)
             }
         }
     }
 
-    public void registerFirstEventHandler(int key, EventHandler eventHandler) {
-        synchronized (this) {
-            registerEventHandler(key, eventHandler);
+    fun registerFirstEventHandler(key: Integer, eventHandler: EventHandler?) {
+        synchronized(this) {
+            registerEventHandler(key, eventHandler)
             if (mDispatchInProgressCounter > 0) {
-                mToBeAddedFirstEventHandler = new Pair<Integer, EventHandler>(key, eventHandler);
+                mToBeAddedFirstEventHandler = Pair<Integer, EventHandler>(key, eventHandler)
             } else {
-                mFirstEventHandler = new Pair<Integer, EventHandler>(key, eventHandler);
+                mFirstEventHandler = Pair<Integer, EventHandler>(key, eventHandler)
             }
         }
     }
 
-    public void deregisterEventHandler(Integer key) {
-        synchronized (this) {
+    fun deregisterEventHandler(key: Integer) {
+        synchronized(this) {
             if (mDispatchInProgressCounter > 0) {
                 // To avoid ConcurrencyException, stash away the event handler for now.
-                mToBeRemovedEventHandlers.add(key);
+                mToBeRemovedEventHandlers.add(key)
             } else {
-                eventHandlers.remove(key);
-                if (mFirstEventHandler != null && mFirstEventHandler.first == key) {
-                    mFirstEventHandler = null;
-                }
+                eventHandlers.remove(key)
+                val temp6 = mFirstEventHandler
+                if (temp6 != null && temp6.first == key) {
+                    mFirstEventHandler = null
+                } else {}
             }
         }
     }
 
-    public void deregisterAllEventHandlers() {
-        synchronized (this) {
+    fun deregisterAllEventHandlers() {
+        synchronized(this) {
             if (mDispatchInProgressCounter > 0) {
                 // To avoid ConcurrencyException, stash away the event handler for now.
-                mToBeRemovedEventHandlers.addAll(eventHandlers.keySet());
+                mToBeRemovedEventHandlers.addAll(eventHandlers.keys)
             } else {
-                eventHandlers.clear();
-                mFirstEventHandler = null;
+                eventHandlers.clear()
+                mFirstEventHandler = null
             }
         }
     }
 
     // FRAG_TODO doesn't work yet
-    public void filterBroadcasts(Object sender, long eventTypes) {
-        filters.put(sender, eventTypes);
+    fun filterBroadcasts(sender: Object?, eventTypes: Long) {
+        filters.put(sender, eventTypes)
     }
-
     /**
      * @return the time that this controller is currently pointed at
      */
-    public long getTime() {
-        return mTime.toMillis(false);
-    }
-
-    /**
-     * @return the last set of date flags sent with
-     *         {@link EventType#UPDATE_TITLE}
-     */
-    public long getDateFlags() {
-        return mDateFlags;
-    }
-
     /**
      * Set the time this controller is currently pointed at
      *
      * @param millisTime Time since epoch in millis
      */
-    public void setTime(long millisTime) {
-        mTime.set(millisTime);
-    }
-
-    /**
-     * @return the last event ID the edit view was launched with
-     */
-    public long getEventId() {
-        return mEventId;
-    }
-
-    public int getViewType() {
-        return mViewType;
-    }
-
-    public int getPreviousViewType() {
-        return mPreviousViewType;
-    }
-
-    public void launchViewEvent(long eventId, long startMillis, long endMillis, int response) {
-        Intent intent = new Intent(Intent.ACTION_VIEW);
-        Uri eventUri = ContentUris.withAppendedId(Events.CONTENT_URI, eventId);
-        intent.setData(eventUri);
-        intent.setClass(mContext, AllInOneActivity.class);
-        intent.putExtra(EXTRA_EVENT_BEGIN_TIME, startMillis);
-        intent.putExtra(EXTRA_EVENT_END_TIME, endMillis);
-        intent.putExtra(ATTENDEE_STATUS, response);
-        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        mContext.startActivity(intent);
-    }
-
-    // Forces the viewType. Should only be used for initialization.
-    public void setViewType(int viewType) {
-        mViewType = viewType;
-    }
-
-    // Sets the eventId. Should only be used for initialization.
-    public void setEventId(long eventId) {
-        mEventId = eventId;
-    }
-
-    private String eventInfoToString(EventInfo eventInfo) {
-        String tmp = "Unknown";
-
-        StringBuilder builder = new StringBuilder();
-        if ((eventInfo.eventType & EventType.GO_TO) != 0) {
-            tmp = "Go to time/event";
-        } else if ((eventInfo.eventType & EventType.VIEW_EVENT) != 0) {
-            tmp = "View event";
-        } else if ((eventInfo.eventType & EventType.VIEW_EVENT_DETAILS) != 0) {
-            tmp = "View details";
-        } else if ((eventInfo.eventType & EventType.EVENTS_CHANGED) != 0) {
-            tmp = "Refresh events";
-        } else if ((eventInfo.eventType & EventType.USER_HOME) != 0) {
-            tmp = "Gone home";
-        } else if ((eventInfo.eventType & EventType.UPDATE_TITLE) != 0) {
-            tmp = "Update title";
+    var time: Long?
+        get() = mTime?.toMillis(false)
+        set(millisTime) {
+            mTime?.set(millisTime as Long)
         }
-        builder.append(tmp);
-        builder.append(": id=");
-        builder.append(eventInfo.id);
-        builder.append(", selected=");
-        builder.append(eventInfo.selectedTime);
-        builder.append(", start=");
-        builder.append(eventInfo.startTime);
-        builder.append(", end=");
-        builder.append(eventInfo.endTime);
-        builder.append(", viewType=");
-        builder.append(eventInfo.viewType);
-        builder.append(", x=");
-        builder.append(eventInfo.x);
-        builder.append(", y=");
-        builder.append(eventInfo.y);
-        return builder.toString();
+
+    fun launchViewEvent(eventId: Long, startMillis: Long, endMillis: Long, response: Int) {
+        val intent = Intent(Intent.ACTION_VIEW)
+        val eventUri: Uri = ContentUris.withAppendedId(Events.CONTENT_URI, eventId)
+        intent.setData(eventUri)
+        intent.setClass(mContext as Context, AllInOneActivity::class.java)
+        intent.putExtra(EXTRA_EVENT_BEGIN_TIME, startMillis)
+        intent.putExtra(EXTRA_EVENT_END_TIME, endMillis)
+        intent.putExtra(ATTENDEE_STATUS, response)
+        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+        mContext?.startActivity(intent)
+    }
+
+    private fun eventInfoToString(eventInfo: EventInfo): String {
+        var tmp = "Unknown"
+        val builder = StringBuilder()
+        if (eventInfo.eventType and EventType.GO_TO != 0L) {
+            tmp = "Go to time/event"
+        } else if (eventInfo.eventType and EventType.VIEW_EVENT != 0L) {
+            tmp = "View event"
+        } else if (eventInfo.eventType and EventType.VIEW_EVENT_DETAILS != 0L) {
+            tmp = "View details"
+        } else if (eventInfo.eventType and EventType.EVENTS_CHANGED != 0L) {
+            tmp = "Refresh events"
+        } else if (eventInfo.eventType and EventType.USER_HOME != 0L) {
+            tmp = "Gone home"
+        } else if (eventInfo.eventType and EventType.UPDATE_TITLE != 0L) {
+            tmp = "Update title"
+        }
+        builder.append(tmp)
+        builder.append(": id=")
+        builder.append(eventInfo.id)
+        builder.append(", selected=")
+        builder.append(eventInfo.selectedTime)
+        builder.append(", start=")
+        builder.append(eventInfo.startTime)
+        builder.append(", end=")
+        builder.append(eventInfo.endTime)
+        builder.append(", viewType=")
+        builder.append(eventInfo.viewType)
+        builder.append(", x=")
+        builder.append(eventInfo.x)
+        builder.append(", y=")
+        builder.append(eventInfo.y)
+        return builder.toString()
+    }
+
+    companion object {
+        private const val DEBUG = false
+        private const val TAG = "CalendarController"
+        const val EVENT_EDIT_ON_LAUNCH = "editMode"
+        const val MIN_CALENDAR_YEAR = 1970
+        const val MAX_CALENDAR_YEAR = 2036
+        const val MIN_CALENDAR_WEEK = 0
+        const val MAX_CALENDAR_WEEK = 3497 // weeks between 1/1/1970 and 1/1/2037
+        private val instances: WeakHashMap<Context, WeakReference<CalendarController>> =
+            WeakHashMap<Context, WeakReference<CalendarController>>()
+
+        /**
+         * Pass to the ExtraLong parameter for EventType.GO_TO to signal the time
+         * can be ignored
+         */
+        const val EXTRA_GOTO_DATE: Long = 1
+        const val EXTRA_GOTO_TIME: Long = 2
+        const val EXTRA_GOTO_BACK_TO_PREVIOUS: Long = 4
+        const val EXTRA_GOTO_TODAY: Long = 8
+
+        /**
+         * Creates and/or returns an instance of CalendarController associated with
+         * the supplied context. It is best to pass in the current Activity.
+         *
+         * @param context The activity if at all possible.
+         */
+        @JvmStatic fun getInstance(context: Context): CalendarController {
+            synchronized(instances) {
+                var controller: CalendarController? = null
+                val weakController: WeakReference<CalendarController>? = instances.get(context)
+                if (weakController != null) {
+                    controller = weakController.get()
+                }
+                if (controller == null) {
+                    controller = CalendarController(context)
+                    instances.put(context, WeakReference(controller))
+                }
+                return controller
+            }
+        }
+
+        /**
+         * Removes an instance when it is no longer needed. This should be called in
+         * an activity's onDestroy method.
+         *
+         * @param context The activity used to create the controller
+         */
+        @JvmStatic fun removeInstance(context: Context?) {
+            instances.remove(context)
+        }
+    }
+
+    init {
+        mContext = context
+        mUpdateTimezone.run()
+        mTime?.setToNow()
+        mDetailViewType = Utils.getSharedPreference(
+            mContext,
+            GeneralPreferences.KEY_DETAILED_VIEW,
+            GeneralPreferences.DEFAULT_DETAILED_VIEW
+        )
     }
 }
