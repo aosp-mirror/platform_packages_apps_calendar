@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,274 +13,186 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.android.calendar
 
-package com.android.calendar;
+import android.app.Activity
+import android.app.FragmentManager
+import android.app.backup.BackupManager
+import android.content.Context
+import android.content.Intent
+import android.content.SharedPreferences
+import android.content.SharedPreferences.Editor
+import android.content.SharedPreferences.OnSharedPreferenceChangeListener
+import android.media.Ringtone
+import android.media.RingtoneManager
+import android.net.Uri
+import android.os.Bundle
+import android.os.Vibrator
+import android.preference.CheckBoxPreference
+import android.preference.ListPreference
+import android.preference.Preference
+import android.preference.Preference.OnPreferenceChangeListener
+import android.preference.Preference.OnPreferenceClickListener
+import android.preference.PreferenceCategory
+import android.preference.PreferenceFragment
+import android.preference.PreferenceManager
+import android.preference.PreferenceScreen
+import android.preference.RingtonePreference
+import android.provider.CalendarContract
+import android.provider.CalendarContract.CalendarCache
+import android.provider.SearchRecentSuggestions
+import android.text.TextUtils
+import android.text.format.Time
+import android.widget.Toast
+import com.android.calendar.alerts.AlertReceiver
+import com.android.timezonepicker.TimeZoneInfo
+import com.android.timezonepicker.TimeZonePickerDialog
+import com.android.timezonepicker.TimeZonePickerDialog.OnTimeZoneSetListener
+import com.android.timezonepicker.TimeZonePickerUtils
 
-import android.app.Activity;
-import android.app.FragmentManager;
-import android.app.backup.BackupManager;
-import android.content.Context;
-import android.content.Intent;
-import android.content.SharedPreferences;
-import android.content.SharedPreferences.Editor;
-import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
-import android.media.Ringtone;
-import android.media.RingtoneManager;
-import android.net.Uri;
-import android.os.Bundle;
-import android.os.Vibrator;
-import android.preference.CheckBoxPreference;
-import android.preference.ListPreference;
-import android.preference.Preference;
-import android.preference.Preference.OnPreferenceChangeListener;
-import android.preference.Preference.OnPreferenceClickListener;
-import android.preference.PreferenceCategory;
-import android.preference.PreferenceFragment;
-import android.preference.PreferenceManager;
-import android.preference.PreferenceScreen;
-import android.preference.RingtonePreference;
-import android.provider.CalendarContract;
-import android.provider.CalendarContract.CalendarCache;
-import android.provider.SearchRecentSuggestions;
-import android.text.TextUtils;
-import android.text.format.Time;
-import android.widget.Toast;
-
-import com.android.calendar.alerts.AlertReceiver;
-import com.android.timezonepicker.TimeZoneInfo;
-import com.android.timezonepicker.TimeZonePickerDialog;
-import com.android.timezonepicker.TimeZonePickerDialog.OnTimeZoneSetListener;
-import com.android.timezonepicker.TimeZonePickerUtils;
-
-public class GeneralPreferences extends PreferenceFragment implements
-        OnSharedPreferenceChangeListener, OnPreferenceChangeListener, OnTimeZoneSetListener {
-    // The name of the shared preferences file. This name must be maintained for historical
-    // reasons, as it's what PreferenceManager assigned the first time the file was created.
-    static final String SHARED_PREFS_NAME = "com.android.calendar_preferences";
-    static final String SHARED_PREFS_NAME_NO_BACKUP = "com.android.calendar_preferences_no_backup";
-
-    private static final String FRAG_TAG_TIME_ZONE_PICKER = "TimeZonePicker";
-
-    // Preference keys
-    public static final String KEY_HIDE_DECLINED = "preferences_hide_declined";
-    public static final String KEY_WEEK_START_DAY = "preferences_week_start_day";
-    public static final String KEY_SHOW_WEEK_NUM = "preferences_show_week_num";
-    public static final String KEY_DAYS_PER_WEEK = "preferences_days_per_week";
-    public static final String KEY_SKIP_SETUP = "preferences_skip_setup";
-
-    public static final String KEY_CLEAR_SEARCH_HISTORY = "preferences_clear_search_history";
-
-    public static final String KEY_ALERTS_CATEGORY = "preferences_alerts_category";
-    public static final String KEY_ALERTS = "preferences_alerts";
-    public static final String KEY_ALERTS_VIBRATE = "preferences_alerts_vibrate";
-    public static final String KEY_ALERTS_RINGTONE = "preferences_alerts_ringtone";
-    public static final String KEY_ALERTS_POPUP = "preferences_alerts_popup";
-
-    public static final String KEY_SHOW_CONTROLS = "preferences_show_controls";
-
-    public static final String KEY_DEFAULT_REMINDER = "preferences_default_reminder";
-    public static final int NO_REMINDER = -1;
-    public static final String NO_REMINDER_STRING = "-1";
-    public static final int REMINDER_DEFAULT_TIME = 10; // in minutes
-
-    public static final String KEY_DEFAULT_CELL_HEIGHT = "preferences_default_cell_height";
-    public static final String KEY_VERSION = "preferences_version";
-
-    /** Key to SharePreference for default view (CalendarController.ViewType) */
-    public static final String KEY_START_VIEW = "preferred_startView";
-    /**
-     *  Key to SharePreference for default detail view (CalendarController.ViewType)
-     *  Typically used by widget
-     */
-    public static final String KEY_DETAILED_VIEW = "preferred_detailedView";
-    public static final String KEY_DEFAULT_CALENDAR = "preference_defaultCalendar";
-
-    // These must be in sync with the array preferences_week_start_day_values
-    public static final String WEEK_START_DEFAULT = "-1";
-    public static final String WEEK_START_SATURDAY = "7";
-    public static final String WEEK_START_SUNDAY = "1";
-    public static final String WEEK_START_MONDAY = "2";
-
-    // These keys are kept to enable migrating users from previous versions
-    private static final String KEY_ALERTS_TYPE = "preferences_alerts_type";
-    private static final String ALERT_TYPE_ALERTS = "0";
-    private static final String ALERT_TYPE_STATUS_BAR = "1";
-    private static final String ALERT_TYPE_OFF = "2";
-    static final String KEY_HOME_TZ_ENABLED = "preferences_home_tz_enabled";
-    static final String KEY_HOME_TZ = "preferences_home_tz";
-
-    // Default preference values
-    public static final int DEFAULT_START_VIEW = CalendarController.ViewType.WEEK;
-    public static final int DEFAULT_DETAILED_VIEW = CalendarController.ViewType.DAY;
-    public static final boolean DEFAULT_SHOW_WEEK_NUM = false;
-    // This should match the XML file.
-    public static final String DEFAULT_RINGTONE = "content://settings/system/notification_sound";
-
-    CheckBoxPreference mAlert;
-    CheckBoxPreference mVibrate;
-    CheckBoxPreference mPopup;
-    CheckBoxPreference mUseHomeTZ;
-    CheckBoxPreference mHideDeclined;
-    Preference mHomeTZ;
-    TimeZonePickerUtils mTzPickerUtils;
-    ListPreference mWeekStart;
-    ListPreference mDefaultReminder;
-
-    private String mTimeZoneId;
-
-    /** Return a properly configured SharedPreferences instance */
-    public static SharedPreferences getSharedPreferences(Context context) {
-        return context.getSharedPreferences(SHARED_PREFS_NAME, Context.MODE_PRIVATE);
-    }
-
-    /** Set the default shared preferences in the proper context */
-    public static void setDefaultValues(Context context) {
-        PreferenceManager.setDefaultValues(context, SHARED_PREFS_NAME, Context.MODE_PRIVATE,
-                R.xml.general_preferences, false);
-    }
+class GeneralPreferences : PreferenceFragment(), OnSharedPreferenceChangeListener,
+        OnPreferenceChangeListener, OnTimeZoneSetListener {
+    var mAlert: CheckBoxPreference? = null
+    var mVibrate: CheckBoxPreference? = null
+    var mPopup: CheckBoxPreference? = null
+    var mUseHomeTZ: CheckBoxPreference? = null
+    var mHideDeclined: CheckBoxPreference? = null
+    var mHomeTZ: Preference? = null
+    var mTzPickerUtils: TimeZonePickerUtils? = null
+    var mWeekStart: ListPreference? = null
+    var mDefaultReminder: ListPreference? = null
+    private var mTimeZoneId: String? = null
 
     @Override
-    public void onCreate(Bundle icicle) {
-        super.onCreate(icicle);
-
-        final Activity activity = getActivity();
+    override fun onCreate(icicle: Bundle?) {
+        super.onCreate(icicle)
+        val activity: Activity = getActivity()
 
         // Make sure to always use the same preferences file regardless of the package name
         // we're running under
-        final PreferenceManager preferenceManager = getPreferenceManager();
-        final SharedPreferences sharedPreferences = getSharedPreferences(activity);
-        preferenceManager.setSharedPreferencesName(SHARED_PREFS_NAME);
+        val preferenceManager: PreferenceManager = getPreferenceManager()
+        val sharedPreferences: SharedPreferences = getSharedPreferences(activity)
+        preferenceManager.setSharedPreferencesName(SHARED_PREFS_NAME)
 
         // Load the preferences from an XML resource
-        addPreferencesFromResource(R.xml.general_preferences);
-
-        final PreferenceScreen preferenceScreen = getPreferenceScreen();
-        mAlert = (CheckBoxPreference) preferenceScreen.findPreference(KEY_ALERTS);
-        mVibrate = (CheckBoxPreference) preferenceScreen.findPreference(KEY_ALERTS_VIBRATE);
-        Vibrator vibrator = (Vibrator) activity.getSystemService(Context.VIBRATOR_SERVICE);
+        addPreferencesFromResource(R.xml.general_preferences)
+        val preferenceScreen: PreferenceScreen = getPreferenceScreen()
+        mAlert = preferenceScreen.findPreference(KEY_ALERTS) as CheckBoxPreference
+        mVibrate = preferenceScreen.findPreference(KEY_ALERTS_VIBRATE) as CheckBoxPreference
+        val vibrator: Vibrator = activity.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
         if (vibrator == null || !vibrator.hasVibrator()) {
-            PreferenceCategory mAlertGroup = (PreferenceCategory) preferenceScreen
-                    .findPreference(KEY_ALERTS_CATEGORY);
-            mAlertGroup.removePreference(mVibrate);
+            val mAlertGroup: PreferenceCategory = preferenceScreen
+                    .findPreference(KEY_ALERTS_CATEGORY) as PreferenceCategory
+            mAlertGroup.removePreference(mVibrate)
         }
-
-        mPopup = (CheckBoxPreference) preferenceScreen.findPreference(KEY_ALERTS_POPUP);
-        mUseHomeTZ = (CheckBoxPreference) preferenceScreen.findPreference(KEY_HOME_TZ_ENABLED);
-        mHideDeclined = (CheckBoxPreference) preferenceScreen.findPreference(KEY_HIDE_DECLINED);
-        mWeekStart = (ListPreference) preferenceScreen.findPreference(KEY_WEEK_START_DAY);
-        mDefaultReminder = (ListPreference) preferenceScreen.findPreference(KEY_DEFAULT_REMINDER);
-        mHomeTZ = preferenceScreen.findPreference(KEY_HOME_TZ);
-        mWeekStart.setSummary(mWeekStart.getEntry());
-        mDefaultReminder.setSummary(mDefaultReminder.getEntry());
+        mPopup = preferenceScreen.findPreference(KEY_ALERTS_POPUP) as CheckBoxPreference
+        mUseHomeTZ = preferenceScreen.findPreference(KEY_HOME_TZ_ENABLED) as CheckBoxPreference
+        mHideDeclined = preferenceScreen.findPreference(KEY_HIDE_DECLINED) as CheckBoxPreference
+        mWeekStart = preferenceScreen.findPreference(KEY_WEEK_START_DAY) as ListPreference
+        mDefaultReminder = preferenceScreen.findPreference(KEY_DEFAULT_REMINDER) as ListPreference
+        mHomeTZ = preferenceScreen.findPreference(KEY_HOME_TZ)
+        mWeekStart?.setSummary(mWeekStart?.getEntry())
+        mDefaultReminder?.setSummary(mDefaultReminder?.getEntry())
 
         // This triggers an asynchronous call to the provider to refresh the data in shared pref
-        mTimeZoneId = Utils.getTimeZone(activity, null);
-
-        SharedPreferences prefs = CalendarUtils.getSharedPreferences(activity,
-                Utils.SHARED_PREFS_NAME);
+        mTimeZoneId = Utils.getTimeZone(activity, null)
+        val prefs: SharedPreferences = CalendarUtils.getSharedPreferences(activity,
+                Utils.SHARED_PREFS_NAME)
 
         // Utils.getTimeZone will return the currentTimeZone instead of the one
         // in the shared_pref if home time zone is disabled. So if home tz is
         // off, we will explicitly read it.
         if (!prefs.getBoolean(KEY_HOME_TZ_ENABLED, false)) {
-            mTimeZoneId = prefs.getString(KEY_HOME_TZ, Time.getCurrentTimezone());
+            mTimeZoneId = prefs.getString(KEY_HOME_TZ, Time.getCurrentTimezone())
         }
 
-        mHomeTZ.setOnPreferenceClickListener(new OnPreferenceClickListener() {
+        mHomeTZ?.setOnPreferenceClickListener(object: Preference.OnPreferenceClickListener {
             @Override
-            public boolean onPreferenceClick(Preference preference) {
-                showTimezoneDialog();
-                return true;
+            override fun onPreferenceClick(preference: Preference?): Boolean {
+                showTimezoneDialog()
+                return true
             }
-        });
+        })
 
         if (mTzPickerUtils == null) {
-            mTzPickerUtils = new TimeZonePickerUtils(getActivity());
+            mTzPickerUtils = TimeZonePickerUtils(getActivity())
         }
-        CharSequence timezoneName = mTzPickerUtils.getGmtDisplayName(getActivity(), mTimeZoneId,
-                System.currentTimeMillis(), false);
-        mHomeTZ.setSummary(timezoneName != null ? timezoneName : mTimeZoneId);
-
-        TimeZonePickerDialog tzpd = (TimeZonePickerDialog) activity.getFragmentManager()
-                .findFragmentByTag(FRAG_TAG_TIME_ZONE_PICKER);
+        val timezoneName: CharSequence? = mTzPickerUtils?.getGmtDisplayName(getActivity(),
+                mTimeZoneId, System.currentTimeMillis(), false)
+        mHomeTZ?.setSummary(timezoneName ?: mTimeZoneId)
+        val tzpd: TimeZonePickerDialog = activity.getFragmentManager()
+                .findFragmentByTag(FRAG_TAG_TIME_ZONE_PICKER) as TimeZonePickerDialog
         if (tzpd != null) {
-            tzpd.setOnTimeZoneSetListener(this);
+            tzpd.setOnTimeZoneSetListener(this)
         }
-
-        migrateOldPreferences(sharedPreferences);
-
-        updateChildPreferences();
+        migrateOldPreferences(sharedPreferences)
+        updateChildPreferences()
     }
 
-    private void showTimezoneDialog() {
-        final Activity activity = getActivity();
-        if (activity == null) {
-            return;
-        }
-
-        Bundle b = new Bundle();
-        b.putLong(TimeZonePickerDialog.BUNDLE_START_TIME_MILLIS, System.currentTimeMillis());
-        b.putString(TimeZonePickerDialog.BUNDLE_TIME_ZONE, Utils.getTimeZone(activity, null));
-
-        FragmentManager fm = getActivity().getFragmentManager();
-        TimeZonePickerDialog tzpd = (TimeZonePickerDialog) fm
-                .findFragmentByTag(FRAG_TAG_TIME_ZONE_PICKER);
+    private fun showTimezoneDialog() {
+        val activity: Activity = getActivity() ?: return
+        val b = Bundle()
+        b.putLong(TimeZonePickerDialog.BUNDLE_START_TIME_MILLIS, System.currentTimeMillis())
+        b.putString(TimeZonePickerDialog.BUNDLE_TIME_ZONE, Utils.getTimeZone(activity, null))
+        val fm: FragmentManager = getActivity().getFragmentManager()
+        var tzpd: TimeZonePickerDialog? = fm
+                .findFragmentByTag(FRAG_TAG_TIME_ZONE_PICKER) as TimeZonePickerDialog
         if (tzpd != null) {
-            tzpd.dismiss();
+            tzpd.dismiss()
         }
-        tzpd = new TimeZonePickerDialog();
-        tzpd.setArguments(b);
-        tzpd.setOnTimeZoneSetListener(this);
-        tzpd.show(fm, FRAG_TAG_TIME_ZONE_PICKER);
+        tzpd = TimeZonePickerDialog()
+        tzpd.setArguments(b)
+        tzpd.setOnTimeZoneSetListener(this)
+        tzpd.show(fm, FRAG_TAG_TIME_ZONE_PICKER)
     }
 
     @Override
-    public void onStart() {
-        super.onStart();
+    override fun onStart() {
+        super.onStart()
         getPreferenceScreen().getSharedPreferences()
-                .registerOnSharedPreferenceChangeListener(this);
-        setPreferenceListeners(this);
+                .registerOnSharedPreferenceChangeListener(this)
+        setPreferenceListeners(this)
     }
 
     /**
      * Sets up all the preference change listeners to use the specified
      * listener.
      */
-    private void setPreferenceListeners(OnPreferenceChangeListener listener) {
-        mUseHomeTZ.setOnPreferenceChangeListener(listener);
-        mHomeTZ.setOnPreferenceChangeListener(listener);
-        mWeekStart.setOnPreferenceChangeListener(listener);
-        mDefaultReminder.setOnPreferenceChangeListener(listener);
-        mHideDeclined.setOnPreferenceChangeListener(listener);
-        mVibrate.setOnPreferenceChangeListener(listener);
+    private fun setPreferenceListeners(listener: OnPreferenceChangeListener?) {
+        mUseHomeTZ?.setOnPreferenceChangeListener(listener)
+        mHomeTZ?.setOnPreferenceChangeListener(listener)
+        mWeekStart?.setOnPreferenceChangeListener(listener)
+        mDefaultReminder?.setOnPreferenceChangeListener(listener)
+        mHideDeclined?.setOnPreferenceChangeListener(listener)
+        mVibrate?.setOnPreferenceChangeListener(listener)
     }
 
     @Override
-    public void onStop() {
+    override fun onStop() {
         getPreferenceScreen().getSharedPreferences()
-                .unregisterOnSharedPreferenceChangeListener(this);
-        setPreferenceListeners(null);
-        super.onStop();
+                .unregisterOnSharedPreferenceChangeListener(this)
+        setPreferenceListeners(null)
+        super.onStop()
     }
 
     @Override
-    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-        Activity a = getActivity();
+    override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String) {
+        val a: Activity = getActivity()
         if (key.equals(KEY_ALERTS)) {
-            updateChildPreferences();
+            updateChildPreferences()
             if (a != null) {
-                Intent intent = new Intent();
-                intent.setClass(a, AlertReceiver.class);
-                if (mAlert.isChecked()) {
-                    intent.setAction(AlertReceiver.ACTION_DISMISS_OLD_REMINDERS);
+                val intent = Intent()
+                intent.setClass(a, AlertReceiver::class.java)
+                if (mAlert?.isChecked() ?: false) {
+                    intent.setAction(AlertReceiver.ACTION_DISMISS_OLD_REMINDERS)
                 } else {
-                    intent.setAction(AlertReceiver.EVENT_REMINDER_APP_ACTION);
+                    intent.setAction(AlertReceiver.EVENT_REMINDER_APP_ACTION)
                 }
-                a.sendBroadcast(intent);
+                a.sendBroadcast(intent)
             }
         }
         if (a != null) {
-            BackupManager.dataChanged(a.getPackageName());
+            BackupManager.dataChanged(a.getPackageName())
         }
     }
 
@@ -288,48 +200,46 @@ public class GeneralPreferences extends PreferenceFragment implements
      * Handles time zone preference changes
      */
     @Override
-    public boolean onPreferenceChange(Preference preference, Object newValue) {
-        String tz;
-        final Activity activity = getActivity();
-        if (preference == mUseHomeTZ) {
-            if ((Boolean)newValue) {
-                tz = mTimeZoneId;
+    override fun onPreferenceChange(preference: Preference, newValue: Any): Boolean {
+        val tz: String?
+        val activity: Activity = getActivity()
+        if (preference === mUseHomeTZ) {
+            tz = if (newValue != null) {
+                mTimeZoneId
             } else {
-                tz = CalendarCache.TIMEZONE_TYPE_AUTO;
+                CalendarCache.TIMEZONE_TYPE_AUTO
             }
-            Utils.setTimeZone(activity, tz);
-            return true;
-        } else if (preference == mHideDeclined) {
-            mHideDeclined.setChecked((Boolean) newValue);
-            Intent intent = new Intent(Utils.getWidgetScheduledUpdateAction(activity));
-            intent.setDataAndType(CalendarContract.CONTENT_URI, Utils.APPWIDGET_DATA_TYPE);
-            activity.sendBroadcast(intent);
-            return true;
-        } else if (preference == mWeekStart) {
-            mWeekStart.setValue((String) newValue);
-            mWeekStart.setSummary(mWeekStart.getEntry());
-        } else if (preference == mDefaultReminder) {
-            mDefaultReminder.setValue((String) newValue);
-            mDefaultReminder.setSummary(mDefaultReminder.getEntry());
-        } else if (preference == mVibrate) {
-            mVibrate.setChecked((Boolean) newValue);
-            return true;
+            Utils.setTimeZone(activity, tz)
+            return true
+        } else if (preference === mHideDeclined) {
+            mHideDeclined?.setChecked(newValue as Boolean)
+            val intent = Intent(Utils.getWidgetScheduledUpdateAction(activity))
+            intent.setDataAndType(CalendarContract.CONTENT_URI, Utils.APPWIDGET_DATA_TYPE)
+            activity.sendBroadcast(intent)
+            return true
+        } else if (preference === mWeekStart) {
+            mWeekStart?.setValue(newValue as String)
+            mWeekStart?.setSummary(mWeekStart?.getEntry())
+        } else if (preference === mDefaultReminder) {
+            mDefaultReminder?.setValue(newValue as String)
+            mDefaultReminder?.setSummary(mDefaultReminder?.getEntry())
+        } else if (preference === mVibrate) {
+            mVibrate?.setChecked(newValue as Boolean)
+            return true
         } else {
-            return true;
+            return true
         }
-        return false;
+        return false
     }
 
-    public String getRingtoneTitleFromUri(Context context, String uri) {
+    fun getRingtoneTitleFromUri(context: Context?, uri: String?): String? {
         if (TextUtils.isEmpty(uri)) {
-            return null;
+            return null
         }
-
-        Ringtone ring = RingtoneManager.getRingtone(getActivity(), Uri.parse(uri));
-        if (ring != null) {
-            return ring.getTitle(context);
-        }
-        return null;
+        val ring: Ringtone = RingtoneManager.getRingtone(getActivity(), Uri.parse(uri))
+        return if (ring != null) {
+            ring.getTitle(context)
+        } else null
     }
 
     /**
@@ -337,29 +247,28 @@ public class GeneralPreferences extends PreferenceFragment implements
      * set of keys and values.
      * @param prefs the preferences to upgrade
      */
-    private void migrateOldPreferences(SharedPreferences prefs) {
+    private fun migrateOldPreferences(prefs: SharedPreferences) {
         // If needed, migrate vibration setting from a previous version
-
-        mVibrate.setChecked(Utils.getDefaultVibrate(getActivity(), prefs));
+        mVibrate?.setChecked(Utils.getDefaultVibrate(getActivity(), prefs))
 
         // If needed, migrate the old alerts type settin
         if (!prefs.contains(KEY_ALERTS) && prefs.contains(KEY_ALERTS_TYPE)) {
-            String type = prefs.getString(KEY_ALERTS_TYPE, ALERT_TYPE_STATUS_BAR);
+            val type: String? = prefs.getString(KEY_ALERTS_TYPE, ALERT_TYPE_STATUS_BAR)
             if (type.equals(ALERT_TYPE_OFF)) {
-                mAlert.setChecked(false);
-                mPopup.setChecked(false);
-                mPopup.setEnabled(false);
+                mAlert?.setChecked(false)
+                mPopup?.setChecked(false)
+                mPopup?.setEnabled(false)
             } else if (type.equals(ALERT_TYPE_STATUS_BAR)) {
-                mAlert.setChecked(true);
-                mPopup.setChecked(false);
-                mPopup.setEnabled(true);
+                mAlert?.setChecked(true)
+                mPopup?.setChecked(false)
+                mPopup?.setEnabled(true)
             } else if (type.equals(ALERT_TYPE_ALERTS)) {
-                mAlert.setChecked(true);
-                mPopup.setChecked(true);
-                mPopup.setEnabled(true);
+                mAlert?.setChecked(true)
+                mPopup?.setChecked(true)
+                mPopup?.setEnabled(true)
             }
             // clear out the old setting
-            prefs.edit().remove(KEY_ALERTS_TYPE).commit();
+            prefs.edit().remove(KEY_ALERTS_TYPE).commit()
         }
     }
 
@@ -368,33 +277,105 @@ public class GeneralPreferences extends PreferenceFragment implements
      * example, when notifications are turned off, we disable the preferences
      * for configuring the exact notification behavior.
      */
-    private void updateChildPreferences() {
-        if (mAlert.isChecked()) {
-            mVibrate.setEnabled(true);
-            mPopup.setEnabled(true);
+    private fun updateChildPreferences() {
+        if (mAlert?.isChecked() ?: false) {
+            mVibrate?.setEnabled(true)
+            mPopup?.setEnabled(true)
         } else {
-            mVibrate.setEnabled(false);
-            mPopup.setEnabled(false);
+            mVibrate?.setEnabled(false)
+            mPopup?.setEnabled(false)
         }
     }
 
-
     @Override
-    public boolean onPreferenceTreeClick(
-            PreferenceScreen preferenceScreen, Preference preference) {
-        final String key = preference.getKey();
-        return super.onPreferenceTreeClick(preferenceScreen, preference);
+    override fun onPreferenceTreeClick(
+            preferenceScreen: PreferenceScreen?, preference: Preference): Boolean {
+        val key: String = preference.getKey()
+        return super.onPreferenceTreeClick(preferenceScreen, preference)
     }
 
     @Override
-    public void onTimeZoneSet(TimeZoneInfo tzi) {
+    override fun onTimeZoneSet(tzi: TimeZoneInfo) {
         if (mTzPickerUtils == null) {
-            mTzPickerUtils = new TimeZonePickerUtils(getActivity());
+            mTzPickerUtils = TimeZonePickerUtils(getActivity())
+        }
+        val timezoneName: CharSequence? = mTzPickerUtils?.getGmtDisplayName(
+                getActivity(), tzi.mTzId, System.currentTimeMillis(), false)
+        mHomeTZ?.setSummary(timezoneName)
+        Utils.setTimeZone(getActivity(), tzi.mTzId)
+    }
+
+    companion object {
+        // The name of the shared preferences file. This name must be maintained for historical
+        // reasons, as it's what PreferenceManager assigned the first time the file was created.
+        const val SHARED_PREFS_NAME = "com.android.calendar_preferences"
+        const val SHARED_PREFS_NAME_NO_BACKUP = "com.android.calendar_preferences_no_backup"
+        private const val FRAG_TAG_TIME_ZONE_PICKER = "TimeZonePicker"
+
+        // Preference keys
+        const val KEY_HIDE_DECLINED = "preferences_hide_declined"
+        const val KEY_WEEK_START_DAY = "preferences_week_start_day"
+        const val KEY_SHOW_WEEK_NUM = "preferences_show_week_num"
+        const val KEY_DAYS_PER_WEEK = "preferences_days_per_week"
+        const val KEY_SKIP_SETUP = "preferences_skip_setup"
+        const val KEY_CLEAR_SEARCH_HISTORY = "preferences_clear_search_history"
+        const val KEY_ALERTS_CATEGORY = "preferences_alerts_category"
+        const val KEY_ALERTS = "preferences_alerts"
+        const val KEY_ALERTS_VIBRATE = "preferences_alerts_vibrate"
+        const val KEY_ALERTS_RINGTONE = "preferences_alerts_ringtone"
+        const val KEY_ALERTS_POPUP = "preferences_alerts_popup"
+        const val KEY_SHOW_CONTROLS = "preferences_show_controls"
+        const val KEY_DEFAULT_REMINDER = "preferences_default_reminder"
+        const val NO_REMINDER = -1
+        const val NO_REMINDER_STRING = "-1"
+        const val REMINDER_DEFAULT_TIME = 10 // in minutes
+        const val KEY_DEFAULT_CELL_HEIGHT = "preferences_default_cell_height"
+        const val KEY_VERSION = "preferences_version"
+
+        /** Key to SharePreference for default view (CalendarController.ViewType)  */
+        const val KEY_START_VIEW = "preferred_startView"
+
+        /**
+         * Key to SharePreference for default detail view (CalendarController.ViewType)
+         * Typically used by widget
+         */
+        const val KEY_DETAILED_VIEW = "preferred_detailedView"
+        const val KEY_DEFAULT_CALENDAR = "preference_defaultCalendar"
+
+        // These must be in sync with the array preferences_week_start_day_values
+        const val WEEK_START_DEFAULT = "-1"
+        const val WEEK_START_SATURDAY = "7"
+        const val WEEK_START_SUNDAY = "1"
+        const val WEEK_START_MONDAY = "2"
+
+        // These keys are kept to enable migrating users from previous versions
+        private const val KEY_ALERTS_TYPE = "preferences_alerts_type"
+        private const val ALERT_TYPE_ALERTS = "0"
+        private const val ALERT_TYPE_STATUS_BAR = "1"
+        private const val ALERT_TYPE_OFF = "2"
+        const val KEY_HOME_TZ_ENABLED = "preferences_home_tz_enabled"
+        const val KEY_HOME_TZ = "preferences_home_tz"
+
+        // Default preference values
+        const val DEFAULT_START_VIEW: Int = CalendarController.ViewType.WEEK
+        const val DEFAULT_DETAILED_VIEW: Int = CalendarController.ViewType.DAY
+        const val DEFAULT_SHOW_WEEK_NUM = false
+
+        // This should match the XML file.
+        const val DEFAULT_RINGTONE = "content://settings/system/notification_sound"
+
+
+        /** Return a properly configured SharedPreferences instance  */
+        @JvmStatic
+        fun getSharedPreferences(context: Context): SharedPreferences {
+            return context.getSharedPreferences(SHARED_PREFS_NAME, Context.MODE_PRIVATE)
         }
 
-        final CharSequence timezoneName = mTzPickerUtils.getGmtDisplayName(
-                getActivity(), tzi.mTzId, System.currentTimeMillis(), false);
-        mHomeTZ.setSummary(timezoneName);
-        Utils.setTimeZone(getActivity(), tzi.mTzId);
+        /** Set the default shared preferences in the proper context  */
+        @JvmStatic
+        fun setDefaultValues(context: Context?) {
+            PreferenceManager.setDefaultValues(context, SHARED_PREFS_NAME, Context.MODE_PRIVATE,
+                    R.xml.general_preferences, false)
+        }
     }
 }
