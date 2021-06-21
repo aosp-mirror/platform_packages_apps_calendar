@@ -217,8 +217,8 @@ public class EventInfoFragment extends DialogFragment implements OnCheckedChange
 
     static {
         if (!Utils.isJellybeanOrLater()) {
-            EVENT_PROJECTION[EVENT_INDEX_CUSTOM_APP_PACKAGE] = Events._ID; // dummy value
-            EVENT_PROJECTION[EVENT_INDEX_CUSTOM_APP_URI] = Events._ID; // dummy value
+            EVENT_PROJECTION[EVENT_INDEX_CUSTOM_APP_PACKAGE] = Events._ID; // nonessential value
+            EVENT_PROJECTION[EVENT_INDEX_CUSTOM_APP_URI] = Events._ID; // nonessential value
         }
     }
 
