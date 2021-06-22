@@ -13,194 +13,164 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.android.calendar
 
-package com.android.calendar;
-
-import com.android.calendar.CalendarController.EventInfo;
-import com.android.calendar.CalendarController.EventType;
-
-import android.app.Fragment;
-import android.content.Context;
-import android.os.Bundle;
-import android.text.format.Time;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.view.ViewGroup.LayoutParams;
-import android.view.animation.Animation;
-import android.view.animation.AnimationUtils;
-import android.widget.ProgressBar;
-import android.widget.ViewSwitcher;
-import android.widget.ViewSwitcher.ViewFactory;
+import com.android.calendar.CalendarController.EventInfo
+import com.android.calendar.CalendarController.EventType
+import android.app.Fragment
+import android.content.Context
+import android.os.Bundle
+import android.text.format.Time
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.view.ViewGroup.LayoutParams
+import android.view.animation.Animation
+import android.view.animation.AnimationUtils
+import android.widget.ProgressBar
+import android.widget.ViewSwitcher
+import android.widget.ViewSwitcher.ViewFactory
 
 /**
  * This is the base class for Day and Week Activities.
  */
-public class DayFragment extends Fragment implements CalendarController.EventHandler, ViewFactory {
-    /**
-     * The view id used for all the views we create. It's OK to have all child
-     * views have the same ID. This ID is used to pick which view receives
-     * focus when a view hierarchy is saved / restore
-     */
-    private static final int VIEW_ID = 1;
-
-    protected static final String BUNDLE_KEY_RESTORE_TIME = "key_restore_time";
-
-    protected ProgressBar mProgressBar;
-    protected ViewSwitcher mViewSwitcher;
-    protected Animation mInAnimationForward;
-    protected Animation mOutAnimationForward;
-    protected Animation mInAnimationBackward;
-    protected Animation mOutAnimationBackward;
-    EventLoader mEventLoader;
-
-    Time mSelectedDay = new Time();
-
-    private final Runnable mTZUpdater = new Runnable() {
-        @Override
-        public void run() {
-            if (!DayFragment.this.isAdded()) {
-                return;
+class DayFragment : Fragment, CalendarController.EventHandler, ViewFactory {
+    protected var mProgressBar: ProgressBar? = null
+    protected var mViewSwitcher: ViewSwitcher? = null
+    protected var mInAnimationForward: Animation? = null
+    protected var mOutAnimationForward: Animation? = null
+    protected var mInAnimationBackward: Animation? = null
+    protected var mOutAnimationBackward: Animation? = null
+    var mEventLoader: EventLoader? = null
+    var mSelectedDay: Time = Time()
+    private val mTZUpdater: Runnable = object : Runnable {
+        override fun run() {
+            if (!this@DayFragment.isAdded()) {
+                return
             }
-            String tz = Utils.getTimeZone(getActivity(), mTZUpdater);
-            mSelectedDay.timezone = tz;
-            mSelectedDay.normalize(true);
+            val tz: String = Utils.getTimeZone(getActivity(), this)
+            mSelectedDay.timezone = tz
+            mSelectedDay.normalize(true)
         }
-    };
+    }
+    private var mNumDays = 0
 
-    private int mNumDays;
-
-    public DayFragment() {
-        mSelectedDay.setToNow();
+    constructor() {
+        mSelectedDay.setToNow()
     }
 
-    public DayFragment(long timeMillis, int numOfDays) {
-        mNumDays = numOfDays;
-        if (timeMillis == 0) {
-            mSelectedDay.setToNow();
+    constructor(timeMillis: Long, numOfDays: Int) {
+        mNumDays = numOfDays
+        if (timeMillis == 0L) {
+            mSelectedDay.setToNow()
         } else {
-            mSelectedDay.set(timeMillis);
+            mSelectedDay.set(timeMillis)
         }
     }
 
-    @Override
-    public void onCreate(Bundle icicle) {
-        super.onCreate(icicle);
-
-        Context context = getActivity();
-
-        mInAnimationForward = AnimationUtils.loadAnimation(context, R.anim.slide_left_in);
-        mOutAnimationForward = AnimationUtils.loadAnimation(context, R.anim.slide_left_out);
-        mInAnimationBackward = AnimationUtils.loadAnimation(context, R.anim.slide_right_in);
-        mOutAnimationBackward = AnimationUtils.loadAnimation(context, R.anim.slide_right_out);
-
-        mEventLoader = new EventLoader(context);
+    override fun onCreate(icicle: Bundle?) {
+        super.onCreate(icicle)
+        val context: Context = getActivity()
+        mInAnimationForward = AnimationUtils.loadAnimation(context, R.anim.slide_left_in)
+        mOutAnimationForward = AnimationUtils.loadAnimation(context, R.anim.slide_left_out)
+        mInAnimationBackward = AnimationUtils.loadAnimation(context, R.anim.slide_right_in)
+        mOutAnimationBackward = AnimationUtils.loadAnimation(context, R.anim.slide_right_out)
+        mEventLoader = EventLoader(context)
     }
 
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-            Bundle savedInstanceState) {
-        View v = inflater.inflate(R.layout.day_activity, null);
-
-        mViewSwitcher = (ViewSwitcher) v.findViewById(R.id.switcher);
-        mViewSwitcher.setFactory(this);
-        mViewSwitcher.getCurrentView().requestFocus();
-        ((DayView) mViewSwitcher.getCurrentView()).updateTitle();
-
-        return v;
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
+                     savedInstanceState: Bundle?): View {
+        val v: View = inflater.inflate(R.layout.day_activity, null)
+        mViewSwitcher = v.findViewById(R.id.switcher) as ViewSwitcher
+        mViewSwitcher?.setFactory(this)
+        mViewSwitcher?.getCurrentView()?.requestFocus()
+        (mViewSwitcher?.getCurrentView() as DayView).updateTitle()
+        return v
     }
 
-    public View makeView() {
-        mTZUpdater.run();
-        DayView view = new DayView(getActivity(), CalendarController
-                .getInstance(getActivity()), mViewSwitcher, mEventLoader, mNumDays);
-        view.setId(VIEW_ID);
-        view.setLayoutParams(new ViewSwitcher.LayoutParams(
-                LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
-        view.setSelected(mSelectedDay, false, false);
-        return view;
+    override fun makeView(): View {
+        mTZUpdater.run()
+        val view = DayView(getActivity(), CalendarController
+                .getInstance(getActivity()), mViewSwitcher, mEventLoader, mNumDays)
+        view.setId(DayFragment.Companion.VIEW_ID)
+        view.setLayoutParams(LayoutParams(
+                LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
+        view.setSelected(mSelectedDay, false, false)
+        return view
     }
 
-    @Override
-    public void onResume() {
-        super.onResume();
-        mEventLoader.startBackgroundThread();
-        mTZUpdater.run();
-        eventsChanged();
-        DayView view = (DayView) mViewSwitcher.getCurrentView();
-        view.handleOnResume();
-        view.restartCurrentTimeUpdates();
-
-        view = (DayView) mViewSwitcher.getNextView();
-        view.handleOnResume();
-        view.restartCurrentTimeUpdates();
+    override fun onResume() {
+        super.onResume()
+        mEventLoader!!.startBackgroundThread()
+        mTZUpdater.run()
+        eventsChanged()
+        var view: DayView = mViewSwitcher?.getCurrentView() as DayView
+        view.handleOnResume()
+        view.restartCurrentTimeUpdates()
+        view = mViewSwitcher?.getNextView() as DayView
+        view.handleOnResume()
+        view.restartCurrentTimeUpdates()
     }
 
-    @Override
-    public void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
+    override fun onSaveInstanceState(outState: Bundle?) {
+        super.onSaveInstanceState(outState)
     }
 
-    @Override
-    public void onPause() {
-        super.onPause();
-        DayView view = (DayView) mViewSwitcher.getCurrentView();
-        view.cleanup();
-        view = (DayView) mViewSwitcher.getNextView();
-        view.cleanup();
-        mEventLoader.stopBackgroundThread();
+    override fun onPause() {
+        super.onPause()
+        var view: DayView = mViewSwitcher?.getCurrentView() as DayView
+        view.cleanup()
+        view = mViewSwitcher?.getNextView() as DayView
+        view.cleanup()
+        mEventLoader!!.stopBackgroundThread()
 
         // Stop events cross-fade animation
-        view.stopEventsAnimation();
-        ((DayView) mViewSwitcher.getNextView()).stopEventsAnimation();
+        view.stopEventsAnimation()
+        (mViewSwitcher?.getNextView() as DayView).stopEventsAnimation()
     }
 
-    void startProgressSpinner() {
+    fun startProgressSpinner() {
         // start the progress spinner
-        mProgressBar.setVisibility(View.VISIBLE);
+        mProgressBar?.setVisibility(View.VISIBLE)
     }
 
-    void stopProgressSpinner() {
+    fun stopProgressSpinner() {
         // stop the progress spinner
-        mProgressBar.setVisibility(View.GONE);
+        mProgressBar?.setVisibility(View.GONE)
     }
 
-    private void goTo(Time goToTime, boolean ignoreTime, boolean animateToday) {
+    private fun goTo(goToTime: Time?, ignoreTime: Boolean, animateToday: Boolean) {
         if (mViewSwitcher == null) {
             // The view hasn't been set yet. Just save the time and use it later.
-            mSelectedDay.set(goToTime);
-            return;
+            mSelectedDay.set(goToTime)
+            return
         }
-
-        DayView currentView = (DayView) mViewSwitcher.getCurrentView();
+        val currentView: DayView = mViewSwitcher?.getCurrentView() as DayView
 
         // How does goTo time compared to what's already displaying?
-        int diff = currentView.compareToVisibleTimeRange(goToTime);
-
+        val diff: Int = currentView.compareToVisibleTimeRange(goToTime)
         if (diff == 0) {
             // In visible range. No need to switch view
-            currentView.setSelected(goToTime, ignoreTime, animateToday);
+            currentView.setSelected(goToTime, ignoreTime, animateToday)
         } else {
             // Figure out which way to animate
             if (diff > 0) {
-                mViewSwitcher.setInAnimation(mInAnimationForward);
-                mViewSwitcher.setOutAnimation(mOutAnimationForward);
+                mViewSwitcher?.setInAnimation(mInAnimationForward)
+                mViewSwitcher?.setOutAnimation(mOutAnimationForward)
             } else {
-                mViewSwitcher.setInAnimation(mInAnimationBackward);
-                mViewSwitcher.setOutAnimation(mOutAnimationBackward);
+                mViewSwitcher?.setInAnimation(mInAnimationBackward)
+                mViewSwitcher?.setOutAnimation(mOutAnimationBackward)
             }
-
-            DayView next = (DayView) mViewSwitcher.getNextView();
+            val next: DayView = mViewSwitcher?.getNextView() as DayView
             if (ignoreTime) {
-                next.setFirstVisibleHour(currentView.getFirstVisibleHour());
+                next.setFirstVisibleHour(currentView.getFirstVisibleHour())
             }
-
-            next.setSelected(goToTime, ignoreTime, animateToday);
-            next.reloadEvents();
-            mViewSwitcher.showNext();
-            next.requestFocus();
-            next.updateTitle();
-            next.restartCurrentTimeUpdates();
+            next.setSelected(goToTime, ignoreTime, animateToday)
+            next.reloadEvents()
+            mViewSwitcher?.showNext()
+            next.requestFocus()
+            next.updateTitle()
+            next.restartCurrentTimeUpdates()
         }
     }
 
@@ -211,46 +181,50 @@ public class DayFragment extends Fragment implements CalendarController.EventHan
      *
      * @return the selected time in milliseconds
      */
-    public long getSelectedTimeInMillis() {
+    val selectedTimeInMillis: Long
+        get() {
+            if (mViewSwitcher == null) {
+                return -1
+            }
+            val view: DayView = mViewSwitcher?.getCurrentView() as DayView ?: return -1
+            return view.getSelectedTimeInMillis()
+        }
+
+    override fun eventsChanged() {
         if (mViewSwitcher == null) {
-            return -1;
+            return
         }
-        DayView view = (DayView) mViewSwitcher.getCurrentView();
-        if (view == null) {
-            return -1;
-        }
-        return view.getSelectedTimeInMillis();
+        var view: DayView = mViewSwitcher?.getCurrentView() as DayView
+        view.clearCachedEvents()
+        view.reloadEvents()
+        view = mViewSwitcher?.getNextView() as DayView
+        view.clearCachedEvents()
     }
 
-    public void eventsChanged() {
-        if (mViewSwitcher == null) {
-            return;
-        }
-        DayView view = (DayView) mViewSwitcher.getCurrentView();
-        view.clearCachedEvents();
-        view.reloadEvents();
+    val nextView: DayView
+        get() = mViewSwitcher?.getNextView() as DayView
+    override val supportedEventTypes: Long
+        get() = CalendarController.EventType.GO_TO or CalendarController.EventType.EVENTS_CHANGED
 
-        view = (DayView) mViewSwitcher.getNextView();
-        view.clearCachedEvents();
-    }
-
-    public DayView getNextView() {
-        return (DayView) mViewSwitcher.getNextView();
-    }
-
-    public long getSupportedEventTypes() {
-        return EventType.GO_TO | EventType.EVENTS_CHANGED;
-    }
-
-    public void handleEvent(EventInfo msg) {
-        if (msg.eventType == EventType.GO_TO) {
+    override fun handleEvent(msg: CalendarController.EventInfo?) {
+        if (msg?.eventType == CalendarController.EventType.GO_TO) {
 // TODO support a range of time
 // TODO support event_id
 // TODO support select message
-            goTo(msg.selectedTime, (msg.extraLong & CalendarController.EXTRA_GOTO_DATE) != 0,
-                    (msg.extraLong & CalendarController.EXTRA_GOTO_TODAY) != 0);
-        } else if (msg.eventType == EventType.EVENTS_CHANGED) {
-            eventsChanged();
+            goTo(msg?.selectedTime, msg?.extraLong and CalendarController.EXTRA_GOTO_DATE != 0L,
+                    msg?.extraLong and CalendarController.EXTRA_GOTO_TODAY != 0L)
+        } else if (msg?.eventType == CalendarController.EventType.EVENTS_CHANGED) {
+            eventsChanged()
         }
+    }
+
+    companion object {
+        /**
+         * The view id used for all the views we create. It's OK to have all child
+         * views have the same ID. This ID is used to pick which view receives
+         * focus when a view hierarchy is saved / restore
+         */
+        private const val VIEW_ID = 1
+        protected const val BUNDLE_KEY_RESTORE_TIME = "key_restore_time"
     }
 }
