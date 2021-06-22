@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,20 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.android.calendar
 
-package com.android.calendar;
-
-import android.content.Context;
-import android.graphics.Color;
-import android.util.AttributeSet;
-import android.view.Gravity;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.AbsListView;
-import android.widget.AbsListView.OnScrollListener;
-import android.widget.Adapter;
-import android.widget.FrameLayout;
-import android.widget.ListView;
+import android.content.Context
+import android.graphics.Color
+import android.util.AttributeSet
+import android.view.Gravity
+import android.view.View
+import android.view.ViewGroup
+import android.widget.AbsListView
+import android.widget.AbsListView.OnScrollListener
+import android.widget.Adapter
+import android.widget.FrameLayout
+import android.widget.ListView
 
 /**
  * Implements a ListView class with a sticky header at the top. The header is
@@ -35,52 +34,49 @@ import android.widget.ListView;
  * scroll movement) and the header of the current section slides to the top.
  * Notes:
  * 1. The class uses the first available child ListView as the working
- *    ListView. If no ListView child exists, the class will create a default one.
+ * ListView. If no ListView child exists, the class will create a default one.
  * 2. The ListView's adapter must be passed to this class using the 'setAdapter'
- *    method. The adapter must implement the HeaderIndexer interface. If no adapter
- *    is specified, the class will try to extract it from the ListView
+ * method. The adapter must implement the HeaderIndexer interface. If no adapter
+ * is specified, the class will try to extract it from the ListView
  * 3. The class registers itself as a listener to scroll events (OnScrollListener), if the
- *    ListView needs to receive scroll events, it must register its listener using
- *    this class' setOnScrollListener method.
+ * ListView needs to receive scroll events, it must register its listener using
+ * this class' setOnScrollListener method.
  * 4. Headers for the list view must be added before using the StickyHeaderListView
  * 5. The implementation should register to listen to dataset changes. Right now this is not done
- *    since a change the dataset in a listview forces a call to OnScroll. The needed code is
- *    commented out.
+ * since a change the dataset in a listview forces a call to OnScroll. The needed code is
+ * commented out.
  */
-public class StickyHeaderListView extends FrameLayout implements OnScrollListener {
-
-    private static final String TAG = "StickyHeaderListView";
-    protected boolean mChildViewsCreated = false;
-    protected boolean mDoHeaderReset = false;
-
-    protected Context mContext = null;
-    protected Adapter mAdapter = null;
-    protected HeaderIndexer mIndexer = null;
-    protected HeaderHeightListener mHeaderHeightListener = null;
-    protected View mStickyHeader = null;
-    protected View mNonessentialHeader = null; // A invisible header used when a section has no header
-    protected ListView mListView = null;
-    protected ListView.OnScrollListener mListener = null;
-
-    private int mSeparatorWidth;
-    private View mSeparatorView;
-    private int mLastStickyHeaderHeight = 0;
+class StickyHeaderListView(context: Context, attrs: AttributeSet?) :
+    FrameLayout(context, attrs), OnScrollListener {
+    protected var mChildViewsCreated = false
+    protected var mDoHeaderReset = false
+    protected var mContext: Context? = null
+    protected var mAdapter: Adapter? = null
+    protected var mIndexer: HeaderIndexer? = null
+    protected var mHeaderHeightListener: HeaderHeightListener? = null
+    protected var mStickyHeader: View? = null
+    // A invisible header used when a section has no header
+    protected var mNonessentialHeader: View? = null
+    protected var mListView: ListView? = null
+    protected var mListener: AbsListView.OnScrollListener? = null
+    private var mSeparatorWidth = 0
+    private var mSeparatorView: View? = null
+    private var mLastStickyHeaderHeight = 0
 
     // This code is needed only if dataset changes do not force a call to OnScroll
     // protected DataSetObserver mListDataObserver = null;
+    protected var mCurrentSectionPos = -1 // Position of section that has its header on the
 
-
-    protected int mCurrentSectionPos = -1; // Position of section that has its header on the
-                                           // top of the view
-    protected int mNextSectionPosition = -1; // Position of next section's header
-    protected int mListViewHeadersCount = 0;
+    // top of the view
+    protected var mNextSectionPosition = -1 // Position of next section's header
+    protected var mListViewHeadersCount = 0
 
     /**
      * Interface that must be implemented by the ListView adapter to provide headers locations
      * and number of items under each header.
      *
      */
-    public interface HeaderIndexer {
+    interface HeaderIndexer {
         /**
          * Calculates the position of the header of a specific item in the adapter's data set.
          * For example: Assuming you have a list with albums and songs names:
@@ -90,8 +86,7 @@ public class StickyHeaderListView extends FrameLayout implements OnScrollListene
          * @param position - Position of the item in the ListView dataset
          * @return Position of header. -1 if the is no header
          */
-
-        int getHeaderPositionFromItemPosition(int position);
+        fun getHeaderPositionFromItemPosition(position: Int): Int
 
         /**
          * Calculates the number of items in the section defined by the header (not including
@@ -102,40 +97,36 @@ public class StickyHeaderListView extends FrameLayout implements OnScrollListene
          * @param headerPosition - the value returned by 'getHeaderPositionFromItemPosition'
          * @return Number of items. -1 on error.
          */
-        int getHeaderItemsNumber(int headerPosition);
+        fun getHeaderItemsNumber(headerPosition: Int): Int
     }
 
     /***
-    *
-    * Interface that is used to update the sticky header's height
-    *
-    */
-   public interface HeaderHeightListener {
-
-       /***
-        * Updated a change in the sticky header's size
-        *
-        * @param height - new height of sticky header
-        */
-       void OnHeaderHeightChanged(int height);
-   }
+     *
+     * Interface that is used to update the sticky header's height
+     *
+     */
+    interface HeaderHeightListener {
+        /***
+         * Updated a change in the sticky header's size
+         *
+         * @param height - new height of sticky header
+         */
+        fun OnHeaderHeightChanged(height: Int)
+    }
 
     /**
      * Sets the adapter to be used by the class to get views of headers
      *
      * @param adapter - The adapter.
      */
-
-    public void setAdapter(Adapter adapter) {
-
+    fun setAdapter(adapter: Adapter?) {
         // This code is needed only if dataset changes do not force a call to
         // OnScroll
         // if (mAdapter != null && mListDataObserver != null) {
         // mAdapter.unregisterDataSetObserver(mListDataObserver);
         // }
-
         if (adapter != null) {
-            mAdapter = adapter;
+            mAdapter = adapter
             // This code is needed only if dataset changes do not force a call
             // to OnScroll
             // mAdapter.registerDataSetObserver(mListDataObserver);
@@ -147,20 +138,18 @@ public class StickyHeaderListView extends FrameLayout implements OnScrollListene
      *
      * @param indexer - The indexer.
      */
-
-    public void setIndexer(HeaderIndexer indexer) {
-        mIndexer = indexer;
+    fun setIndexer(indexer: HeaderIndexer?) {
+        mIndexer = indexer
     }
 
     /**
      * Sets the list view that is displayed
      * @param lv - The list view.
      */
-
-    public void setListView(ListView lv) {
-        mListView = lv;
-        mListView.setOnScrollListener(this);
-        mListViewHeadersCount = mListView.getHeaderViewsCount();
+    fun setListView(lv: ListView?) {
+        mListView = lv
+        mListView?.setOnScrollListener(this)
+        mListViewHeadersCount = mListView?.getHeaderViewsCount() as Int
     }
 
     /**
@@ -171,36 +160,13 @@ public class StickyHeaderListView extends FrameLayout implements OnScrollListene
      *
      * @param listener - The external listener.
      */
-    public void setOnScrollListener(ListView.OnScrollListener listener) {
-        mListener = listener;
+    fun setOnScrollListener(listener: AbsListView.OnScrollListener?) {
+        mListener = listener
     }
 
-    public void setHeaderHeightListener(HeaderHeightListener listener) {
-        mHeaderHeightListener = listener;
+    fun setHeaderHeightListener(listener: HeaderHeightListener?) {
+        mHeaderHeightListener = listener
     }
-
-    // This code is needed only if dataset changes do not force a call to OnScroll
-    // protected void createDataListener() {
-    //    mListDataObserver = new DataSetObserver() {
-    //        @Override
-    //        public void onChanged() {
-    //            onDataChanged();
-    //        }
-    //    };
-    // }
-
-    /**
-     * Constructor
-     *
-     * @param context - application context.
-     * @param attrs - layout attributes.
-     */
-    public StickyHeaderListView(Context context, AttributeSet attrs) {
-        super(context, attrs);
-        mContext = context;
-        // This code is needed only if dataset changes do not force a call to OnScroll
-        // createDataListener();
-     }
 
     /**
      * Scroll status changes listener
@@ -209,9 +175,9 @@ public class StickyHeaderListView extends FrameLayout implements OnScrollListene
      * @param scrollState - new scroll state.
      */
     @Override
-    public void onScrollStateChanged(AbsListView view, int scrollState) {
+    override fun onScrollStateChanged(view: AbsListView?, scrollState: Int) {
         if (mListener != null) {
-            mListener.onScrollStateChanged(view, scrollState);
+            mListener?.onScrollStateChanged(view, scrollState)
         }
     }
 
@@ -220,18 +186,20 @@ public class StickyHeaderListView extends FrameLayout implements OnScrollListene
      *
      * @param view - the scrolled view
      * @param firstVisibleItem - the index (in the list's adapter) of the top
-     *            visible item.
+     * visible item.
      * @param visibleItemCount - the number of visible items in the list
      * @param totalItemCount - the total number items in the list
      */
     @Override
-    public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount,
-            int totalItemCount) {
-
-        updateStickyHeader(firstVisibleItem);
-
+    override fun onScroll(
+        view: AbsListView?,
+        firstVisibleItem: Int,
+        visibleItemCount: Int,
+        totalItemCount: Int
+    ) {
+        updateStickyHeader(firstVisibleItem)
         if (mListener != null) {
-            mListener.onScroll(view, firstVisibleItem, visibleItemCount, totalItemCount);
+            mListener?.onScroll(view, firstVisibleItem, visibleItemCount, totalItemCount)
         }
     }
 
@@ -241,155 +209,178 @@ public class StickyHeaderListView extends FrameLayout implements OnScrollListene
      * @param color - color of separator
      * @param width - width in pixels of separator
      */
-    public void setHeaderSeparator(int color, int width) {
-        mSeparatorView = new View(mContext);
-        ViewGroup.LayoutParams params = new LayoutParams(LayoutParams.MATCH_PARENT,
-                width, Gravity.TOP);
-        mSeparatorView.setLayoutParams(params);
-        mSeparatorView.setBackgroundColor(color);
-        mSeparatorWidth = width;
-        this.addView(mSeparatorView);
+    fun setHeaderSeparator(color: Int, width: Int) {
+        mSeparatorView = View(mContext)
+        val params: ViewGroup.LayoutParams = LayoutParams(
+            LayoutParams.MATCH_PARENT,
+            width, Gravity.TOP
+        )
+        mSeparatorView?.setLayoutParams(params)
+        mSeparatorView?.setBackgroundColor(color)
+        mSeparatorWidth = width
+        this.addView(mSeparatorView)
     }
 
-    protected void updateStickyHeader(int firstVisibleItem) {
-
+    protected fun updateStickyHeader(firstVisibleItemInput: Int) {
         // Try to make sure we have an adapter to work with (may not succeed).
+        var firstVisibleItem = firstVisibleItemInput
         if (mAdapter == null && mListView != null) {
-            setAdapter(mListView.getAdapter());
+            setAdapter(mListView?.getAdapter())
         }
-
-        firstVisibleItem -= mListViewHeadersCount;
+        firstVisibleItem -= mListViewHeadersCount
         if (mAdapter != null && mIndexer != null && mDoHeaderReset) {
 
             // Get the section header position
-            int sectionSize = 0;
-            int sectionPos = mIndexer.getHeaderPositionFromItemPosition(firstVisibleItem);
+            var sectionSize = 0
+            val sectionPos = mIndexer!!.getHeaderPositionFromItemPosition(firstVisibleItem)
 
             // New section - set it in the header view
-            boolean newView = false;
+            var newView = false
             if (sectionPos != mCurrentSectionPos) {
 
-                // No header for current position , use the nonessential invisible one, hide the separator
+                // No header for current position , use the nonessential invisible one,
+                // hide the separator
                 if (sectionPos == -1) {
-                    sectionSize = 0;
-                    this.removeView(mStickyHeader);
-                    mStickyHeader = mNonessentialHeader;
+                    sectionSize = 0
+                    this.removeView(mStickyHeader)
+                    mStickyHeader = mNonessentialHeader
                     if (mSeparatorView != null) {
-                        mSeparatorView.setVisibility(View.GONE);
+                        mSeparatorView?.setVisibility(View.GONE)
                     }
-                    newView = true;
+                    newView = true
                 } else {
                     // Create a copy of the header view to show on top
-                    sectionSize = mIndexer.getHeaderItemsNumber(sectionPos);
-                    View v = mAdapter.getView(sectionPos + mListViewHeadersCount, null, mListView);
-                    v.measure(MeasureSpec.makeMeasureSpec(mListView.getWidth(),
-                            MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(mListView.getHeight(),
-                                    MeasureSpec.AT_MOST));
-                    this.removeView(mStickyHeader);
-                    mStickyHeader = v;
-                    newView = true;
+                    sectionSize = mIndexer!!.getHeaderItemsNumber(sectionPos)
+                    val v: View? =
+                        mAdapter?.getView(sectionPos + mListViewHeadersCount, null, mListView)
+                    v?.measure(
+                        MeasureSpec.makeMeasureSpec(
+                            mListView?.getWidth() as Int,
+                            MeasureSpec.EXACTLY
+                        ), MeasureSpec.makeMeasureSpec(
+                            mListView?.getHeight() as Int,
+                            MeasureSpec.AT_MOST
+                        )
+                    )
+                    this.removeView(mStickyHeader)
+                    mStickyHeader = v
+                    newView = true
                 }
-                mCurrentSectionPos = sectionPos;
-                mNextSectionPosition = sectionSize + sectionPos + 1;
+                mCurrentSectionPos = sectionPos
+                mNextSectionPosition = sectionSize + sectionPos + 1
             }
-
 
             // Do transitions
             // If position of bottom of last item in a section is smaller than the height of the
             // sticky header - shift drawable of header.
             if (mStickyHeader != null) {
-                int sectionLastItemPosition =  mNextSectionPosition - firstVisibleItem - 1;
-                int stickyHeaderHeight = mStickyHeader.getHeight();
+                val sectionLastItemPosition = mNextSectionPosition - firstVisibleItem - 1
+                var stickyHeaderHeight: Int = mStickyHeader?.getHeight() as Int
                 if (stickyHeaderHeight == 0) {
-                    stickyHeaderHeight = mStickyHeader.getMeasuredHeight();
+                    stickyHeaderHeight = mStickyHeader?.getMeasuredHeight() as Int
                 }
 
                 // Update new header height
                 if (mHeaderHeightListener != null &&
-                        mLastStickyHeaderHeight != stickyHeaderHeight) {
-                    mLastStickyHeaderHeight = stickyHeaderHeight;
-                    mHeaderHeightListener.OnHeaderHeightChanged(stickyHeaderHeight);
+                    mLastStickyHeaderHeight != stickyHeaderHeight
+                ) {
+                    mLastStickyHeaderHeight = stickyHeaderHeight
+                    mHeaderHeightListener!!.OnHeaderHeightChanged(stickyHeaderHeight)
                 }
-
-                View SectionLastView = mListView.getChildAt(sectionLastItemPosition);
+                val SectionLastView: View? = mListView?.getChildAt(sectionLastItemPosition)
                 if (SectionLastView != null && SectionLastView.getBottom() <= stickyHeaderHeight) {
-                    int lastViewBottom = SectionLastView.getBottom();
-                    mStickyHeader.setTranslationY(lastViewBottom - stickyHeaderHeight);
+                    val lastViewBottom: Int = SectionLastView.getBottom()
+                    mStickyHeader?.setTranslationY(lastViewBottom.toFloat() -
+                        stickyHeaderHeight.toFloat())
                     if (mSeparatorView != null) {
-                        mSeparatorView.setVisibility(View.GONE);
+                        mSeparatorView?.setVisibility(View.GONE)
                     }
                 } else if (stickyHeaderHeight != 0) {
-                    mStickyHeader.setTranslationY(0);
-                    if (mSeparatorView != null && !mStickyHeader.equals(mNonessentialHeader)) {
-                        mSeparatorView.setVisibility(View.VISIBLE);
+                    mStickyHeader?.setTranslationY(0f)
+                    if (mSeparatorView != null &&
+                        mStickyHeader?.equals(mNonessentialHeader) == false) {
+                        mSeparatorView?.setVisibility(View.VISIBLE)
                     }
                 }
                 if (newView) {
-                    mStickyHeader.setVisibility(View.INVISIBLE);
-                    this.addView(mStickyHeader);
-                    if (mSeparatorView != null && !mStickyHeader.equals(mNonessentialHeader)){
-                        FrameLayout.LayoutParams params =
-                                new FrameLayout.LayoutParams(LayoutParams.MATCH_PARENT,
-                                        mSeparatorWidth);
-                        params.setMargins(0, mStickyHeader.getMeasuredHeight(), 0, 0);
-                        mSeparatorView.setLayoutParams(params);
-                        mSeparatorView.setVisibility(View.VISIBLE);
+                    mStickyHeader?.setVisibility(View.INVISIBLE)
+                    this.addView(mStickyHeader)
+                    if (mSeparatorView != null &&
+                        mStickyHeader?.equals(mNonessentialHeader) == false) {
+                        val params: FrameLayout.LayoutParams = LayoutParams(
+                            LayoutParams.MATCH_PARENT,
+                            mSeparatorWidth
+                        )
+                        params.setMargins(0, mStickyHeader?.getMeasuredHeight() as Int, 0, 0)
+                        mSeparatorView?.setLayoutParams(params)
+                        mSeparatorView?.setVisibility(View.VISIBLE)
                     }
-                    mStickyHeader.setVisibility(View.VISIBLE);
+                    mStickyHeader?.setVisibility(View.VISIBLE)
                 }
             }
         }
     }
 
     @Override
-    protected void onFinishInflate() {
-        super.onFinishInflate();
+    protected override fun onFinishInflate() {
+        super.onFinishInflate()
         if (!mChildViewsCreated) {
-            setChildViews();
+            setChildViews()
         }
-        mDoHeaderReset = true;
+        mDoHeaderReset = true
     }
 
     @Override
-    protected void onAttachedToWindow() {
-        super.onAttachedToWindow();
+    protected override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
         if (!mChildViewsCreated) {
-            setChildViews();
+            setChildViews()
         }
-        mDoHeaderReset = true;
+        mDoHeaderReset = true
     }
-
 
     // Resets the sticky header when the adapter data set was changed
     // This code is needed only if dataset changes do not force a call to OnScroll
     // protected void onDataChanged() {
     // Should do a call to updateStickyHeader if needed
     // }
-
-    private void setChildViews() {
-
+    private fun setChildViews() {
         // Find a child ListView (if any)
-        int iChildNum = getChildCount();
-        for (int i = 0; i < iChildNum; i++) {
-            Object v = getChildAt(i);
-            if (v instanceof ListView) {
-                setListView((ListView) v);
+        val iChildNum: Int = getChildCount()
+        for (i in 0 until iChildNum) {
+            val v: Object = getChildAt(i) as Object
+            if (v is ListView) {
+                setListView(v as ListView)
             }
         }
 
         // No child ListView - add one
         if (mListView == null) {
-            setListView(new ListView(mContext));
+            setListView(ListView(mContext))
         }
 
         // Create a nonessential view , it will be used in case a section has no header
-        mNonessentialHeader = new View (mContext);
-        ViewGroup.LayoutParams params = new LayoutParams(LayoutParams.MATCH_PARENT,
-                1, Gravity.TOP);
-        mNonessentialHeader.setLayoutParams(params);
-        mNonessentialHeader.setBackgroundColor(Color.TRANSPARENT);
-
-        mChildViewsCreated = true;
+        mNonessentialHeader = View(mContext)
+        val params: ViewGroup.LayoutParams = LayoutParams(
+            LayoutParams.MATCH_PARENT,
+            1, Gravity.TOP
+        )
+        mNonessentialHeader?.setLayoutParams(params)
+        mNonessentialHeader?.setBackgroundColor(Color.TRANSPARENT)
+        mChildViewsCreated = true
     }
 
+    companion object {
+        private const val TAG = "StickyHeaderListView"
+    }
+
+    /**
+     * Constructor
+     *
+     * @param context - application context.
+     * @param attrs - layout attributes.
+     */
+    init {
+        mContext = context
+    }
 }
