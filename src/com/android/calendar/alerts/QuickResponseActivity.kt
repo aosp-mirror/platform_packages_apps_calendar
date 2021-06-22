@@ -38,12 +38,12 @@ class QuickResponseActivity : ListActivity(), OnItemClickListener {
     @Override
     protected override fun onCreate(icicle: Bundle?) {
         super.onCreate(icicle)
-        val intent: Intent = getIntent()
+        val intent: Intent? = getIntent()
         if (intent == null) {
             finish()
             return
         }
-        mEventId = intent.getLongExtra(EXTRA_EVENT_ID, -1)
+        mEventId = intent?.getLongExtra(EXTRA_EVENT_ID, -1) as Long
         if (mEventId == -1L) {
             finish()
             return
