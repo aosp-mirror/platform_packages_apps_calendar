@@ -37,6 +37,7 @@ exclude_srcsm = [
     "src/**/calendar/CalendarApplication.java",
     "src/**/calendar/CalendarBackupAgent.java",
     "src/**/calendar/CalendarUtils.java",
+    "src/**/calendar/DayFragment.java",
     "src/**/calendar/EventGeometry.java",
     "src/**/calendar/EventLoader.java",
     "src/**/calendar/GeneralPreferences.java",
