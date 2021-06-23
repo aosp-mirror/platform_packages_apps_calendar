@@ -65,8 +65,8 @@ class EventGeometry {
         if (endDay > date) {
             endTime = DayView.MINUTES_PER_DAY
         }
-        val col: Int = event.getColumn()
-        val maxCols: Int = event.getMaxColumns()
+        val col: Int = event.column
+        val maxCols: Int = event.maxColumns
         val startHour = startTime / 60
         var endHour = endTime / 60
 

@@ -21,7 +21,6 @@ import android.app.backup.BackupManager
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
-import android.content.SharedPreferences.Editor
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener
 import android.media.Ringtone
 import android.media.RingtoneManager
@@ -37,13 +36,10 @@ import android.preference.PreferenceCategory
 import android.preference.PreferenceFragment
 import android.preference.PreferenceManager
 import android.preference.PreferenceScreen
-import android.preference.RingtonePreference
 import android.provider.CalendarContract
 import android.provider.CalendarContract.CalendarCache
-import android.provider.SearchRecentSuggestions
 import android.text.TextUtils
 import android.text.format.Time
-import android.widget.Toast
 import com.android.calendar.alerts.AlertReceiver
 import com.android.timezonepicker.TimeZoneInfo
 import com.android.timezonepicker.TimeZonePickerDialog
@@ -71,7 +67,7 @@ class GeneralPreferences : PreferenceFragment(), OnSharedPreferenceChangeListene
         // Make sure to always use the same preferences file regardless of the package name
         // we're running under
         val preferenceManager: PreferenceManager = getPreferenceManager()
-        val sharedPreferences: SharedPreferences = getSharedPreferences(activity)
+        val sharedPreferences: SharedPreferences? = getSharedPreferences(activity)
         preferenceManager.setSharedPreferencesName(SHARED_PREFS_NAME)
 
         // Load the preferences from an XML resource
@@ -106,7 +102,7 @@ class GeneralPreferences : PreferenceFragment(), OnSharedPreferenceChangeListene
             mTimeZoneId = prefs.getString(KEY_HOME_TZ, Time.getCurrentTimezone())
         }
 
-        mHomeTZ?.setOnPreferenceClickListener(object: Preference.OnPreferenceClickListener {
+        mHomeTZ?.setOnPreferenceClickListener(object : Preference.OnPreferenceClickListener {
             @Override
             override fun onPreferenceClick(preference: Preference?): Boolean {
                 showTimezoneDialog()
@@ -247,13 +243,13 @@ class GeneralPreferences : PreferenceFragment(), OnSharedPreferenceChangeListene
      * set of keys and values.
      * @param prefs the preferences to upgrade
      */
-    private fun migrateOldPreferences(prefs: SharedPreferences) {
+    private fun migrateOldPreferences(prefs: SharedPreferences?) {
         // If needed, migrate vibration setting from a previous version
         mVibrate?.setChecked(Utils.getDefaultVibrate(getActivity(), prefs))
 
         // If needed, migrate the old alerts type settin
-        if (!prefs.contains(KEY_ALERTS) && prefs.contains(KEY_ALERTS_TYPE)) {
-            val type: String? = prefs.getString(KEY_ALERTS_TYPE, ALERT_TYPE_STATUS_BAR)
+        if (prefs?.contains(KEY_ALERTS) == false && prefs?.contains(KEY_ALERTS_TYPE) == true) {
+            val type: String? = prefs?.getString(KEY_ALERTS_TYPE, ALERT_TYPE_STATUS_BAR)
             if (type.equals(ALERT_TYPE_OFF)) {
                 mAlert?.setChecked(false)
                 mPopup?.setChecked(false)
@@ -268,7 +264,7 @@ class GeneralPreferences : PreferenceFragment(), OnSharedPreferenceChangeListene
                 mPopup?.setEnabled(true)
             }
             // clear out the old setting
-            prefs.edit().remove(KEY_ALERTS_TYPE).commit()
+            prefs?.edit().remove(KEY_ALERTS_TYPE).commit()
         }
     }
 
@@ -289,7 +285,9 @@ class GeneralPreferences : PreferenceFragment(), OnSharedPreferenceChangeListene
 
     @Override
     override fun onPreferenceTreeClick(
-            preferenceScreen: PreferenceScreen?, preference: Preference): Boolean {
+        preferenceScreen: PreferenceScreen?,
+        preference: Preference
+    ): Boolean {
         val key: String = preference.getKey()
         return super.onPreferenceTreeClick(preferenceScreen, preference)
     }
@@ -364,11 +362,10 @@ class GeneralPreferences : PreferenceFragment(), OnSharedPreferenceChangeListene
         // This should match the XML file.
         const val DEFAULT_RINGTONE = "content://settings/system/notification_sound"
 
-
         /** Return a properly configured SharedPreferences instance  */
         @JvmStatic
-        fun getSharedPreferences(context: Context): SharedPreferences {
-            return context.getSharedPreferences(SHARED_PREFS_NAME, Context.MODE_PRIVATE)
+        fun getSharedPreferences(context: Context?): SharedPreferences? {
+            return context?.getSharedPreferences(SHARED_PREFS_NAME, Context.MODE_PRIVATE)
         }
 
         /** Set the default shared preferences in the proper context  */
