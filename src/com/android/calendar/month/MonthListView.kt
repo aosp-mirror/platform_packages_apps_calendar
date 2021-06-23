@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,39 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.android.calendar.month
 
-package com.android.calendar.month;
+import android.content.Context
+import android.util.AttributeSet
+import android.view.MotionEvent
+import android.widget.ListView
+import com.android.calendar.Utils
 
-import android.content.Context;
-import android.util.AttributeSet;
-import android.view.MotionEvent;
-import android.widget.ListView;
+class MonthListView : ListView {
+    constructor(context: Context?) : super(context) {}
+    constructor(context: Context?, attrs: AttributeSet?, defStyle: Int) :
+            super(context, attrs, defStyle) {}
+    constructor(context: Context?, attrs: AttributeSet?) : super(context, attrs) {}
 
-import com.android.calendar.Utils;
-
-public class MonthListView extends ListView {
-
-    private static final String TAG = "MonthListView";
-
-    public MonthListView(Context context) {
-        super(context);
-    }
-
-    public MonthListView(Context context, AttributeSet attrs, int defStyle) {
-        super(context, attrs, defStyle);
-    }
-
-    public MonthListView(Context context, AttributeSet attrs) {
-        super(context, attrs);
+    @Override
+    override fun onTouchEvent(ev: MotionEvent?): Boolean {
+        return super.onTouchEvent(ev)
     }
 
     @Override
-    public boolean onTouchEvent(MotionEvent ev) {
-        return super.onTouchEvent(ev);
+    override fun onInterceptTouchEvent(ev: MotionEvent?): Boolean {
+        return super.onInterceptTouchEvent(ev)
     }
 
-    @Override
-    public boolean onInterceptTouchEvent(MotionEvent ev) {
-        return super.onInterceptTouchEvent(ev);
+    companion object {
+        private const val TAG = "MonthListView"
     }
 }

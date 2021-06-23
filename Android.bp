@@ -33,10 +33,12 @@ exclude_srcsd = [
 ]
 
 exclude_srcsm = [
+    "src/**/calendar/month/MonthListView.java",
     "src/**/calendar/AsyncQueryServiceHelper.java",
     "src/**/calendar/CalendarApplication.java",
     "src/**/calendar/CalendarBackupAgent.java",
     "src/**/calendar/CalendarUtils.java",
+    "src/**/calendar/CalendarViewAdapter.java",
     "src/**/calendar/DayFragment.java",
     "src/**/calendar/EventGeometry.java",
     "src/**/calendar/EventLoader.java",
