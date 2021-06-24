@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import android.text.format.Time
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.ViewGroup.LayoutParams
+import android.widget.FrameLayout.LayoutParams
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
 import android.widget.ProgressBar
@@ -48,7 +48,7 @@ class DayFragment : Fragment, CalendarController.EventHandler, ViewFactory {
             if (!this@DayFragment.isAdded()) {
                 return
             }
-            val tz: String = Utils.getTimeZone(getActivity(), this)
+            val tz: String? = Utils.getTimeZone(getActivity(), this)
             mSelectedDay.timezone = tz
             mSelectedDay.normalize(true)
         }
@@ -78,13 +78,16 @@ class DayFragment : Fragment, CalendarController.EventHandler, ViewFactory {
         mEventLoader = EventLoader(context)
     }
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
-                     savedInstanceState: Bundle?): View {
-        val v: View = inflater.inflate(R.layout.day_activity, null)
-        mViewSwitcher = v.findViewById(R.id.switcher) as ViewSwitcher
+    override fun onCreateView(
+        inflater: LayoutInflater?,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
+        val v: View? = inflater?.inflate(R.layout.day_activity, null)
+        mViewSwitcher = v?.findViewById(R.id.switcher) as? ViewSwitcher
         mViewSwitcher?.setFactory(this)
         mViewSwitcher?.getCurrentView()?.requestFocus()
-        (mViewSwitcher?.getCurrentView() as DayView).updateTitle()
+        (mViewSwitcher?.getCurrentView() as? DayView)?.updateTitle()
         return v
     }
 
@@ -104,12 +107,12 @@ class DayFragment : Fragment, CalendarController.EventHandler, ViewFactory {
         mEventLoader!!.startBackgroundThread()
         mTZUpdater.run()
         eventsChanged()
-        var view: DayView = mViewSwitcher?.getCurrentView() as DayView
-        view.handleOnResume()
-        view.restartCurrentTimeUpdates()
-        view = mViewSwitcher?.getNextView() as DayView
-        view.handleOnResume()
-        view.restartCurrentTimeUpdates()
+        var view: DayView? = mViewSwitcher?.getCurrentView() as? DayView
+        view?.handleOnResume()
+        view?.restartCurrentTimeUpdates()
+        view = mViewSwitcher?.getNextView() as? DayView
+        view?.handleOnResume()
+        view?.restartCurrentTimeUpdates()
     }
 
     override fun onSaveInstanceState(outState: Bundle?) {
@@ -118,15 +121,15 @@ class DayFragment : Fragment, CalendarController.EventHandler, ViewFactory {
 
     override fun onPause() {
         super.onPause()
-        var view: DayView = mViewSwitcher?.getCurrentView() as DayView
-        view.cleanup()
-        view = mViewSwitcher?.getNextView() as DayView
-        view.cleanup()
+        var view: DayView? = mViewSwitcher?.getCurrentView() as? DayView
+        view?.cleanup()
+        view = mViewSwitcher?.getNextView() as? DayView
+        view?.cleanup()
         mEventLoader!!.stopBackgroundThread()
 
         // Stop events cross-fade animation
-        view.stopEventsAnimation()
-        (mViewSwitcher?.getNextView() as DayView).stopEventsAnimation()
+        view?.stopEventsAnimation()
+        (mViewSwitcher?.getNextView() as? DayView)?.stopEventsAnimation()
     }
 
     fun startProgressSpinner() {
@@ -145,13 +148,13 @@ class DayFragment : Fragment, CalendarController.EventHandler, ViewFactory {
             mSelectedDay.set(goToTime)
             return
         }
-        val currentView: DayView = mViewSwitcher?.getCurrentView() as DayView
+        val currentView: DayView? = mViewSwitcher?.getCurrentView() as? DayView
 
         // How does goTo time compared to what's already displaying?
-        val diff: Int = currentView.compareToVisibleTimeRange(goToTime)
+        val diff: Int = currentView?.compareToVisibleTimeRange(goToTime) as Int
         if (diff == 0) {
             // In visible range. No need to switch view
-            currentView.setSelected(goToTime, ignoreTime, animateToday)
+            currentView?.setSelected(goToTime, ignoreTime, animateToday)
         } else {
             // Figure out which way to animate
             if (diff > 0) {
@@ -161,16 +164,16 @@ class DayFragment : Fragment, CalendarController.EventHandler, ViewFactory {
                 mViewSwitcher?.setInAnimation(mInAnimationBackward)
                 mViewSwitcher?.setOutAnimation(mOutAnimationBackward)
             }
-            val next: DayView = mViewSwitcher?.getNextView() as DayView
+            val next: DayView? = mViewSwitcher?.getNextView() as? DayView
             if (ignoreTime) {
-                next.setFirstVisibleHour(currentView.getFirstVisibleHour())
+                next?.setFirstVisibleHour(currentView?.getFirstVisibleHour())
             }
-            next.setSelected(goToTime, ignoreTime, animateToday)
-            next.reloadEvents()
+            next?.setSelected(goToTime, ignoreTime, animateToday)
+            next?.reloadEvents()
             mViewSwitcher?.showNext()
-            next.requestFocus()
-            next.updateTitle()
-            next.restartCurrentTimeUpdates()
+            next?.requestFocus()
+            next?.updateTitle()
+            next?.restartCurrentTimeUpdates()
         }
     }
 
@@ -194,15 +197,15 @@ class DayFragment : Fragment, CalendarController.EventHandler, ViewFactory {
         if (mViewSwitcher == null) {
             return
         }
-        var view: DayView = mViewSwitcher?.getCurrentView() as DayView
-        view.clearCachedEvents()
-        view.reloadEvents()
-        view = mViewSwitcher?.getNextView() as DayView
-        view.clearCachedEvents()
+        var view: DayView? = mViewSwitcher?.getCurrentView() as? DayView
+        view?.clearCachedEvents()
+        view?.reloadEvents()
+        view = mViewSwitcher?.getNextView() as? DayView
+        view?.clearCachedEvents()
     }
 
-    val nextView: DayView
-        get() = mViewSwitcher?.getNextView() as DayView
+    val nextView: DayView?
+        get() = mViewSwitcher?.getNextView() as? DayView
     override val supportedEventTypes: Long
         get() = CalendarController.EventType.GO_TO or CalendarController.EventType.EVENTS_CHANGED
 
