@@ -428,7 +428,7 @@ open class SimpleWeekView(context: Context) : View(context) {
             if (hover != null
                     && (mLastHoverTime == null || Time.compare(hover, mLastHoverTime) !== 0)) {
                 val millis: Long = hover.toMillis(true)
-                val date: String = Utils.formatDateRange(context, millis, millis,
+                val date = Utils.formatDateRange(context, millis, millis,
                         DateUtils.FORMAT_SHOW_DATE)
                 val accessEvent: AccessibilityEvent =
                         AccessibilityEvent.obtain(AccessibilityEvent.TYPE_NOTIFICATION_STATE_CHANGED)
