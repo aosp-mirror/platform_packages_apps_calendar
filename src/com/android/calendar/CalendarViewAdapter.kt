@@ -54,8 +54,7 @@ class CalendarViewAdapter(context: Context, viewType: Int, showDate: Boolean) : 
     private val mFormatter: Formatter
     private val mStringBuilder: StringBuilder
     private var mMidnightHandler: Handler? = null // Used to run a time update every midnight
-    private val mShowDate // Spinner mode indicator (view name or view name with date)
-            : Boolean
+    private val mShowDate: Boolean // Spinner mode indicator (view name or view name with date)
 
     // Updates time specific variables (time-zone, today's Julian day).
     private val mTimeUpdater: Runnable = object : Runnable {
@@ -72,7 +71,7 @@ class CalendarViewAdapter(context: Context, viewType: Int, showDate: Boolean) : 
         val time = Time(mTimeZone)
         val now: Long = System.currentTimeMillis()
         time.set(now)
-        mTodayJulianDay = Time.getJulianDay(now, time.gmtoff) as Long
+        mTodayJulianDay = Time.getJulianDay(now, time.gmtoff).toLong()
         notifyDataSetChanged()
         setMidnightHandler()
     }
@@ -86,7 +85,7 @@ class CalendarViewAdapter(context: Context, viewType: Int, showDate: Boolean) : 
         val time = Time(mTimeZone)
         time.set(now)
         val runInMillis: Long = ((24 * 3600 - time.hour * 3600 - time.minute * 60 -
-                time.second + 1) * 1000) as Long
+                time.second + 1) * 1000).toLong()
         mMidnightHandler?.postDelayed(mTimeUpdater, runInMillis)
     }
 
@@ -195,27 +194,27 @@ class CalendarViewAdapter(context: Context, viewType: Int, showDate: Boolean) : 
     }
 
     @Override
-    override fun getDropDownView(position: Int, convertView: View, parent: ViewGroup?): View {
-        var v: View = mInflater.inflate(R.layout.actionbar_pulldown_menu_button, parent, false)
-        val viewType: TextView = v.findViewById(R.id.button_view) as TextView
-        val date: TextView = v.findViewById(R.id.button_date) as TextView
+    override fun getDropDownView(position: Int, convertView: View?, parent: ViewGroup?): View? {
+        var v: View? = mInflater.inflate(R.layout.actionbar_pulldown_menu_button, parent, false)
+        val viewType: TextView? = v?.findViewById(R.id.button_view) as? TextView
+        val date: TextView? = v?.findViewById(R.id.button_date) as? TextView
         when (position) {
             DAY_BUTTON_INDEX -> {
-                viewType.setText(mButtonNames[DAY_BUTTON_INDEX])
+                viewType?.setText(mButtonNames[DAY_BUTTON_INDEX])
                 if (mShowDate) {
-                    date.setText(buildMonthDayDate())
+                    date?.setText(buildMonthDayDate())
                 }
             }
             WEEK_BUTTON_INDEX -> {
-                viewType.setText(mButtonNames[WEEK_BUTTON_INDEX])
+                viewType?.setText(mButtonNames[WEEK_BUTTON_INDEX])
                 if (mShowDate) {
-                    date.setText(buildWeekDate())
+                    date?.setText(buildWeekDate())
                 }
             }
             MONTH_BUTTON_INDEX -> {
-                viewType.setText(mButtonNames[MONTH_BUTTON_INDEX])
+                viewType?.setText(mButtonNames[MONTH_BUTTON_INDEX])
                 if (mShowDate) {
-                    date.setText(buildMonthDate())
+                    date?.setText(buildMonthDate())
                 }
             }
             else -> v = convertView
@@ -242,7 +241,7 @@ class CalendarViewAdapter(context: Context, viewType: Int, showDate: Boolean) : 
     private fun buildDayOfWeek(): String {
         val t = Time(mTimeZone)
         t.set(mMilliTime)
-        val julianDay: Long = Time.getJulianDay(mMilliTime, t.gmtoff) as Long
+        val julianDay: Long = Time.getJulianDay(mMilliTime, t.gmtoff).toLong()
         var dayOfWeek: String? = null
         mStringBuilder.setLength(0)
         dayOfWeek = if (julianDay == mTodayJulianDay) {
