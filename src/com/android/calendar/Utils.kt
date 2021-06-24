@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,242 +13,209 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.android.calendar
 
-package com.android.calendar;
+import android.app.Activity
+import android.content.ComponentName
+import android.content.ContentResolver
+import android.content.Context
+import android.content.Intent
+import android.content.SharedPreferences
+import android.content.pm.PackageManager
+import android.content.res.Resources
+import android.database.Cursor
+import android.database.MatrixCursor
+import android.graphics.Color
+import android.graphics.drawable.Drawable
+import android.graphics.drawable.LayerDrawable
+import android.net.Uri
+import android.os.Build
+import android.os.Bundle
+import android.os.Handler
+import android.provider.CalendarContract.Calendars
+import android.provider.CalendarContract.EXTRA_EVENT_BEGIN_TIME
+import android.text.TextUtils
+import android.text.format.DateFormat
+import android.text.format.DateUtils
+import android.text.format.Time
+import android.util.Log
+import com.android.calendar.CalendarController.ViewType
+import com.android.calendar.CalendarUtils.TimeZoneUtils
+import java.util.ArrayList
+import java.util.Arrays
+import java.util.Calendar
+import java.util.Formatter
+import java.util.HashMap
+import java.util.LinkedHashSet
+import java.util.LinkedList
+import java.util.List
+import java.util.Locale
+import java.util.TimeZone
+import java.util.regex.Pattern
 
-import static android.provider.CalendarContract.EXTRA_EVENT_BEGIN_TIME;
-
-import android.accounts.Account;
-import android.app.Activity;
-import android.app.SearchManager;
-import android.content.BroadcastReceiver;
-import android.content.ComponentName;
-import android.content.ContentResolver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
-import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
-import android.content.res.Resources;
-import android.database.Cursor;
-import android.database.MatrixCursor;
-import android.graphics.Color;
-import android.graphics.drawable.Drawable;
-import android.graphics.drawable.LayerDrawable;
-import android.net.Uri;
-import android.os.Build;
-import android.os.Bundle;
-import android.os.Handler;
-import android.provider.CalendarContract.Calendars;
-import android.text.Spannable;
-import android.text.SpannableString;
-import android.text.Spanned;
-import android.text.TextUtils;
-import android.text.format.DateFormat;
-import android.text.format.DateUtils;
-import android.text.format.Time;
-import android.text.style.URLSpan;
-import android.text.util.Linkify;
-import android.util.Log;
-
-import com.android.calendar.CalendarController.ViewType;
-import com.android.calendar.CalendarUtils.TimeZoneUtils;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Formatter;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
-import java.util.TimeZone;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-public class Utils {
-    private static final boolean DEBUG = false;
-    private static final String TAG = "CalUtils";
+object Utils {
+    private const val DEBUG = false
+    private const val TAG = "CalUtils"
 
     // Set to 0 until we have UI to perform undo
-    public static final long UNDO_DELAY = 0;
+    const val UNDO_DELAY: Long = 0
 
     // For recurring events which instances of the series are being modified
-    public static final int MODIFY_UNINITIALIZED = 0;
-    public static final int MODIFY_SELECTED = 1;
-    public static final int MODIFY_ALL_FOLLOWING = 2;
-    public static final int MODIFY_ALL = 3;
+    const val MODIFY_UNINITIALIZED = 0
+    const val MODIFY_SELECTED = 1
+    const val MODIFY_ALL_FOLLOWING = 2
+    const val MODIFY_ALL = 3
 
     // When the edit event view finishes it passes back the appropriate exit
     // code.
-    public static final int DONE_REVERT = 1 << 0;
-    public static final int DONE_SAVE = 1 << 1;
-    public static final int DONE_DELETE = 1 << 2;
+    const val DONE_REVERT = 1 shl 0
+    const val DONE_SAVE = 1 shl 1
+    const val DONE_DELETE = 1 shl 2
+
     // And should re run with DONE_EXIT if it should also leave the view, just
     // exiting is identical to reverting
-    public static final int DONE_EXIT = 1 << 0;
-
-    public static final String OPEN_EMAIL_MARKER = " <";
-    public static final String CLOSE_EMAIL_MARKER = ">";
-
-    public static final String INTENT_KEY_DETAIL_VIEW = "DETAIL_VIEW";
-    public static final String INTENT_KEY_VIEW_TYPE = "VIEW";
-    public static final String INTENT_VALUE_VIEW_TYPE_DAY = "DAY";
-    public static final String INTENT_KEY_HOME = "KEY_HOME";
-
-    public static final int MONDAY_BEFORE_JULIAN_EPOCH = Time.EPOCH_JULIAN_DAY - 3;
-    public static final int DECLINED_EVENT_ALPHA = 0x66;
-    public static final int DECLINED_EVENT_TEXT_ALPHA = 0xC0;
-
-    private static final float SATURATION_ADJUST = 1.3f;
-    private static final float INTENSITY_ADJUST = 0.8f;
+    const val DONE_EXIT = 1 shl 0
+    const val OPEN_EMAIL_MARKER = " <"
+    const val CLOSE_EMAIL_MARKER = ">"
+    const val INTENT_KEY_DETAIL_VIEW = "DETAIL_VIEW"
+    const val INTENT_KEY_VIEW_TYPE = "VIEW"
+    const val INTENT_VALUE_VIEW_TYPE_DAY = "DAY"
+    const val INTENT_KEY_HOME = "KEY_HOME"
+    val MONDAY_BEFORE_JULIAN_EPOCH: Int = Time.EPOCH_JULIAN_DAY - 3
+    const val DECLINED_EVENT_ALPHA = 0x66
+    const val DECLINED_EVENT_TEXT_ALPHA = 0xC0
+    private const val SATURATION_ADJUST = 1.3f
+    private const val INTENSITY_ADJUST = 0.8f
 
     // Defines used by the DNA generation code
-    static final int DAY_IN_MINUTES = 60 * 24;
-    static final int WEEK_IN_MINUTES = DAY_IN_MINUTES * 7;
-    // The work day is being counted as 6am to 8pm
-    static int WORK_DAY_MINUTES = 14 * 60;
-    static int WORK_DAY_START_MINUTES = 6 * 60;
-    static int WORK_DAY_END_MINUTES = 20 * 60;
-    static int WORK_DAY_END_LENGTH = (24 * 60) - WORK_DAY_END_MINUTES;
-    static int CONFLICT_COLOR = 0xFF000000;
-    static boolean mMinutesLoaded = false;
+    const val DAY_IN_MINUTES = 60 * 24
+    const val WEEK_IN_MINUTES = DAY_IN_MINUTES * 7
 
-    public static final int YEAR_MIN = 1970;
-    public static final int YEAR_MAX = 2036;
+    // The work day is being counted as 6am to 8pm
+    var WORK_DAY_MINUTES = 14 * 60
+    var WORK_DAY_START_MINUTES = 6 * 60
+    var WORK_DAY_END_MINUTES = 20 * 60
+    var WORK_DAY_END_LENGTH = 24 * 60 - WORK_DAY_END_MINUTES
+    var CONFLICT_COLOR = -0x1000000
+    var mMinutesLoaded = false
+    const val YEAR_MIN = 1970
+    const val YEAR_MAX = 2036
 
     // The name of the shared preferences file. This name must be maintained for
     // historical
     // reasons, as it's what PreferenceManager assigned the first time the file
     // was created.
-    static final String SHARED_PREFS_NAME = "com.android.calendar_preferences";
-
-    public static final String KEY_QUICK_RESPONSES = "preferences_quick_responses";
-
-    public static final String KEY_ALERTS_VIBRATE_WHEN = "preferences_alerts_vibrateWhen";
-
-    public static final String APPWIDGET_DATA_TYPE = "vnd.android.data/update";
-
-    static final String MACHINE_GENERATED_ADDRESS = "calendar.google.com";
-
-    private static final TimeZoneUtils mTZUtils = new TimeZoneUtils(SHARED_PREFS_NAME);
-    private static boolean mAllowWeekForDetailView = false;
-    private static long mTardis = 0;
-    private static String sVersion = null;
-
-    private static final Pattern mWildcardPattern = Pattern.compile("^.*$");
+    const val SHARED_PREFS_NAME = "com.android.calendar_preferences"
+    const val KEY_QUICK_RESPONSES = "preferences_quick_responses"
+    const val KEY_ALERTS_VIBRATE_WHEN = "preferences_alerts_vibrateWhen"
+    const val APPWIDGET_DATA_TYPE = "vnd.android.data/update"
+    const val MACHINE_GENERATED_ADDRESS = "calendar.google.com"
+    private val mTZUtils: TimeZoneUtils? = TimeZoneUtils(SHARED_PREFS_NAME)
+    @JvmField var allowWeekForDetailView = false
+    internal var tardis: Long = 0
+        private set
+    private var sVersion: String? = null
+    private val mWildcardPattern: Pattern = Pattern.compile("^.*$")
 
     /**
-    * A coordinate must be of the following form for Google Maps to correctly use it:
-    * Latitude, Longitude
-    *
-    * This may be in decimal form:
-    * Latitude: {-90 to 90}
-    * Longitude: {-180 to 180}
-    *
-    * Or, in degrees, minutes, and seconds:
-    * Latitude: {-90 to 90}° {0 to 59}' {0 to 59}"
-    * Latitude: {-180 to 180}° {0 to 59}' {0 to 59}"
-    * + or - degrees may also be represented with N or n, S or s for latitude, and with
-    * E or e, W or w for longitude, where the direction may either precede or follow the value.
-    *
-    * Some examples of coordinates that will be accepted by the regex:
-    * 37.422081°, -122.084576°
-    * 37.422081,-122.084576
-    * +37°25'19.49", -122°5'4.47"
-    * 37°25'19.49"N, 122°5'4.47"W
-    * N 37° 25' 19.49",  W 122° 5' 4.47"
-    **/
-    private static final String COORD_DEGREES_LATITUDE =
-            "([-+NnSs]" + "(\\s)*)?"
-            + "[1-9]?[0-9](\u00B0)" + "(\\s)*"
-            + "([1-5]?[0-9]\')?" + "(\\s)*"
-            + "([1-5]?[0-9]" + "(\\.[0-9]+)?\")?"
-            + "((\\s)*" + "[NnSs])?";
-    private static final String COORD_DEGREES_LONGITUDE =
-            "([-+EeWw]" + "(\\s)*)?"
-            + "(1)?[0-9]?[0-9](\u00B0)" + "(\\s)*"
-            + "([1-5]?[0-9]\')?" + "(\\s)*"
-            + "([1-5]?[0-9]" + "(\\.[0-9]+)?\")?"
-            + "((\\s)*" + "[EeWw])?";
-    private static final String COORD_DEGREES_PATTERN =
-            COORD_DEGREES_LATITUDE
-            + "(\\s)*" + "," + "(\\s)*"
-            + COORD_DEGREES_LONGITUDE;
-    private static final String COORD_DECIMAL_LATITUDE =
-            "[+-]?"
-            + "[1-9]?[0-9]" + "(\\.[0-9]+)"
-            + "(\u00B0)?";
-    private static final String COORD_DECIMAL_LONGITUDE =
-            "[+-]?"
-            + "(1)?[0-9]?[0-9]" + "(\\.[0-9]+)"
-            + "(\u00B0)?";
-    private static final String COORD_DECIMAL_PATTERN =
-            COORD_DECIMAL_LATITUDE
-            + "(\\s)*" + "," + "(\\s)*"
-            + COORD_DECIMAL_LONGITUDE;
-    private static final Pattern COORD_PATTERN =
-            Pattern.compile(COORD_DEGREES_PATTERN + "|" + COORD_DECIMAL_PATTERN);
-
-    private static final String NANP_ALLOWED_SYMBOLS = "()+-*#.";
-    private static final int NANP_MIN_DIGITS = 7;
-    private static final int NANP_MAX_DIGITS = 11;
-
-
-    /**
-     * Returns whether the SDK is the Jellybean release or later.
+     * A coordinate must be of the following form for Google Maps to correctly use it:
+     * Latitude, Longitude
+     *
+     * This may be in decimal form:
+     * Latitude: {-90 to 90}
+     * Longitude: {-180 to 180}
+     *
+     * Or, in degrees, minutes, and seconds:
+     * Latitude: {-90 to 90}° {0 to 59}' {0 to 59}"
+     * Latitude: {-180 to 180}° {0 to 59}' {0 to 59}"
+     * + or - degrees may also be represented with N or n, S or s for latitude, and with
+     * E or e, W or w for longitude, where the direction may either precede or follow the value.
+     *
+     * Some examples of coordinates that will be accepted by the regex:
+     * 37.422081°, -122.084576°
+     * 37.422081,-122.084576
+     * +37°25'19.49", -122°5'4.47"
+     * 37°25'19.49"N, 122°5'4.47"W
+     * N 37° 25' 19.49",  W 122° 5' 4.47"
      */
-    public static boolean isJellybeanOrLater() {
-      return Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN;
-    }
+    private const val COORD_DEGREES_LATITUDE = ("([-+NnSs]" + "(\\s)*)?" +
+        "[1-9]?[0-9](\u00B0)" + "(\\s)*" +
+        "([1-5]?[0-9]\')?" + "(\\s)*" +
+        "([1-5]?[0-9]" + "(\\.[0-9]+)?\")?" +
+        "((\\s)*" + "[NnSs])?")
+    private const val COORD_DEGREES_LONGITUDE = ("([-+EeWw]" + "(\\s)*)?" +
+        "(1)?[0-9]?[0-9](\u00B0)" + "(\\s)*" +
+        "([1-5]?[0-9]\')?" + "(\\s)*" +
+        "([1-5]?[0-9]" + "(\\.[0-9]+)?\")?" +
+        "((\\s)*" + "[EeWw])?")
+    private const val COORD_DEGREES_PATTERN = (COORD_DEGREES_LATITUDE + "(\\s)*" + "," + "(\\s)*" +
+        COORD_DEGREES_LONGITUDE)
+    private const val COORD_DECIMAL_LATITUDE = ("[+-]?" +
+        "[1-9]?[0-9]" + "(\\.[0-9]+)" +
+        "(\u00B0)?")
+    private const val COORD_DECIMAL_LONGITUDE = ("[+-]?" +
+        "(1)?[0-9]?[0-9]" + "(\\.[0-9]+)" +
+        "(\u00B0)?")
+    private const val COORD_DECIMAL_PATTERN = (COORD_DECIMAL_LATITUDE + "(\\s)*" + "," + "(\\s)*" +
+        COORD_DECIMAL_LONGITUDE)
+    private val COORD_PATTERN: Pattern =
+        Pattern.compile(COORD_DEGREES_PATTERN + "|" + COORD_DECIMAL_PATTERN)
+    private const val NANP_ALLOWED_SYMBOLS = "()+-*#."
+    private const val NANP_MIN_DIGITS = 7
+    private const val NANP_MAX_DIGITS = 11
 
     /**
      * Returns whether the SDK is the KeyLimePie release or later.
      */
-    public static boolean isKeyLimePieOrLater() {
-      return Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT;
+    @JvmStatic fun isKeyLimePieOrLater(): Boolean {
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT
     }
 
-    public static int getViewTypeFromIntentAndSharedPref(Activity activity) {
-        Intent intent = activity.getIntent();
-        Bundle extras = intent.getExtras();
-        SharedPreferences prefs = GeneralPreferences.getSharedPreferences(activity);
+    /**
+     * Returns whether the SDK is the Jellybean release or later.
+     */
+    @JvmStatic fun isJellybeanOrLater(): Boolean {
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN
+    }
 
-        if (TextUtils.equals(intent.getAction(), Intent.ACTION_EDIT)) {
-            return ViewType.EDIT;
+    @JvmStatic fun getViewTypeFromIntentAndSharedPref(activity: Activity): Int {
+        val intent: Intent? = activity.getIntent()
+        val extras: Bundle? = intent?.getExtras()
+        val prefs: SharedPreferences? = GeneralPreferences.getSharedPreferences(activity)
+        if (TextUtils.equals(intent?.getAction(), Intent.ACTION_EDIT)) {
+            return ViewType.EDIT
         }
         if (extras != null) {
-            if (extras.getBoolean(INTENT_KEY_DETAIL_VIEW, false)) {
+            if (extras?.getBoolean(INTENT_KEY_DETAIL_VIEW, false)) {
                 // This is the "detail" view which is either agenda or day view
-                return prefs.getInt(GeneralPreferences.KEY_DETAILED_VIEW,
-                        GeneralPreferences.DEFAULT_DETAILED_VIEW);
-            } else if (INTENT_VALUE_VIEW_TYPE_DAY.equals(extras.getString(INTENT_KEY_VIEW_TYPE))) {
+                return prefs?.getInt(
+                    GeneralPreferences.KEY_DETAILED_VIEW,
+                    GeneralPreferences.DEFAULT_DETAILED_VIEW
+                ) as Int
+            } else if (INTENT_VALUE_VIEW_TYPE_DAY.equals(extras?.getString(INTENT_KEY_VIEW_TYPE))) {
                 // Not sure who uses this. This logic came from LaunchActivity
-                return ViewType.DAY;
+                return ViewType.DAY
             }
         }
 
         // Default to the last view
-        return prefs.getInt(
-                GeneralPreferences.KEY_START_VIEW, GeneralPreferences.DEFAULT_START_VIEW);
+        return prefs?.getInt(
+            GeneralPreferences.KEY_START_VIEW, GeneralPreferences.DEFAULT_START_VIEW
+        ) as Int
     }
 
     /**
      * Gets the intent action for telling the widget to update.
      */
-    public static String getWidgetUpdateAction(Context context) {
-        return context.getPackageName() + ".APPWIDGET_UPDATE";
+    @JvmStatic fun getWidgetUpdateAction(context: Context): String {
+        return context.getPackageName().toString() + ".APPWIDGET_UPDATE"
     }
 
     /**
      * Gets the intent action for telling the widget to update.
      */
-    public static String getWidgetScheduledUpdateAction(Context context) {
-        return context.getPackageName() + ".APPWIDGET_SCHEDULED_UPDATE";
+    @JvmStatic fun getWidgetScheduledUpdateAction(context: Context): String {
+        return context.getPackageName().toString() + ".APPWIDGET_SCHEDULED_UPDATE"
     }
 
     /**
@@ -260,8 +227,8 @@ public class Utils {
      * @param context The calling activity
      * @param timeZone The time zone to set Calendar to, or **tbd**
      */
-    public static void setTimeZone(Context context, String timeZone) {
-        mTZUtils.setTimeZone(context, timeZone);
+    @JvmStatic fun setTimeZone(context: Context?, timeZone: String?) {
+        mTZUtils?.setTimeZone(context as Context, timeZone as String)
     }
 
     /**
@@ -275,12 +242,12 @@ public class Utils {
      *
      * @param context The calling activity
      * @param callback The runnable that should execute if a query returns new
-     *            values
+     * values
      * @return The string value representing the time zone Calendar should
-     *         display
+     * display
      */
-    public static String getTimeZone(Context context, Runnable callback) {
-        return mTZUtils.getTimeZone(context, callback);
+    @JvmStatic fun getTimeZone(context: Context?, callback: Runnable?): String? {
+        return mTZUtils?.getTimeZone(context as Context, callback)
     }
 
     /**
@@ -289,58 +256,79 @@ public class Utils {
      * @param context the context is required only if the time is shown
      * @param startMillis the start time in UTC milliseconds
      * @param endMillis the end time in UTC milliseconds
-     * @param flags a bit mask of options See {@link DateUtils#formatDateRange(Context, Formatter,
-     * long, long, int, String) formatDateRange}
+     * @param flags a bit mask of options See [formatDateRange][DateUtils.formatDateRange]
      * @return a string containing the formatted date/time range.
      */
-    public static String formatDateRange(
-            Context context, long startMillis, long endMillis, int flags) {
-        return mTZUtils.formatDateRange(context, startMillis, endMillis, flags);
+    @JvmStatic fun formatDateRange(
+        context: Context?,
+        startMillis: Long,
+        endMillis: Long,
+        flags: Int
+    ): String? {
+        return mTZUtils?.formatDateRange(context as Context, startMillis, endMillis, flags)
     }
 
-    public static boolean getDefaultVibrate(Context context, SharedPreferences prefs) {
-        boolean vibrate;
-        if (prefs.contains(KEY_ALERTS_VIBRATE_WHEN)) {
+    @JvmStatic fun getDefaultVibrate(context: Context, prefs: SharedPreferences?): Boolean {
+        val vibrate: Boolean
+        if (prefs?.contains(KEY_ALERTS_VIBRATE_WHEN) == true) {
             // Migrate setting to new 4.2 behavior
             //
             // silent and never -> off
             // always -> on
-            String vibrateWhen = prefs.getString(KEY_ALERTS_VIBRATE_WHEN, null);
-            vibrate = vibrateWhen != null && vibrateWhen.equals(context
-                    .getString(R.string.prefDefault_alerts_vibrate_true));
-            prefs.edit().remove(KEY_ALERTS_VIBRATE_WHEN).commit();
-            Log.d(TAG, "Migrating KEY_ALERTS_VIBRATE_WHEN(" + vibrateWhen
-                    + ") to KEY_ALERTS_VIBRATE = " + vibrate);
+            val vibrateWhen: String? = prefs?.getString(KEY_ALERTS_VIBRATE_WHEN, null)
+            vibrate = vibrateWhen != null && vibrateWhen.equals(
+                context
+                    .getString(R.string.prefDefault_alerts_vibrate_true)
+            )
+            prefs?.edit().remove(KEY_ALERTS_VIBRATE_WHEN).commit()
+            Log.d(
+                TAG, "Migrating KEY_ALERTS_VIBRATE_WHEN(" +
+                    vibrateWhen + ") to KEY_ALERTS_VIBRATE = " + vibrate
+            )
         } else {
-            vibrate = prefs.getBoolean(GeneralPreferences.KEY_ALERTS_VIBRATE,
-                    false);
+            vibrate = prefs?.getBoolean(
+                GeneralPreferences.KEY_ALERTS_VIBRATE,
+                false
+            ) as Boolean
         }
-        return vibrate;
+        return vibrate
     }
 
-    public static String[] getSharedPreference(Context context, String key, String[] defaultValue) {
-        SharedPreferences prefs = GeneralPreferences.getSharedPreferences(context);
-        Set<String> ss = prefs.getStringSet(key, null);
+    @JvmStatic fun getSharedPreference(
+        context: Context?,
+        key: String?,
+        defaultValue: Array<String>?
+    ): Array<String>? {
+        val prefs: SharedPreferences? = GeneralPreferences.getSharedPreferences(context)
+        val ss = prefs?.getStringSet(key, null)
         if (ss != null) {
-            String strings[] = new String[ss.size()];
-            return ss.toArray(strings);
+            val strings = arrayOfNulls<String>(ss?.size)
+            return ss?.toTypedArray()
         }
-        return defaultValue;
+        return defaultValue
     }
 
-    public static String getSharedPreference(Context context, String key, String defaultValue) {
-        SharedPreferences prefs = GeneralPreferences.getSharedPreferences(context);
-        return prefs.getString(key, defaultValue);
+    @JvmStatic fun getSharedPreference(
+        context: Context?,
+        key: String?,
+        defaultValue: String?
+    ): String? {
+        val prefs: SharedPreferences? = GeneralPreferences.getSharedPreferences(context)
+        return prefs?.getString(key, defaultValue)
     }
 
-    public static int getSharedPreference(Context context, String key, int defaultValue) {
-        SharedPreferences prefs = GeneralPreferences.getSharedPreferences(context);
-        return prefs.getInt(key, defaultValue);
+    @JvmStatic fun getSharedPreference(context: Context?, key: String?, defaultValue: Int): Int {
+        val prefs: SharedPreferences? = GeneralPreferences.getSharedPreferences(context)
+        return prefs?.getInt(key, defaultValue) as Int
     }
 
-    public static boolean getSharedPreference(Context context, String key, boolean defaultValue) {
-        SharedPreferences prefs = GeneralPreferences.getSharedPreferences(context);
-        return prefs.getBoolean(key, defaultValue);
+    @JvmStatic fun getSharedPreference(
+        context: Context?,
+        key: String?,
+        defaultValue: Boolean
+    ): Boolean {
+        val prefs: SharedPreferences? = GeneralPreferences.getSharedPreferences(context)
+        return prefs?.getBoolean(key, defaultValue) as Boolean
     }
 
     /**
@@ -350,155 +338,148 @@ public class Utils {
      * @param key the key of the preference to set
      * @param value the value to set
      */
-    public static void setSharedPreference(Context context, String key, String value) {
-        SharedPreferences prefs = GeneralPreferences.getSharedPreferences(context);
-        prefs.edit().putString(key, value).apply();
+    @JvmStatic fun setSharedPreference(context: Context?, key: String?, value: String?) {
+        val prefs: SharedPreferences? = GeneralPreferences.getSharedPreferences(context)
+        prefs?.edit()?.putString(key, value)?.apply()
     }
 
-    public static void setSharedPreference(Context context, String key, String[] values) {
-        SharedPreferences prefs = GeneralPreferences.getSharedPreferences(context);
-        LinkedHashSet<String> set = new LinkedHashSet<String>();
-        for (String value : values) {
-            set.add(value);
+    @JvmStatic fun setSharedPreference(context: Context?, key: String?, values: Array<String?>) {
+        val prefs: SharedPreferences? = GeneralPreferences.getSharedPreferences(context)
+        val set: LinkedHashSet<String?> = LinkedHashSet<String?>()
+        for (value in values) {
+            set.add(value)
         }
-        prefs.edit().putStringSet(key, set).apply();
+        prefs?.edit()?.putStringSet(key, set)?.apply()
     }
 
-    protected static void tardis() {
-        mTardis = System.currentTimeMillis();
+    internal fun tardis() {
+        tardis = System.currentTimeMillis()
     }
 
-    protected static long getTardis() {
-        return mTardis;
+    @JvmStatic fun setSharedPreference(context: Context?, key: String?, value: Boolean) {
+        val prefs: SharedPreferences? = GeneralPreferences.getSharedPreferences(context)
+        val editor: SharedPreferences.Editor? = prefs?.edit()
+        editor?.putBoolean(key, value)
+        editor?.apply()
     }
 
-    public static void setSharedPreference(Context context, String key, boolean value) {
-        SharedPreferences prefs = GeneralPreferences.getSharedPreferences(context);
-        SharedPreferences.Editor editor = prefs.edit();
-        editor.putBoolean(key, value);
-        editor.apply();
+    @JvmStatic fun setSharedPreference(context: Context?, key: String?, value: Int) {
+        val prefs: SharedPreferences? = GeneralPreferences.getSharedPreferences(context)
+        val editor: SharedPreferences.Editor? = prefs?.edit()
+        editor?.putInt(key, value)
+        editor?.apply()
     }
 
-    static void setSharedPreference(Context context, String key, int value) {
-        SharedPreferences prefs = GeneralPreferences.getSharedPreferences(context);
-        SharedPreferences.Editor editor = prefs.edit();
-        editor.putInt(key, value);
-        editor.apply();
-    }
-
-    public static void removeSharedPreference(Context context, String key) {
-        SharedPreferences prefs = context.getSharedPreferences(
-                GeneralPreferences.SHARED_PREFS_NAME, Context.MODE_PRIVATE);
-        prefs.edit().remove(key).apply();
+    @JvmStatic fun removeSharedPreference(context: Context?, key: String?) {
+        val prefs: SharedPreferences? = context?.getSharedPreferences(
+            GeneralPreferences.SHARED_PREFS_NAME, Context.MODE_PRIVATE
+        )
+        prefs?.edit()?.remove(key)?.apply()
     }
 
     /**
      * Save default agenda/day/week/month view for next time
      *
      * @param context
-     * @param viewId {@link CalendarController.ViewType}
+     * @param viewId [CalendarController.ViewType]
      */
-    static void setDefaultView(Context context, int viewId) {
-        SharedPreferences prefs = GeneralPreferences.getSharedPreferences(context);
-        SharedPreferences.Editor editor = prefs.edit();
-
-        boolean validDetailView = false;
-        if (mAllowWeekForDetailView && viewId == CalendarController.ViewType.WEEK) {
-            validDetailView = true;
-        } else {
-            validDetailView = viewId == CalendarController.ViewType.AGENDA
-                    || viewId == CalendarController.ViewType.DAY;
-        }
-
+    @JvmStatic fun setDefaultView(context: Context?, viewId: Int) {
+        val prefs: SharedPreferences? = GeneralPreferences.getSharedPreferences(context)
+        val editor: SharedPreferences.Editor? = prefs?.edit()
+        var validDetailView = false
+        validDetailView =
+            if (allowWeekForDetailView && viewId == CalendarController.ViewType.WEEK) {
+                true
+            } else {
+                (viewId == CalendarController.ViewType.AGENDA ||
+                    viewId == CalendarController.ViewType.DAY)
+            }
         if (validDetailView) {
             // Record the detail start view
-            editor.putInt(GeneralPreferences.KEY_DETAILED_VIEW, viewId);
+            editor?.putInt(GeneralPreferences.KEY_DETAILED_VIEW, viewId)
         }
 
         // Record the (new) start view
-        editor.putInt(GeneralPreferences.KEY_START_VIEW, viewId);
-        editor.apply();
+        editor?.putInt(GeneralPreferences.KEY_START_VIEW, viewId)
+        editor?.apply()
     }
 
-    public static MatrixCursor matrixCursorFromCursor(Cursor cursor) {
+    @JvmStatic fun matrixCursorFromCursor(cursor: Cursor?): MatrixCursor? {
         if (cursor == null) {
-            return null;
+            return null
         }
-
-        String[] columnNames = cursor.getColumnNames();
+        var columnNames: Array<String?> = cursor.getColumnNames()
         if (columnNames == null) {
-            columnNames = new String[] {};
+            columnNames = arrayOf()
         }
-        MatrixCursor newCursor = new MatrixCursor(columnNames);
-        int numColumns = cursor.getColumnCount();
-        String data[] = new String[numColumns];
-        cursor.moveToPosition(-1);
+        val newCursor = MatrixCursor(columnNames)
+        val numColumns: Int = cursor.getColumnCount()
+        val data = arrayOfNulls<String>(numColumns)
+        cursor.moveToPosition(-1)
         while (cursor.moveToNext()) {
-            for (int i = 0; i < numColumns; i++) {
-                data[i] = cursor.getString(i);
+            for (i in 0 until numColumns) {
+                data[i] = cursor.getString(i)
             }
-            newCursor.addRow(data);
+            newCursor.addRow(data)
         }
-        return newCursor;
+        return newCursor
     }
 
     /**
      * Compares two cursors to see if they contain the same data.
      *
      * @return Returns true of the cursors contain the same data and are not
-     *         null, false otherwise
+     * null, false otherwise
      */
-    public static boolean compareCursors(Cursor c1, Cursor c2) {
+    @JvmStatic fun compareCursors(c1: Cursor?, c2: Cursor?): Boolean {
         if (c1 == null || c2 == null) {
-            return false;
+            return false
         }
-
-        int numColumns = c1.getColumnCount();
+        val numColumns: Int = c1.getColumnCount()
         if (numColumns != c2.getColumnCount()) {
-            return false;
+            return false
         }
-
-        if (c1.getCount() != c2.getCount()) {
-            return false;
+        if (c1.getCount() !== c2.getCount()) {
+            return false
         }
-
-        c1.moveToPosition(-1);
-        c2.moveToPosition(-1);
+        c1.moveToPosition(-1)
+        c2.moveToPosition(-1)
         while (c1.moveToNext() && c2.moveToNext()) {
-            for (int i = 0; i < numColumns; i++) {
+            for (i in 0 until numColumns) {
                 if (!TextUtils.equals(c1.getString(i), c2.getString(i))) {
-                    return false;
+                    return false
                 }
             }
         }
-
-        return true;
+        return true
     }
 
     /**
      * If the given intent specifies a time (in milliseconds since the epoch),
      * then that time is returned. Otherwise, the current time is returned.
      */
-    public static final long timeFromIntentInMillis(Intent intent) {
+    @JvmStatic fun timeFromIntentInMillis(intent: Intent?): Long? {
         // If the time was specified, then use that. Otherwise, use the current
         // time.
-        Uri data = intent.getData();
-        long millis = intent.getLongExtra(EXTRA_EVENT_BEGIN_TIME, -1);
-        if (millis == -1 && data != null && data.isHierarchical()) {
-            List<String> path = data.getPathSegments();
-            if (path.size() == 2 && path.get(0).equals("time")) {
+        val data: Uri? = intent?.getData()
+        var millis: Long? = intent?.getLongExtra(EXTRA_EVENT_BEGIN_TIME, -1)?.toLong()
+        if (millis == -1L && data != null && data?.isHierarchical()) {
+            val path: List<String> = data?.getPathSegments() as List<String>
+            if (path.size == 2 && path[0].equals("time")) {
                 try {
-                    millis = Long.valueOf(data.getLastPathSegment());
-                } catch (NumberFormatException e) {
-                    Log.i("Calendar", "timeFromIntentInMillis: Data existed but no valid time "
-                            + "found. Using current time.");
+                    millis = (data?.getLastPathSegment()?.toLong())
+                } catch (e: NumberFormatException) {
+                    Log.i(
+                        "Calendar", "timeFromIntentInMillis: Data existed but no valid time " +
+                            "found. Using current time."
+                    )
                 }
             }
         }
-        if (millis <= 0) {
-            millis = System.currentTimeMillis();
+        if ((millis ?: 0L) <= 0) {
+            millis = System.currentTimeMillis()
         }
-        return millis;
+        return millis
     }
 
     /**
@@ -508,11 +489,11 @@ public class Utils {
      * @param time the time to format
      * @return the string containing the weekday and the date
      */
-    public static String formatMonthYear(Context context, Time time) {
-        int flags = DateUtils.FORMAT_SHOW_DATE | DateUtils.FORMAT_NO_MONTH_DAY
-                | DateUtils.FORMAT_SHOW_YEAR;
-        long millis = time.toMillis(true);
-        return formatDateRange(context, millis, millis, flags);
+    @JvmStatic fun formatMonthYear(context: Context?, time: Time): String? {
+        val flags: Int = (DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_NO_MONTH_DAY
+            or DateUtils.FORMAT_SHOW_YEAR)
+        val millis: Long = time.toMillis(true)
+        return formatDateRange(context, millis, millis, flags)
     }
 
     /**
@@ -523,55 +504,55 @@ public class Utils {
      * @param delim the delimiter to use
      * @return a string contained the things joined together
      */
-    public static String join(List<?> things, String delim) {
-        StringBuilder builder = new StringBuilder();
-        boolean first = true;
-        for (Object thing : things) {
+    @JvmStatic fun join(things: List<*>, delim: String?): String {
+        val builder = StringBuilder()
+        var first = true
+        for (thing in things) {
             if (first) {
-                first = false;
+                first = false
             } else {
-                builder.append(delim);
+                builder.append(delim)
             }
-            builder.append(thing.toString());
+            builder.append(thing.toString())
         }
-        return builder.toString();
+        return builder.toString()
     }
 
     /**
-     * Returns the week since {@link Time#EPOCH_JULIAN_DAY} (Jan 1, 1970)
+     * Returns the week since [Time.EPOCH_JULIAN_DAY] (Jan 1, 1970)
      * adjusted for first day of week.
      *
      * This takes a julian day and the week start day and calculates which
-     * week since {@link Time#EPOCH_JULIAN_DAY} that day occurs in, starting
+     * week since [Time.EPOCH_JULIAN_DAY] that day occurs in, starting
      * at 0. *Do not* use this to compute the ISO week number for the year.
      *
      * @param julianDay The julian day to calculate the week number for
      * @param firstDayOfWeek Which week day is the first day of the week,
-     *          see {@link Time#SUNDAY}
+     * see [Time.SUNDAY]
      * @return Weeks since the epoch
      */
-    public static int getWeeksSinceEpochFromJulianDay(int julianDay, int firstDayOfWeek) {
-        int diff = Time.THURSDAY - firstDayOfWeek;
+    @JvmStatic fun getWeeksSinceEpochFromJulianDay(julianDay: Int, firstDayOfWeek: Int): Int {
+        var diff: Int = Time.THURSDAY - firstDayOfWeek
         if (diff < 0) {
-            diff += 7;
+            diff += 7
         }
-        int refDay = Time.EPOCH_JULIAN_DAY - diff;
-        return (julianDay - refDay) / 7;
+        val refDay: Int = Time.EPOCH_JULIAN_DAY - diff
+        return (julianDay - refDay) / 7
     }
 
     /**
      * Takes a number of weeks since the epoch and calculates the Julian day of
      * the Monday for that week.
      *
-     * This assumes that the week containing the {@link Time#EPOCH_JULIAN_DAY}
+     * This assumes that the week containing the [Time.EPOCH_JULIAN_DAY]
      * is considered week 0. It returns the Julian day for the Monday
-     * {@code week} weeks after the Monday of the week containing the epoch.
+     * `week` weeks after the Monday of the week containing the epoch.
      *
      * @param week Number of weeks since the epoch
      * @return The julian day for the Monday of the given week since the epoch
      */
-    public static int getJulianMondayFromWeeksSinceEpoch(int week) {
-        return MONDAY_BEFORE_JULIAN_EPOCH + week * 7;
+    @JvmStatic fun getJulianMondayFromWeeksSinceEpoch(week: Int): Int {
+        return MONDAY_BEFORE_JULIAN_EPOCH + week * 7
     }
 
     /**
@@ -579,24 +560,23 @@ public class Utils {
      *
      * @return the first day of week in android.text.format.Time
      */
-    public static int getFirstDayOfWeek(Context context) {
-        SharedPreferences prefs = GeneralPreferences.getSharedPreferences(context);
-        String pref = prefs.getString(
-                GeneralPreferences.KEY_WEEK_START_DAY, GeneralPreferences.WEEK_START_DEFAULT);
-
-        int startDay;
-        if (GeneralPreferences.WEEK_START_DEFAULT.equals(pref)) {
-            startDay = Calendar.getInstance().getFirstDayOfWeek();
+    @JvmStatic fun getFirstDayOfWeek(context: Context?): Int {
+        val prefs: SharedPreferences? = GeneralPreferences.getSharedPreferences(context)
+        val pref: String? = prefs?.getString(
+            GeneralPreferences.KEY_WEEK_START_DAY, GeneralPreferences.WEEK_START_DEFAULT
+        )
+        val startDay: Int
+        startDay = if (GeneralPreferences.WEEK_START_DEFAULT.equals(pref)) {
+            Calendar.getInstance().getFirstDayOfWeek()
         } else {
-            startDay = Integer.parseInt(pref);
+            Integer.parseInt(pref)
         }
-
-        if (startDay == Calendar.SATURDAY) {
-            return Time.SATURDAY;
+        return if (startDay == Calendar.SATURDAY) {
+            Time.SATURDAY
         } else if (startDay == Calendar.MONDAY) {
-            return Time.MONDAY;
+            Time.MONDAY
         } else {
-            return Time.SUNDAY;
+            Time.SUNDAY
         }
     }
 
@@ -605,55 +585,50 @@ public class Utils {
      *
      * @return the first day of week as a java.util.Calendar constant
      */
-    public static int getFirstDayOfWeekAsCalendar(Context context) {
-        return convertDayOfWeekFromTimeToCalendar(getFirstDayOfWeek(context));
+    @JvmStatic fun getFirstDayOfWeekAsCalendar(context: Context?): Int {
+        return convertDayOfWeekFromTimeToCalendar(getFirstDayOfWeek(context))
     }
 
     /**
      * Converts the day of the week from android.text.format.Time to java.util.Calendar
      */
-    public static int convertDayOfWeekFromTimeToCalendar(int timeDayOfWeek) {
-        switch (timeDayOfWeek) {
-            case Time.MONDAY:
-                return Calendar.MONDAY;
-            case Time.TUESDAY:
-                return Calendar.TUESDAY;
-            case Time.WEDNESDAY:
-                return Calendar.WEDNESDAY;
-            case Time.THURSDAY:
-                return Calendar.THURSDAY;
-            case Time.FRIDAY:
-                return Calendar.FRIDAY;
-            case Time.SATURDAY:
-                return Calendar.SATURDAY;
-            case Time.SUNDAY:
-                return Calendar.SUNDAY;
-            default:
-                throw new IllegalArgumentException("Argument must be between Time.SUNDAY and " +
-                        "Time.SATURDAY");
+    @JvmStatic fun convertDayOfWeekFromTimeToCalendar(timeDayOfWeek: Int): Int {
+        return when (timeDayOfWeek) {
+            Time.MONDAY -> Calendar.MONDAY
+            Time.TUESDAY -> Calendar.TUESDAY
+            Time.WEDNESDAY -> Calendar.WEDNESDAY
+            Time.THURSDAY -> Calendar.THURSDAY
+            Time.FRIDAY -> Calendar.FRIDAY
+            Time.SATURDAY -> Calendar.SATURDAY
+            Time.SUNDAY -> Calendar.SUNDAY
+            else -> throw IllegalArgumentException(
+                "Argument must be between Time.SUNDAY and " +
+                    "Time.SATURDAY"
+            )
         }
     }
 
     /**
      * @return true when week number should be shown.
      */
-    public static boolean getShowWeekNumber(Context context) {
-        final SharedPreferences prefs = GeneralPreferences.getSharedPreferences(context);
-        return prefs.getBoolean(
-                GeneralPreferences.KEY_SHOW_WEEK_NUM, GeneralPreferences.DEFAULT_SHOW_WEEK_NUM);
+    @JvmStatic fun getShowWeekNumber(context: Context?): Boolean {
+        val prefs: SharedPreferences? = GeneralPreferences.getSharedPreferences(context)
+        return prefs?.getBoolean(
+            GeneralPreferences.KEY_SHOW_WEEK_NUM, GeneralPreferences.DEFAULT_SHOW_WEEK_NUM
+        ) as Boolean
     }
 
     /**
      * @return true when declined events should be hidden.
      */
-    public static boolean getHideDeclinedEvents(Context context) {
-        final SharedPreferences prefs = GeneralPreferences.getSharedPreferences(context);
-        return prefs.getBoolean(GeneralPreferences.KEY_HIDE_DECLINED, false);
+    @JvmStatic fun getHideDeclinedEvents(context: Context?): Boolean {
+        val prefs: SharedPreferences? = GeneralPreferences.getSharedPreferences(context)
+        return prefs?.getBoolean(GeneralPreferences.KEY_HIDE_DECLINED, false) as Boolean
     }
 
-    public static int getDaysPerWeek(Context context) {
-        final SharedPreferences prefs = GeneralPreferences.getSharedPreferences(context);
-        return prefs.getInt(GeneralPreferences.KEY_DAYS_PER_WEEK, 7);
+    @JvmStatic fun getDaysPerWeek(context: Context?): Int {
+        val prefs: SharedPreferences? = GeneralPreferences.getSharedPreferences(context)
+        return prefs?.getInt(GeneralPreferences.KEY_DAYS_PER_WEEK, 7) as Int
     }
 
     /**
@@ -663,10 +638,10 @@ public class Utils {
      * @param firstDayOfWeek the first day of week in android.text.format.Time
      * @return true if the column is Saturday position
      */
-    public static boolean isSaturday(int column, int firstDayOfWeek) {
-        return (firstDayOfWeek == Time.SUNDAY && column == 6)
-                || (firstDayOfWeek == Time.MONDAY && column == 5)
-                || (firstDayOfWeek == Time.SATURDAY && column == 0);
+    @JvmStatic fun isSaturday(column: Int, firstDayOfWeek: Int): Boolean {
+        return (firstDayOfWeek == Time.SUNDAY && column == 6 ||
+            firstDayOfWeek == Time.MONDAY && column == 5 ||
+            firstDayOfWeek == Time.SATURDAY && column == 0)
     }
 
     /**
@@ -676,10 +651,10 @@ public class Utils {
      * @param firstDayOfWeek the first day of week in android.text.format.Time
      * @return true if the column is Sunday position
      */
-    public static boolean isSunday(int column, int firstDayOfWeek) {
-        return (firstDayOfWeek == Time.SUNDAY && column == 0)
-                || (firstDayOfWeek == Time.MONDAY && column == 6)
-                || (firstDayOfWeek == Time.SATURDAY && column == 1);
+    @JvmStatic fun isSunday(column: Int, firstDayOfWeek: Int): Boolean {
+        return (firstDayOfWeek == Time.SUNDAY && column == 0 ||
+            firstDayOfWeek == Time.MONDAY && column == 6 ||
+            firstDayOfWeek == Time.SATURDAY && column == 1)
     }
 
     /**
@@ -690,24 +665,26 @@ public class Utils {
      * @param utcTime Time to convert, in UTC.
      * @param tz The time zone to convert this time to.
      */
-    public static long convertAlldayUtcToLocal(Time recycle, long utcTime, String tz) {
+    @JvmStatic fun convertAlldayUtcToLocal(recycle: Time?, utcTime: Long, tz: String): Long {
+        var recycle: Time? = recycle
         if (recycle == null) {
-            recycle = new Time();
+            recycle = Time()
         }
-        recycle.timezone = Time.TIMEZONE_UTC;
-        recycle.set(utcTime);
-        recycle.timezone = tz;
-        return recycle.normalize(true);
+        recycle.timezone = Time.TIMEZONE_UTC
+        recycle.set(utcTime)
+        recycle.timezone = tz
+        return recycle.normalize(true)
     }
 
-    public static long convertAlldayLocalToUTC(Time recycle, long localTime, String tz) {
+    @JvmStatic fun convertAlldayLocalToUTC(recycle: Time?, localTime: Long, tz: String): Long {
+        var recycle: Time? = recycle
         if (recycle == null) {
-            recycle = new Time();
+            recycle = Time()
         }
-        recycle.timezone = tz;
-        recycle.set(localTime);
-        recycle.timezone = Time.TIMEZONE_UTC;
-        return recycle.normalize(true);
+        recycle.timezone = tz
+        recycle.set(localTime)
+        recycle.timezone = Time.TIMEZONE_UTC
+        return recycle.normalize(true)
     }
 
     /**
@@ -717,29 +694,30 @@ public class Utils {
      * @param theTime - Time used for calculations (in UTC)
      * @param tz The time zone to convert this time to.
      */
-    public static long getNextMidnight(Time recycle, long theTime, String tz) {
+    @JvmStatic fun getNextMidnight(recycle: Time?, theTime: Long, tz: String): Long {
+        var recycle: Time? = recycle
         if (recycle == null) {
-            recycle = new Time();
+            recycle = Time()
         }
-        recycle.timezone = tz;
-        recycle.set(theTime);
-        recycle.monthDay ++;
-        recycle.hour = 0;
-        recycle.minute = 0;
-        recycle.second = 0;
-        return recycle.normalize(true);
+        recycle.timezone = tz
+        recycle.set(theTime)
+        recycle.monthDay++
+        recycle.hour = 0
+        recycle.minute = 0
+        recycle.second = 0
+        return recycle.normalize(true)
     }
 
-    public static void setAllowWeekForDetailView(boolean allowWeekView) {
-        mAllowWeekForDetailView  = allowWeekView;
+    @JvmStatic fun setAllowWeekForDetailView(allowWeekView: Boolean) {
+        this.allowWeekForDetailView = allowWeekView
     }
 
-    public static boolean getAllowWeekForDetailView() {
-        return mAllowWeekForDetailView;
+    @JvmStatic fun getAllowWeekForDetailView(): Boolean {
+        return this.allowWeekForDetailView
     }
 
-    public static boolean getConfigBool(Context c, int key) {
-        return c.getResources().getBoolean(key);
+    @JvmStatic fun getConfigBool(c: Context, key: Int): Boolean {
+        return c.getResources().getBoolean(key)
     }
 
     /**
@@ -749,70 +727,51 @@ public class Utils {
      *
      * @param color
      */
-    public static int getDisplayColorFromColor(int color) {
+    @JvmStatic fun getDisplayColorFromColor(color: Int): Int {
         if (!isJellybeanOrLater()) {
-            return color;
+            return color
         }
-
-        float[] hsv = new float[3];
-        Color.colorToHSV(color, hsv);
-        hsv[1] = Math.min(hsv[1] * SATURATION_ADJUST, 1.0f);
-        hsv[2] = hsv[2] * INTENSITY_ADJUST;
-        return Color.HSVToColor(hsv);
+        val hsv = FloatArray(3)
+        Color.colorToHSV(color, hsv)
+        hsv[1] = Math.min(hsv[1] * SATURATION_ADJUST, 1.0f)
+        hsv[2] = hsv[2] * INTENSITY_ADJUST
+        return Color.HSVToColor(hsv)
     }
 
     // This takes a color and computes what it would look like blended with
     // white. The result is the color that should be used for declined events.
-    public static int getDeclinedColorFromColor(int color) {
-        int bg = 0xffffffff;
-        int a = DECLINED_EVENT_ALPHA;
-        int r = (((color & 0x00ff0000) * a) + ((bg & 0x00ff0000) * (0xff - a))) & 0xff000000;
-        int g = (((color & 0x0000ff00) * a) + ((bg & 0x0000ff00) * (0xff - a))) & 0x00ff0000;
-        int b = (((color & 0x000000ff) * a) + ((bg & 0x000000ff) * (0xff - a))) & 0x0000ff00;
-        return (0xff000000) | ((r | g | b) >> 8);
+    @JvmStatic fun getDeclinedColorFromColor(color: Int): Int {
+        val bg = -0x1
+        val a = DECLINED_EVENT_ALPHA
+        val r = (color and 0x00ff0000) * a + (bg and 0x00ff0000) * (0xff - a) and -0x1000000
+        val g = (color and 0x0000ff00) * a + (bg and 0x0000ff00) * (0xff - a) and 0x00ff0000
+        val b = (color and 0x000000ff) * a + (bg and 0x000000ff) * (0xff - a) and 0x0000ff00
+        return -0x1000000 or (r or g or b shr 8)
     }
 
-    public static void trySyncAndDisableUpgradeReceiver(Context context) {
-        final PackageManager pm = context.getPackageManager();
-        ComponentName upgradeComponent = new ComponentName(context, UpgradeReceiver.class);
-        if (pm.getComponentEnabledSetting(upgradeComponent) ==
-                PackageManager.COMPONENT_ENABLED_STATE_DISABLED) {
+    @JvmStatic fun trySyncAndDisableUpgradeReceiver(context: Context?) {
+        val pm: PackageManager? = context?.getPackageManager()
+        val upgradeComponent = ComponentName(context as Context, UpgradeReceiver::class.java)
+        if (pm?.getComponentEnabledSetting(upgradeComponent) ===
+            PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+        ) {
             // The upgrade receiver has been disabled, which means this code has been run before,
             // so no need to sync.
-            return;
+            return
         }
-
-        Bundle extras = new Bundle();
-        extras.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true);
+        val extras = Bundle()
+        extras.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true)
         ContentResolver.requestSync(
-                null /* no account */,
-                Calendars.CONTENT_URI.getAuthority(),
-                extras);
+            null /* no account */,
+            Calendars.CONTENT_URI.getAuthority(),
+            extras
+        )
 
         // Now unregister the receiver so that we won't continue to sync every time.
-        pm.setComponentEnabledSetting(upgradeComponent,
-                PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP);
-    }
-
-    // A single strand represents one color of events. Events are divided up by
-    // color to make them convenient to draw. The black strand is special in
-    // that it holds conflicting events as well as color settings for allday on
-    // each day.
-    public static class DNAStrand {
-        public float[] points;
-        public int[] allDays; // color for the allday, 0 means no event
-        int position;
-        public int color;
-        int count;
-    }
-
-    // A segment is a single continuous length of time occupied by a single
-    // color. Segments should never span multiple days.
-    private static class DNASegment {
-        int startMinute; // in minutes since the start of the week
-        int endMinute;
-        int color; // Calendar color or black for conflicts
-        int day; // quick reference to the day this segment is on
+        pm?.setComponentEnabledSetting(
+            upgradeComponent,
+            PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP
+        )
     }
 
     /**
@@ -825,16 +784,16 @@ public class Utils {
      * color. The strands can then be drawn by setting the paint color to each
      * strand's color and calling drawLines on its set of points. The points are
      * set up using the following parameters.
-     * <ul>
-     * <li>Events between midnight and WORK_DAY_START_MINUTES are compressed
-     * into the first 1/8th of the space between top and bottom.</li>
-     * <li>Events between WORK_DAY_END_MINUTES and the following midnight are
-     * compressed into the last 1/8th of the space between top and bottom</li>
-     * <li>Events between WORK_DAY_START_MINUTES and WORK_DAY_END_MINUTES use
-     * the remaining 3/4ths of the space</li>
-     * <li>All segments drawn will maintain at least minPixels height, except
-     * for conflicts in the first or last 1/8th, which may be smaller</li>
-     * </ul>
+     *
+     *  * Events between midnight and WORK_DAY_START_MINUTES are compressed
+     * into the first 1/8th of the space between top and bottom.
+     *  * Events between WORK_DAY_END_MINUTES and the following midnight are
+     * compressed into the last 1/8th of the space between top and bottom
+     *  * Events between WORK_DAY_START_MINUTES and WORK_DAY_END_MINUTES use
+     * the remaining 3/4ths of the space
+     *  * All segments drawn will maintain at least minPixels height, except
+     * for conflicts in the first or last 1/8th, which may be smaller
+     *
      *
      * @param firstJulianDay The julian day of the first day of events
      * @param events A list of events sorted by start time
@@ -844,285 +803,329 @@ public class Utils {
      * @param conflictColor the color to use for conflicts
      * @return
      */
-    public static HashMap<Integer, DNAStrand> createDNAStrands(int firstJulianDay,
-            ArrayList<Event> events, int top, int bottom, int minPixels, int[] dayXs,
-            Context context) {
-
+    @JvmStatic fun createDNAStrands(
+        firstJulianDay: Int,
+        events: ArrayList<Event?>?,
+        top: Int,
+        bottom: Int,
+        minPixels: Int,
+        dayXs: IntArray?,
+        context: Context?
+    ): HashMap<Int, DNAStrand>? {
         if (!mMinutesLoaded) {
             if (context == null) {
-                Log.wtf(TAG, "No context and haven't loaded parameters yet! Can't create DNA.");
+                Log.wtf(TAG, "No context and haven't loaded parameters yet! Can't create DNA.")
             }
-            Resources res = context.getResources();
-            CONFLICT_COLOR = res.getColor(R.color.month_dna_conflict_time_color);
-            WORK_DAY_START_MINUTES = res.getInteger(R.integer.work_start_minutes);
-            WORK_DAY_END_MINUTES = res.getInteger(R.integer.work_end_minutes);
-            WORK_DAY_END_LENGTH = DAY_IN_MINUTES - WORK_DAY_END_MINUTES;
-            WORK_DAY_MINUTES = WORK_DAY_END_MINUTES - WORK_DAY_START_MINUTES;
-            mMinutesLoaded = true;
+            val res: Resources? = context?.getResources()
+            CONFLICT_COLOR = res?.getColor(R.color.month_dna_conflict_time_color) as Int
+            WORK_DAY_START_MINUTES = res?.getInteger(R.integer.work_start_minutes) as Int
+            WORK_DAY_END_MINUTES = res?.getInteger(R.integer.work_end_minutes) as Int
+            WORK_DAY_END_LENGTH = DAY_IN_MINUTES - WORK_DAY_END_MINUTES
+            WORK_DAY_MINUTES = WORK_DAY_END_MINUTES - WORK_DAY_START_MINUTES
+            mMinutesLoaded = true
         }
-
-        if (events == null || events.isEmpty() || dayXs == null || dayXs.length < 1
-                || bottom - top < 8 || minPixels < 0) {
-            Log.e(TAG,
-                    "Bad values for createDNAStrands! events:" + events + " dayXs:"
-                            + Arrays.toString(dayXs) + " bot-top:" + (bottom - top) + " minPixels:"
-                            + minPixels);
-            return null;
+        if (events == null || events.isEmpty() || dayXs == null || dayXs.size < 1 ||
+            bottom - top < 8 || minPixels < 0) {
+            Log.e(
+                TAG,
+                "Bad values for createDNAStrands! events:" + events + " dayXs:" +
+                    Arrays.toString(dayXs) + " bot-top:" + (bottom - top) + " minPixels:" +
+                    minPixels
+            )
+            return null
         }
-
-        LinkedList<DNASegment> segments = new LinkedList<DNASegment>();
-        HashMap<Integer, DNAStrand> strands = new HashMap<Integer, DNAStrand>();
+        val segments: LinkedList<DNASegment> = LinkedList<DNASegment>()
+        val strands: HashMap<Int, DNAStrand> = HashMap<Int, DNAStrand>()
         // add a black strand by default, other colors will get added in
         // the loop
-        DNAStrand blackStrand = new DNAStrand();
-        blackStrand.color = CONFLICT_COLOR;
-        strands.put(CONFLICT_COLOR, blackStrand);
+        val blackStrand = DNAStrand()
+        blackStrand.color = CONFLICT_COLOR
+        strands.put(CONFLICT_COLOR, blackStrand)
         // the min length is the number of minutes that will occupy
         // MIN_SEGMENT_PIXELS in the 'work day' time slot. This computes the
         // minutes/pixel * minpx where the number of pixels are 3/4 the total
         // dna height: 4*(mins/(px * 3/4))
-        int minMinutes = minPixels * 4 * WORK_DAY_MINUTES / (3 * (bottom - top));
+        val minMinutes = minPixels * 4 * WORK_DAY_MINUTES / (3 * (bottom - top))
 
         // There are slightly fewer than half as many pixels in 1/6 the space,
         // so round to 2.5x for the min minutes in the non-work area
-        int minOtherMinutes = minMinutes * 5 / 2;
-        int lastJulianDay = firstJulianDay + dayXs.length - 1;
-
-        Event event = new Event();
+        val minOtherMinutes = minMinutes * 5 / 2
+        val lastJulianDay = firstJulianDay + dayXs.size - 1
+        val event = Event()
         // Go through all the events for the week
-        for (Event currEvent : events) {
+        for (currEvent in events) {
             // if this event is outside the weeks range skip it
-            if (currEvent.endDay < firstJulianDay || currEvent.startDay > lastJulianDay) {
-                continue;
+            if (currEvent != null &&
+                (currEvent.endDay < firstJulianDay || currEvent.startDay > lastJulianDay)) {
+                continue
             }
-            if (currEvent.drawAsAllday()) {
-                addAllDayToStrands(currEvent, strands, firstJulianDay, dayXs.length);
-                continue;
+            if (currEvent?.drawAsAllday() == true) {
+                addAllDayToStrands(currEvent, strands, firstJulianDay, dayXs.size)
+                continue
             }
             // Copy the event over so we can clip its start and end to our range
-            currEvent.copyTo(event);
+            currEvent?.copyTo(event)
             if (event.startDay < firstJulianDay) {
-                event.startDay = firstJulianDay;
-                event.startTime = 0;
+                event.startDay = firstJulianDay
+                event.startTime = 0
             }
             // If it starts after the work day make sure the start is at least
             // minPixels from midnight
             if (event.startTime > DAY_IN_MINUTES - minOtherMinutes) {
-                event.startTime = DAY_IN_MINUTES - minOtherMinutes;
+                event.startTime = DAY_IN_MINUTES - minOtherMinutes
             }
             if (event.endDay > lastJulianDay) {
-                event.endDay = lastJulianDay;
-                event.endTime = DAY_IN_MINUTES - 1;
+                event.endDay = lastJulianDay
+                event.endTime = DAY_IN_MINUTES - 1
             }
             // If the end time is before the work day make sure it ends at least
             // minPixels after midnight
             if (event.endTime < minOtherMinutes) {
-                event.endTime = minOtherMinutes;
+                event.endTime = minOtherMinutes
             }
             // If the start and end are on the same day make sure they are at
             // least minPixels apart. This only needs to be done for times
             // outside the work day as the min distance for within the work day
             // is enforced in the segment code.
-            if (event.startDay == event.endDay &&
-                    event.endTime - event.startTime < minOtherMinutes) {
+            if (event.startDay === event.endDay &&
+                event.endTime - event.startTime < minOtherMinutes
+            ) {
                 // If it's less than minPixels in an area before the work
                 // day
                 if (event.startTime < WORK_DAY_START_MINUTES) {
                     // extend the end to the first easy guarantee that it's
                     // minPixels
-                    event.endTime = Math.min(event.startTime + minOtherMinutes,
-                            WORK_DAY_START_MINUTES + minMinutes);
+                    event.endTime = Math.min(
+                        event.startTime + minOtherMinutes,
+                        WORK_DAY_START_MINUTES + minMinutes
+                    )
                     // if it's in the area after the work day
                 } else if (event.endTime > WORK_DAY_END_MINUTES) {
                     // First try shifting the end but not past midnight
-                    event.endTime = Math.min(event.endTime + minOtherMinutes, DAY_IN_MINUTES - 1);
+                    event.endTime = Math.min(event.endTime + minOtherMinutes, DAY_IN_MINUTES - 1)
                     // if it's still too small move the start back
                     if (event.endTime - event.startTime < minOtherMinutes) {
-                        event.startTime = event.endTime - minOtherMinutes;
+                        event.startTime = event.endTime - minOtherMinutes
                     }
                 }
             }
 
             // This handles adding the first segment
-            if (segments.size() == 0) {
-                addNewSegment(segments, event, strands, firstJulianDay, 0, minMinutes);
-                continue;
+            if (segments.size == 0) {
+                addNewSegment(segments, event, strands, firstJulianDay, 0, minMinutes)
+                continue
             }
             // Now compare our current start time to the end time of the last
             // segment in the list
-            DNASegment lastSegment = segments.getLast();
-            int startMinute = (event.startDay - firstJulianDay) * DAY_IN_MINUTES + event.startTime;
-            int endMinute = Math.max((event.endDay - firstJulianDay) * DAY_IN_MINUTES
-                    + event.endTime, startMinute + minMinutes);
-
+            val lastSegment: DNASegment = segments.getLast()
+            var startMinute: Int =
+                (event.startDay - firstJulianDay) * DAY_IN_MINUTES + event.startTime
+            var endMinute: Int = Math.max(
+                (event.endDay - firstJulianDay) * DAY_IN_MINUTES +
+                    event.endTime, startMinute + minMinutes
+            )
             if (startMinute < 0) {
-                startMinute = 0;
+                startMinute = 0
             }
             if (endMinute >= WEEK_IN_MINUTES) {
-                endMinute = WEEK_IN_MINUTES - 1;
+                endMinute = WEEK_IN_MINUTES - 1
             }
             // If we start before the last segment in the list ends we need to
             // start going through the list as this may conflict with other
             // events
             if (startMinute < lastSegment.endMinute) {
-                int i = segments.size();
+                var i: Int = segments.size
                 // find the last segment this event intersects with
-                while (--i >= 0 && endMinute < segments.get(i).startMinute);
+                while (--i >= 0 && endMinute < segments.get(i).startMinute) {}
 
-                DNASegment currSegment;
+                var currSegment: DNASegment = DNASegment()
                 // for each segment this event intersects with
-                for (; i >= 0 && startMinute <= (currSegment = segments.get(i)).endMinute; i--) {
+                while (i >= 0 && startMinute <= segments.get(i)
+                        .also { currSegment = it }.endMinute) {
+
                     // if the segment is already a conflict ignore it
                     if (currSegment.color == CONFLICT_COLOR) {
-                        continue;
+                        i--
+                        continue
                     }
                     // if the event ends before the segment and wouldn't create
                     // a segment that is too small split off the right side
                     if (endMinute < currSegment.endMinute - minMinutes) {
-                        DNASegment rhs = new DNASegment();
-                        rhs.endMinute = currSegment.endMinute;
-                        rhs.color = currSegment.color;
-                        rhs.startMinute = endMinute + 1;
-                        rhs.day = currSegment.day;
-                        currSegment.endMinute = endMinute;
-                        segments.add(i + 1, rhs);
-                        strands.get(rhs.color).count++;
+                        val rhs = DNASegment()
+                        rhs.endMinute = currSegment.endMinute
+                        rhs.color = currSegment.color
+                        rhs.startMinute = endMinute + 1
+                        rhs.day = currSegment.day
+                        currSegment.endMinute = endMinute
+                        segments.add(i + 1, rhs)
+                        // Equivalent to strands.get(rhs.color)?.count++
+                        // but there is no null safe invocation for ++
+                        strands.get(rhs.color)?.count = strands.get(rhs.color)?.count?.inc() as Int
                         if (DEBUG) {
-                            Log.d(TAG, "Added rhs, curr:" + currSegment.toString() + " i:"
-                                    + segments.get(i).toString());
+                            Log.d(
+                                TAG, "Added rhs, curr:" + currSegment.toString() + " i:" +
+                                    segments.get(i).toString()
+                            )
                         }
                     }
                     // if the event starts after the segment and wouldn't create
                     // a segment that is too small split off the left side
                     if (startMinute > currSegment.startMinute + minMinutes) {
-                        DNASegment lhs = new DNASegment();
-                        lhs.startMinute = currSegment.startMinute;
-                        lhs.color = currSegment.color;
-                        lhs.endMinute = startMinute - 1;
-                        lhs.day = currSegment.day;
-                        currSegment.startMinute = startMinute;
+                        val lhs = DNASegment()
+                        lhs.startMinute = currSegment.startMinute
+                        lhs.color = currSegment.color
+                        lhs.endMinute = startMinute - 1
+                        lhs.day = currSegment.day
+                        currSegment.startMinute = startMinute
                         // increment i so that we are at the right position when
                         // referencing the segments to the right and left of the
                         // current segment.
-                        segments.add(i++, lhs);
-                        strands.get(lhs.color).count++;
+                        segments.add(i++, lhs)
+                        strands.get(lhs.color)?.count = strands.get(lhs.color)?.count?.inc() as Int
                         if (DEBUG) {
-                            Log.d(TAG, "Added lhs, curr:" + currSegment.toString() + " i:"
-                                    + segments.get(i).toString());
+                            Log.d(
+                                TAG, "Added lhs, curr:" + currSegment.toString() + " i:" +
+                                    segments.get(i).toString()
+                            )
                         }
                     }
                     // if the right side is black merge this with the segment to
                     // the right if they're on the same day and overlap
-                    if (i + 1 < segments.size()) {
-                        DNASegment rhs = segments.get(i + 1);
-                        if (rhs.color == CONFLICT_COLOR && currSegment.day == rhs.day
-                                && rhs.startMinute <= currSegment.endMinute + 1) {
-                            rhs.startMinute = Math.min(currSegment.startMinute, rhs.startMinute);
-                            segments.remove(currSegment);
-                            strands.get(currSegment.color).count--;
+                    if (i + 1 < segments.size) {
+                        val rhs: DNASegment = segments.get(i + 1)
+                        if (rhs.color == CONFLICT_COLOR && currSegment.day == rhs.day &&
+                            rhs.startMinute <= currSegment.endMinute + 1) {
+                            rhs.startMinute = Math.min(currSegment.startMinute, rhs.startMinute)
+                            segments.remove(currSegment)
+                            strands.get(currSegment.color)?.count =
+                                strands.get(currSegment.color)?.count?.dec() as Int
                             // point at the new current segment
-                            currSegment = rhs;
+                            currSegment = rhs
                         }
                     }
                     // if the left side is black merge this with the segment to
                     // the left if they're on the same day and overlap
                     if (i - 1 >= 0) {
-                        DNASegment lhs = segments.get(i - 1);
-                        if (lhs.color == CONFLICT_COLOR && currSegment.day == lhs.day
-                                && lhs.endMinute >= currSegment.startMinute - 1) {
-                            lhs.endMinute = Math.max(currSegment.endMinute, lhs.endMinute);
-                            segments.remove(currSegment);
-                            strands.get(currSegment.color).count--;
+                        val lhs: DNASegment = segments.get(i - 1)
+                        if (lhs.color == CONFLICT_COLOR && currSegment.day == lhs.day &&
+                            lhs.endMinute >= currSegment.startMinute - 1) {
+                            lhs.endMinute = Math.max(currSegment.endMinute, lhs.endMinute)
+                            segments.remove(currSegment)
+                            strands.get(currSegment.color)?.count =
+                                strands.get(currSegment.color)?.count?.dec() as Int
                             // point at the new current segment
-                            currSegment = lhs;
+                            currSegment = lhs
                             // point i at the new current segment in case new
                             // code is added
-                            i--;
+                            i--
                         }
                     }
                     // if we're still not black, decrement the count for the
                     // color being removed, change this to black, and increment
                     // the black count
                     if (currSegment.color != CONFLICT_COLOR) {
-                        strands.get(currSegment.color).count--;
-                        currSegment.color = CONFLICT_COLOR;
-                        strands.get(CONFLICT_COLOR).count++;
+                        strands.get(currSegment.color)?.count =
+                            strands.get(currSegment.color)?.count?.dec() as Int
+                        currSegment.color = CONFLICT_COLOR
+                        strands.get(CONFLICT_COLOR)?.count =
+                            strands.get(CONFLICT_COLOR)?.count?.inc() as Int
                     }
+                    i--
                 }
-
             }
             // If this event extends beyond the last segment add a new segment
             if (endMinute > lastSegment.endMinute) {
-                addNewSegment(segments, event, strands, firstJulianDay, lastSegment.endMinute,
-                        minMinutes);
+                addNewSegment(
+                    segments, event, strands, firstJulianDay, lastSegment.endMinute,
+                    minMinutes
+                )
             }
         }
-        weaveDNAStrands(segments, firstJulianDay, strands, top, bottom, dayXs);
-        return strands;
+        weaveDNAStrands(segments, firstJulianDay, strands, top, bottom, dayXs)
+        return strands
     }
 
     // This figures out allDay colors as allDay events are found
-    private static void addAllDayToStrands(Event event, HashMap<Integer, DNAStrand> strands,
-            int firstJulianDay, int numDays) {
-        DNAStrand strand = getOrCreateStrand(strands, CONFLICT_COLOR);
+    private fun addAllDayToStrands(
+        event: Event?,
+        strands: HashMap<Int, DNAStrand>,
+        firstJulianDay: Int,
+        numDays: Int
+    ) {
+        val strand = getOrCreateStrand(strands, CONFLICT_COLOR)
         // if we haven't initialized the allDay portion create it now
-        if (strand.allDays == null) {
-            strand.allDays = new int[numDays];
+        if (strand?.allDays == null) {
+            strand?.allDays = IntArray(numDays)
         }
 
         // For each day this event is on update the color
-        int end = Math.min(event.endDay - firstJulianDay, numDays - 1);
-        for (int i = Math.max(event.startDay - firstJulianDay, 0); i <= end; i++) {
-            if (strand.allDays[i] != 0) {
+        val end: Int = Math.min((event?.endDay ?: 0) - firstJulianDay, numDays - 1)
+        for (i in Math.max((event?.startDay ?: 0) - firstJulianDay, 0)..end) {
+            if (strand?.allDays!![i] != 0) {
                 // if this day already had a color, it is now a conflict
-                strand.allDays[i] = CONFLICT_COLOR;
+                strand?.allDays!![i] = CONFLICT_COLOR
             } else {
                 // else it's just the color of the event
-                strand.allDays[i] = event.color;
+                strand?.allDays!![i] = event?.color as Int
             }
         }
     }
 
     // This processes all the segments, sorts them by color, and generates a
     // list of points to draw
-    private static void weaveDNAStrands(LinkedList<DNASegment> segments, int firstJulianDay,
-            HashMap<Integer, DNAStrand> strands, int top, int bottom, int[] dayXs) {
+    private fun weaveDNAStrands(
+        segments: LinkedList<DNASegment>,
+        firstJulianDay: Int,
+        strands: HashMap<Int, DNAStrand>,
+        top: Int,
+        bottom: Int,
+        dayXs: IntArray
+    ) {
         // First, get rid of any colors that ended up with no segments
-        Iterator<DNAStrand> strandIterator = strands.values().iterator();
+        val strandIterator = strands.values.iterator()
         while (strandIterator.hasNext()) {
-            DNAStrand strand = strandIterator.next();
-            if (strand.count < 1 && strand.allDays == null) {
-                strandIterator.remove();
-                continue;
+            val strand = strandIterator.next()
+            if (strand?.count < 1 && strand.allDays == null) {
+                strandIterator.remove()
+                continue
             }
-            strand.points = new float[strand.count * 4];
-            strand.position = 0;
+            strand.points = FloatArray(strand.count * 4)
+            strand.position = 0
         }
         // Go through each segment and compute its points
-        for (DNASegment segment : segments) {
+        for (segment in segments) {
             // Add the points to the strand of that color
-            DNAStrand strand = strands.get(segment.color);
-            int dayIndex = segment.day - firstJulianDay;
-            int dayStartMinute = segment.startMinute % DAY_IN_MINUTES;
-            int dayEndMinute = segment.endMinute % DAY_IN_MINUTES;
-            int height = bottom - top;
-            int workDayHeight = height * 3 / 4;
-            int remainderHeight = (height - workDayHeight) / 2;
-
-            int x = dayXs[dayIndex];
-            int y0 = 0;
-            int y1 = 0;
-
-            y0 = top + getPixelOffsetFromMinutes(dayStartMinute, workDayHeight, remainderHeight);
-            y1 = top + getPixelOffsetFromMinutes(dayEndMinute, workDayHeight, remainderHeight);
+            val strand: DNAStrand? = strands.get(segment.color)
+            val dayIndex = segment.day - firstJulianDay
+            val dayStartMinute = segment.startMinute % DAY_IN_MINUTES
+            val dayEndMinute = segment.endMinute % DAY_IN_MINUTES
+            val height = bottom - top
+            val workDayHeight = height * 3 / 4
+            val remainderHeight = (height - workDayHeight) / 2
+            val x = dayXs[dayIndex]
+            var y0 = 0
+            var y1 = 0
+            y0 = top + getPixelOffsetFromMinutes(dayStartMinute, workDayHeight, remainderHeight)
+            y1 = top + getPixelOffsetFromMinutes(dayEndMinute, workDayHeight, remainderHeight)
             if (DEBUG) {
-                Log.d(TAG, "Adding " + Integer.toHexString(segment.color) + " at x,y0,y1: " + x
-                        + " " + y0 + " " + y1 + " for " + dayStartMinute + " " + dayEndMinute);
+                Log.d(
+                    TAG,
+                    "Adding " + Integer.toHexString(segment.color).toString() + " at x,y0,y1: " + x
+                        .toString() + " " + y0.toString() + " " + y1.toString() +
+                        " for " + dayStartMinute.toString() + " " + dayEndMinute
+                )
             }
-            strand.points[strand.position++] = x;
-            strand.points[strand.position++] = y0;
-            strand.points[strand.position++] = x;
-            strand.points[strand.position++] = y1;
+            strand?.points!![strand?.position] = x.toFloat()
+            strand?.position = strand?.position?.inc() as Int
+
+            strand?.points!![strand?.position] = y0.toFloat()
+            strand?.position = strand?.position?.inc() as Int
+
+            strand?.points!![strand?.position] = x.toFloat()
+            strand?.position = strand?.position.inc() as Int
+
+            strand?.points!![strand?.position] = y1.toFloat()
+            strand?.position = strand?.position.inc() as Int
         }
     }
 
@@ -1130,88 +1133,99 @@ public class Utils {
      * Compute a pixel offset from the top for a given minute from the work day
      * height and the height of the top area.
      */
-    private static int getPixelOffsetFromMinutes(int minute, int workDayHeight,
-            int remainderHeight) {
-        int y;
+    private fun getPixelOffsetFromMinutes(
+        minute: Int,
+        workDayHeight: Int,
+        remainderHeight: Int
+    ): Int {
+        val y: Int
         if (minute < WORK_DAY_START_MINUTES) {
-            y = minute * remainderHeight / WORK_DAY_START_MINUTES;
+            y = minute * remainderHeight / WORK_DAY_START_MINUTES
         } else if (minute < WORK_DAY_END_MINUTES) {
-            y = remainderHeight + (minute - WORK_DAY_START_MINUTES) * workDayHeight
-                    / WORK_DAY_MINUTES;
+            y = remainderHeight + (minute - WORK_DAY_START_MINUTES) *
+                workDayHeight / WORK_DAY_MINUTES
         } else {
-            y = remainderHeight + workDayHeight + (minute - WORK_DAY_END_MINUTES) * remainderHeight
-                    / WORK_DAY_END_LENGTH;
+            y = remainderHeight + workDayHeight +
+                (minute - WORK_DAY_END_MINUTES) * remainderHeight / WORK_DAY_END_LENGTH
         }
-        return y;
+        return y
     }
 
     /**
      * Add a new segment based on the event provided. This will handle splitting
      * segments across day boundaries and ensures a minimum size for segments.
      */
-    private static void addNewSegment(LinkedList<DNASegment> segments, Event event,
-            HashMap<Integer, DNAStrand> strands, int firstJulianDay, int minStart, int minMinutes) {
+    private fun addNewSegment(
+        segments: LinkedList<DNASegment>,
+        event: Event,
+        strands: HashMap<Int, DNAStrand>,
+        firstJulianDay: Int,
+        minStart: Int,
+        minMinutes: Int
+    ) {
+        var event: Event = event
+        var minStart = minStart
         if (event.startDay > event.endDay) {
-            Log.wtf(TAG, "Event starts after it ends: " + event.toString());
+            Log.wtf(TAG, "Event starts after it ends: " + event.toString())
         }
         // If this is a multiday event split it up by day
-        if (event.startDay != event.endDay) {
-            Event lhs = new Event();
-            lhs.color = event.color;
-            lhs.startDay = event.startDay;
+        if (event.startDay !== event.endDay) {
+            val lhs = Event()
+            lhs.color = event.color
+            lhs.startDay = event.startDay
             // the first day we want the start time to be the actual start time
-            lhs.startTime = event.startTime;
-            lhs.endDay = lhs.startDay;
-            lhs.endTime = DAY_IN_MINUTES - 1;
+            lhs.startTime = event.startTime
+            lhs.endDay = lhs.startDay
+            lhs.endTime = DAY_IN_MINUTES - 1
             // Nearly recursive iteration!
-            while (lhs.startDay != event.endDay) {
-                addNewSegment(segments, lhs, strands, firstJulianDay, minStart, minMinutes);
+            while (lhs.startDay !== event.endDay) {
+                addNewSegment(segments, lhs, strands, firstJulianDay, minStart, minMinutes)
                 // The days in between are all day, even though that shouldn't
                 // actually happen due to the allday filtering
-                lhs.startDay++;
-                lhs.endDay = lhs.startDay;
-                lhs.startTime = 0;
-                minStart = 0;
+                lhs.startDay++
+                lhs.endDay = lhs.startDay
+                lhs.startTime = 0
+                minStart = 0
             }
             // The last day we want the end time to be the actual end time
-            lhs.endTime = event.endTime;
-            event = lhs;
+            lhs.endTime = event.endTime
+            event = lhs
         }
         // Create the new segment and compute its fields
-        DNASegment segment = new DNASegment();
-        int dayOffset = (event.startDay - firstJulianDay) * DAY_IN_MINUTES;
-        int endOfDay = dayOffset + DAY_IN_MINUTES - 1;
+        val segment = DNASegment()
+        val dayOffset: Int = (event.startDay - firstJulianDay) * DAY_IN_MINUTES
+        val endOfDay = dayOffset + DAY_IN_MINUTES - 1
         // clip the start if needed
-        segment.startMinute = Math.max(dayOffset + event.startTime, minStart);
+        segment.startMinute = Math.max(dayOffset + event.startTime, minStart)
         // and extend the end if it's too small, but not beyond the end of the
         // day
-        int minEnd = Math.min(segment.startMinute + minMinutes, endOfDay);
-        segment.endMinute = Math.max(dayOffset + event.endTime, minEnd);
+        val minEnd: Int = Math.min(segment.startMinute + minMinutes, endOfDay)
+        segment.endMinute = Math.max(dayOffset + event.endTime, minEnd)
         if (segment.endMinute > endOfDay) {
-            segment.endMinute = endOfDay;
+            segment.endMinute = endOfDay
         }
-
-        segment.color = event.color;
-        segment.day = event.startDay;
-        segments.add(segment);
+        segment.color = event.color
+        segment.day = event.startDay
+        segments.add(segment)
         // increment the count for the correct color or add a new strand if we
         // don't have that color yet
-        DNAStrand strand = getOrCreateStrand(strands, segment.color);
-        strand.count++;
+        val strand = getOrCreateStrand(strands, segment.color)
+        strand?.count
+        strand?.count = strand?.count?.inc() as Int
     }
 
     /**
      * Try to get a strand of the given color. Create it if it doesn't exist.
      */
-    private static DNAStrand getOrCreateStrand(HashMap<Integer, DNAStrand> strands, int color) {
-        DNAStrand strand = strands.get(color);
+    private fun getOrCreateStrand(strands: HashMap<Int, DNAStrand>, color: Int): DNAStrand? {
+        var strand: DNAStrand? = strands.get(color)
         if (strand == null) {
-            strand = new DNAStrand();
-            strand.color = color;
-            strand.count = 0;
-            strands.put(strand.color, strand);
+            strand = DNAStrand()
+            strand?.color = color
+            strand?.count = 0
+            strands?.put(strand?.color, strand)
         }
-        return strand;
+        return strand
     }
 
     /**
@@ -1219,12 +1233,12 @@ public class Utils {
      *
      * @param context
      */
-    public static void returnToCalendarHome(Context context) {
-        Intent launchIntent = new Intent(context, AllInOneActivity.class);
-        launchIntent.setAction(Intent.ACTION_DEFAULT);
-        launchIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        launchIntent.putExtra(INTENT_KEY_HOME, true);
-        context.startActivity(launchIntent);
+    @JvmStatic fun returnToCalendarHome(context: Context) {
+        val launchIntent = Intent(context, AllInOneActivity::class.java)
+        launchIntent.setAction(Intent.ACTION_DEFAULT)
+        launchIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+        launchIntent.putExtra(INTENT_KEY_HOME, true)
+        context.startActivity(launchIntent)
     }
 
     /**
@@ -1234,23 +1248,24 @@ public class Utils {
      * @param millisSinceEpoch
      * @return
      */
-    public static int getWeekNumberFromTime(long millisSinceEpoch, Context context) {
-        Time weekTime = new Time(getTimeZone(context, null));
-        weekTime.set(millisSinceEpoch);
-        weekTime.normalize(true);
-        int firstDayOfWeek = getFirstDayOfWeek(context);
+    @JvmStatic fun getWeekNumberFromTime(millisSinceEpoch: Long, context: Context?): Int {
+        val weekTime = Time(getTimeZone(context, null))
+        weekTime.set(millisSinceEpoch)
+        weekTime.normalize(true)
+        val firstDayOfWeek = getFirstDayOfWeek(context)
         // if the date is on Saturday or Sunday and the start of the week
         // isn't Monday we may need to shift the date to be in the correct
         // week
-        if (weekTime.weekDay == Time.SUNDAY
-                && (firstDayOfWeek == Time.SUNDAY || firstDayOfWeek == Time.SATURDAY)) {
-            weekTime.monthDay++;
-            weekTime.normalize(true);
-        } else if (weekTime.weekDay == Time.SATURDAY && firstDayOfWeek == Time.SATURDAY) {
-            weekTime.monthDay += 2;
-            weekTime.normalize(true);
+        if (weekTime.weekDay === Time.SUNDAY &&
+            (firstDayOfWeek == Time.SUNDAY || firstDayOfWeek == Time.SATURDAY)
+        ) {
+            weekTime.monthDay++
+            weekTime.normalize(true)
+        } else if (weekTime.weekDay === Time.SATURDAY && firstDayOfWeek == Time.SATURDAY) {
+            weekTime.monthDay += 2
+            weekTime.normalize(true)
         }
-        return weekTime.getWeekNumber();
+        return weekTime.getWeekNumber()
     }
 
     /**
@@ -1261,182 +1276,225 @@ public class Utils {
      * @param todayJulianDay The julian day for today's date
      * @param millis A utc millis since epoch time that falls on julian day
      * @param context The calling context, used to get the timezone and do the
-     *            formatting
+     * formatting
      * @return
      */
-    public static String getDayOfWeekString(int julianDay, int todayJulianDay, long millis,
-            Context context) {
-        getTimeZone(context, null);
-        int flags = DateUtils.FORMAT_SHOW_WEEKDAY;
-        String dayViewText;
-        if (julianDay == todayJulianDay) {
-            dayViewText = context.getString(R.string.agenda_today,
-                    mTZUtils.formatDateRange(context, millis, millis, flags).toString());
+    @JvmStatic fun getDayOfWeekString(
+        julianDay: Int,
+        todayJulianDay: Int,
+        millis: Long,
+        context: Context
+    ): String {
+        getTimeZone(context, null)
+        val flags: Int = DateUtils.FORMAT_SHOW_WEEKDAY
+        var dayViewText: String
+        dayViewText = if (julianDay == todayJulianDay) {
+            context.getString(
+                R.string.agenda_today,
+                mTZUtils?.formatDateRange(context, millis, millis, flags)
+                    .toString()
+            )
         } else if (julianDay == todayJulianDay - 1) {
-            dayViewText = context.getString(R.string.agenda_yesterday,
-                    mTZUtils.formatDateRange(context, millis, millis, flags).toString());
+            context.getString(
+                R.string.agenda_yesterday,
+                mTZUtils?.formatDateRange(context, millis, millis, flags)
+                    .toString()
+            )
         } else if (julianDay == todayJulianDay + 1) {
-            dayViewText = context.getString(R.string.agenda_tomorrow,
-                    mTZUtils.formatDateRange(context, millis, millis, flags).toString());
+            context.getString(
+                R.string.agenda_tomorrow,
+                mTZUtils?.formatDateRange(context, millis, millis, flags)
+                    .toString()
+            )
         } else {
-            dayViewText = mTZUtils.formatDateRange(context, millis, millis, flags).toString();
+            mTZUtils?.formatDateRange(context, millis, millis, flags)
+                .toString()
         }
-        dayViewText = dayViewText.toUpperCase();
-        return dayViewText;
+        dayViewText = dayViewText.toUpperCase()
+        return dayViewText
     }
 
     // Calculate the time until midnight + 1 second and set the handler to
     // do run the runnable
-    public static void setMidnightUpdater(Handler h, Runnable r, String timezone) {
+    @JvmStatic fun setMidnightUpdater(h: Handler?, r: Runnable?, timezone: String?) {
         if (h == null || r == null || timezone == null) {
-            return;
+            return
         }
-        long now = System.currentTimeMillis();
-        Time time = new Time(timezone);
-        time.set(now);
-        long runInMillis = (24 * 3600 - time.hour * 3600 - time.minute * 60 -
-                time.second + 1) * 1000;
-        h.removeCallbacks(r);
-        h.postDelayed(r, runInMillis);
+        val now: Long = System.currentTimeMillis()
+        val time = Time(timezone)
+        time.set(now)
+        val runInMillis: Long = ((24 * 3600 - time.hour * 3600 - time.minute * 60 -
+            time.second + 1) * 1000).toLong()
+        h.removeCallbacks(r)
+        h.postDelayed(r, runInMillis)
     }
 
     // Stop the midnight update thread
-    public static void resetMidnightUpdater(Handler h, Runnable r) {
+    @JvmStatic fun resetMidnightUpdater(h: Handler?, r: Runnable?) {
         if (h == null || r == null) {
-            return;
+            return
         }
-        h.removeCallbacks(r);
+        h.removeCallbacks(r)
     }
 
     /**
      * Returns a string description of the specified time interval.
      */
-    public static String getDisplayedDatetime(long startMillis, long endMillis, long currentMillis,
-            String localTimezone, boolean allDay, Context context) {
+    @JvmStatic fun getDisplayedDatetime(
+        startMillis: Long,
+        endMillis: Long,
+        currentMillis: Long,
+        localTimezone: String,
+        allDay: Boolean,
+        context: Context
+    ): String? {
         // Configure date/time formatting.
-        int flagsDate = DateUtils.FORMAT_SHOW_DATE | DateUtils.FORMAT_SHOW_WEEKDAY;
-        int flagsTime = DateUtils.FORMAT_SHOW_TIME;
+        val flagsDate: Int = DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_SHOW_WEEKDAY
+        var flagsTime: Int = DateUtils.FORMAT_SHOW_TIME
         if (DateFormat.is24HourFormat(context)) {
-            flagsTime |= DateUtils.FORMAT_24HOUR;
+            flagsTime = flagsTime or DateUtils.FORMAT_24HOUR
         }
-
-        Time currentTime = new Time(localTimezone);
-        currentTime.set(currentMillis);
-        Resources resources = context.getResources();
-        String datetimeString = null;
+        val currentTime = Time(localTimezone)
+        currentTime.set(currentMillis)
+        val resources: Resources = context.getResources()
+        var datetimeString: String? = null
         if (allDay) {
             // All day events require special timezone adjustment.
-            long localStartMillis = convertAlldayUtcToLocal(null, startMillis, localTimezone);
-            long localEndMillis = convertAlldayUtcToLocal(null, endMillis, localTimezone);
+            val localStartMillis = convertAlldayUtcToLocal(null, startMillis, localTimezone)
+            val localEndMillis = convertAlldayUtcToLocal(null, endMillis, localTimezone)
             if (singleDayEvent(localStartMillis, localEndMillis, currentTime.gmtoff)) {
                 // If possible, use "Today" or "Tomorrow" instead of a full date string.
-                int todayOrTomorrow = isTodayOrTomorrow(context.getResources(),
-                        localStartMillis, currentMillis, currentTime.gmtoff);
+                val todayOrTomorrow = isTodayOrTomorrow(
+                    context.getResources(),
+                    localStartMillis, currentMillis, currentTime.gmtoff
+                )
                 if (TODAY == todayOrTomorrow) {
-                    datetimeString = resources.getString(R.string.today);
+                    datetimeString = resources.getString(R.string.today)
                 } else if (TOMORROW == todayOrTomorrow) {
-                    datetimeString = resources.getString(R.string.tomorrow);
+                    datetimeString = resources.getString(R.string.tomorrow)
                 }
             }
             if (datetimeString == null) {
                 // For multi-day allday events or single-day all-day events that are not
                 // today or tomorrow, use framework formatter.
-                Formatter f = new Formatter(new StringBuilder(50), Locale.getDefault());
-                datetimeString = DateUtils.formatDateRange(context, f, startMillis,
-                        endMillis, flagsDate, Time.TIMEZONE_UTC).toString();
+                val f = Formatter(StringBuilder(50), Locale.getDefault())
+                datetimeString = DateUtils.formatDateRange(
+                    context, f, startMillis,
+                    endMillis, flagsDate, Time.TIMEZONE_UTC
+                ).toString()
             }
         } else {
-            if (singleDayEvent(startMillis, endMillis, currentTime.gmtoff)) {
+            datetimeString = if (singleDayEvent(startMillis, endMillis, currentTime.gmtoff)) {
                 // Format the time.
-                String timeString = Utils.formatDateRange(context, startMillis, endMillis,
-                        flagsTime);
+                val timeString = formatDateRange(
+                    context, startMillis, endMillis,
+                    flagsTime
+                )
 
                 // If possible, use "Today" or "Tomorrow" instead of a full date string.
-                int todayOrTomorrow = isTodayOrTomorrow(context.getResources(), startMillis,
-                        currentMillis, currentTime.gmtoff);
+                val todayOrTomorrow = isTodayOrTomorrow(
+                    context.getResources(), startMillis,
+                    currentMillis, currentTime.gmtoff
+                )
                 if (TODAY == todayOrTomorrow) {
                     // Example: "Today at 1:00pm - 2:00 pm"
-                    datetimeString = resources.getString(R.string.today_at_time_fmt,
-                            timeString);
+                    resources.getString(
+                        R.string.today_at_time_fmt,
+                        timeString
+                    )
                 } else if (TOMORROW == todayOrTomorrow) {
                     // Example: "Tomorrow at 1:00pm - 2:00 pm"
-                    datetimeString = resources.getString(R.string.tomorrow_at_time_fmt,
-                            timeString);
+                    resources.getString(
+                        R.string.tomorrow_at_time_fmt,
+                        timeString
+                    )
                 } else {
                     // Format the full date. Example: "Thursday, April 12, 1:00pm - 2:00pm"
-                    String dateString = Utils.formatDateRange(context, startMillis, endMillis,
-                            flagsDate);
-                    datetimeString = resources.getString(R.string.date_time_fmt, dateString,
-                            timeString);
+                    val dateString = formatDateRange(
+                        context, startMillis, endMillis,
+                        flagsDate
+                    )
+                    resources.getString(
+                        R.string.date_time_fmt, dateString,
+                        timeString
+                    )
                 }
             } else {
                 // For multiday events, shorten day/month names.
                 // Example format: "Fri Apr 6, 5:00pm - Sun, Apr 8, 6:00pm"
-                int flagsDatetime = flagsDate | flagsTime | DateUtils.FORMAT_ABBREV_MONTH |
-                        DateUtils.FORMAT_ABBREV_WEEKDAY;
-                datetimeString = Utils.formatDateRange(context, startMillis, endMillis,
-                        flagsDatetime);
+                val flagsDatetime = flagsDate or flagsTime or DateUtils.FORMAT_ABBREV_MONTH or
+                    DateUtils.FORMAT_ABBREV_WEEKDAY
+                formatDateRange(
+                    context, startMillis, endMillis,
+                    flagsDatetime
+                )
             }
         }
-        return datetimeString;
+        return datetimeString
     }
 
     /**
      * Returns the timezone to display in the event info, if the local timezone is different
      * from the event timezone.  Otherwise returns null.
      */
-    public static String getDisplayedTimezone(long startMillis, String localTimezone,
-            String eventTimezone) {
-        String tzDisplay = null;
+    @JvmStatic fun getDisplayedTimezone(
+        startMillis: Long,
+        localTimezone: String?,
+        eventTimezone: String?
+    ): String? {
+        var tzDisplay: String? = null
         if (!TextUtils.equals(localTimezone, eventTimezone)) {
             // Figure out if this is in DST
-            TimeZone tz = TimeZone.getTimeZone(localTimezone);
-            if (tz == null || tz.getID().equals("GMT")) {
-                tzDisplay = localTimezone;
+            val tz: TimeZone = TimeZone.getTimeZone(localTimezone)
+            tzDisplay = if (tz == null || tz.getID().equals("GMT")) {
+                localTimezone
             } else {
-                Time startTime = new Time(localTimezone);
-                startTime.set(startMillis);
-                tzDisplay = tz.getDisplayName(startTime.isDst != 0, TimeZone.SHORT);
+                val startTime = Time(localTimezone)
+                startTime.set(startMillis)
+                tz.getDisplayName(startTime.isDst !== 0, TimeZone.SHORT)
             }
         }
-        return tzDisplay;
+        return tzDisplay
     }
 
     /**
      * Returns whether the specified time interval is in a single day.
      */
-    private static boolean singleDayEvent(long startMillis, long endMillis, long localGmtOffset) {
+    private fun singleDayEvent(startMillis: Long, endMillis: Long, localGmtOffset: Long): Boolean {
         if (startMillis == endMillis) {
-            return true;
+            return true
         }
 
         // An event ending at midnight should still be a single-day event, so check
         // time end-1.
-        int startDay = Time.getJulianDay(startMillis, localGmtOffset);
-        int endDay = Time.getJulianDay(endMillis - 1, localGmtOffset);
-        return startDay == endDay;
+        val startDay: Int = Time.getJulianDay(startMillis, localGmtOffset)
+        val endDay: Int = Time.getJulianDay(endMillis - 1, localGmtOffset)
+        return startDay == endDay
     }
 
     // Using int constants as a return value instead of an enum to minimize resources.
-    private static final int TODAY = 1;
-    private static final int TOMORROW = 2;
-    private static final int NONE = 0;
+    private const val TODAY = 1
+    private const val TOMORROW = 2
+    private const val NONE = 0
 
     /**
      * Returns TODAY or TOMORROW if applicable.  Otherwise returns NONE.
      */
-    private static int isTodayOrTomorrow(Resources r, long dayMillis,
-            long currentMillis, long localGmtOffset) {
-        int startDay = Time.getJulianDay(dayMillis, localGmtOffset);
-        int currentDay = Time.getJulianDay(currentMillis, localGmtOffset);
-
-        int days = startDay - currentDay;
-        if (days == 1) {
-            return TOMORROW;
+    private fun isTodayOrTomorrow(
+        r: Resources,
+        dayMillis: Long,
+        currentMillis: Long,
+        localGmtOffset: Long
+    ): Int {
+        val startDay: Int = Time.getJulianDay(dayMillis, localGmtOffset)
+        val currentDay: Int = Time.getJulianDay(currentMillis, localGmtOffset)
+        val days = startDay - currentDay
+        return if (days == 1) {
+            TOMORROW
         } else if (days == 0) {
-            return TODAY;
+            TODAY
         } else {
-            return NONE;
+            NONE
         }
     }
 
@@ -1444,23 +1502,23 @@ public class Utils {
      * Inserts a drawable with today's day into the today's icon in the option menu
      * @param icon - today's icon from the options menu
      */
-    public static void setTodayIcon(LayerDrawable icon, Context c, String timezone) {
-        DayOfMonthDrawable today;
+    @JvmStatic fun setTodayIcon(icon: LayerDrawable, c: Context?, timezone: String?) {
+        val today: DayOfMonthDrawable
 
         // Reuse current drawable if possible
-        Drawable currentDrawable = icon.findDrawableByLayerId(R.id.today_icon_day);
-        if (currentDrawable != null && currentDrawable instanceof DayOfMonthDrawable) {
-            today = (DayOfMonthDrawable)currentDrawable;
+        val currentDrawable: Drawable? = icon.findDrawableByLayerId(R.id.today_icon_day)
+        if (currentDrawable != null && currentDrawable is DayOfMonthDrawable) {
+            today = currentDrawable as DayOfMonthDrawable
         } else {
-            today = new DayOfMonthDrawable(c);
+            today = DayOfMonthDrawable(c as Context)
         }
         // Set the day and update the icon
-        Time now =  new Time(timezone);
-        now.setToNow();
-        now.normalize(false);
-        today.setDayOfMonth(now.monthDay);
-        icon.mutate();
-        icon.setDrawableByLayerId(R.id.today_icon_day, today);
+        val now = Time(timezone)
+        now.setToNow()
+        now.normalize(false)
+        today.setDayOfMonth(now.monthDay)
+        icon.mutate()
+        icon.setDrawableByLayerId(R.id.today_icon_day, today)
     }
 
     /**
@@ -1471,29 +1529,49 @@ public class Utils {
      * @param context
      * @return a list of quick responses.
      */
-    public static String[] getQuickResponses(Context context) {
-        String[] s = Utils.getSharedPreference(context, KEY_QUICK_RESPONSES, (String[]) null);
-
+    fun getQuickResponses(context: Context): Array<String> {
+        var s = getSharedPreference(context, KEY_QUICK_RESPONSES, null as Array<String>?)
         if (s == null) {
-            s = context.getResources().getStringArray(R.array.quick_response_defaults);
+            s = context.getResources().getStringArray(R.array.quick_response_defaults)
         }
-
-        return s;
+        return s
     }
 
     /**
      * Return the app version code.
      */
-    public static String getVersionCode(Context context) {
+    fun getVersionCode(context: Context): String? {
         if (sVersion == null) {
             try {
                 sVersion = context.getPackageManager().getPackageInfo(
-                        context.getPackageName(), 0).versionName;
-            } catch (PackageManager.NameNotFoundException e) {
+                    context.getPackageName(), 0
+                ).versionName
+            } catch (e: PackageManager.NameNotFoundException) {
                 // Can't find version; just leave it blank.
-                Log.e(TAG, "Error finding package " + context.getApplicationInfo().packageName);
+                Log.e(TAG, "Error finding package " + context.getApplicationInfo().packageName)
             }
         }
-        return sVersion;
+        return sVersion
+    }
+
+    // A single strand represents one color of events. Events are divided up by
+    // color to make them convenient to draw. The black strand is special in
+    // that it holds conflicting events as well as color settings for allday on
+    // each day.
+    class DNAStrand {
+        @JvmField var points: FloatArray? = null
+        @JvmField var allDays: IntArray? = null // color for the allday, 0 means no event
+        @JvmField var position = 0
+        @JvmField var color = 0
+        @JvmField var count = 0
+    }
+
+    // A segment is a single continuous length of time occupied by a single
+    // color. Segments should never span multiple days.
+    private class DNASegment {
+        var startMinute = 0 // in minutes since the start of the week =
+        var endMinute = 0
+        var color = 0 // Calendar color or black for conflicts =
+        var day = 0 // quick reference to the day this segment is on =
     }
 }
