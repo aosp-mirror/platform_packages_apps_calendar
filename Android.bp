@@ -32,6 +32,7 @@ exclude_srcsd = [
     "src/**/calendar/Event.java",
     "src/**/calendar/EventInfoActivity.java",
     "src/**/calendar/StickyHeaderListView.java",
+    "src/**/calendar/Utils.java",
 ]
 
 exclude_srcsm = [
