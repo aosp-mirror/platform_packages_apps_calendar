@@ -242,12 +242,12 @@ open class SimpleWeekView(context: Context) : View(context) {
     open protected fun initView() {
         p.setFakeBoldText(false)
         p.setAntiAlias(true)
-        p.setTextSize(MINI_DAY_NUMBER_TEXT_SIZE as Float)
+        p.setTextSize(MINI_DAY_NUMBER_TEXT_SIZE.toFloat())
         p.setStyle(Style.FILL)
         mMonthNumPaint = Paint()
         mMonthNumPaint?.setFakeBoldText(true)
         mMonthNumPaint?.setAntiAlias(true)
-        mMonthNumPaint?.setTextSize(MINI_DAY_NUMBER_TEXT_SIZE as Float)
+        mMonthNumPaint?.setTextSize(MINI_DAY_NUMBER_TEXT_SIZE.toFloat())
         mMonthNumPaint?.setColor(mFocusMonthColor)
         mMonthNumPaint?.setStyle(Style.FILL)
         mMonthNumPaint?.setTextAlign(Align.CENTER)
@@ -327,13 +327,13 @@ open class SimpleWeekView(context: Context) : View(context) {
         var i = 0
         val divisor = 2 * nDays
         if (mShowWeekNum) {
-            p.setTextSize(MINI_WK_NUMBER_TEXT_SIZE as Float)
+            p.setTextSize(MINI_WK_NUMBER_TEXT_SIZE.toFloat())
             p.setStyle(Style.FILL)
             p.setTextAlign(Align.CENTER)
             p.setAntiAlias(true)
             p.setColor(mWeekNumColor)
             val x = (mWidth - mPadding * 2) / divisor + mPadding
-            canvas.drawText(mDayNumbers[0] ?: "", x as Float, y as Float, p)
+            canvas.drawText(mDayNumbers[0] ?: "", x.toFloat(), y.toFloat(), p)
             i++
         }
         var isFocusMonth = mFocusDay[i]
@@ -345,13 +345,13 @@ open class SimpleWeekView(context: Context) : View(context) {
                 mMonthNumPaint?.setColor(if (isFocusMonth) mFocusMonthColor else mOtherMonthColor)
             }
             if (mHasToday && mToday == i) {
-                mMonthNumPaint?.setTextSize(MINI_TODAY_NUMBER_TEXT_SIZE as Float)
+                mMonthNumPaint?.setTextSize(MINI_TODAY_NUMBER_TEXT_SIZE.toFloat())
                 mMonthNumPaint?.setFakeBoldText(true)
             }
             val x = (2 * i + 1) * (mWidth - mPadding * 2) / divisor + mPadding
-            canvas.drawText(mDayNumbers[i] ?: "", x as Float, y as Float, mMonthNumPaint ?: Paint())
+            canvas.drawText(mDayNumbers[i] ?: "", x.toFloat(), y.toFloat(), mMonthNumPaint ?: Paint())
             if (mHasToday && mToday == i) {
-                mMonthNumPaint?.setTextSize(MINI_DAY_NUMBER_TEXT_SIZE as Float)
+                mMonthNumPaint?.setTextSize(MINI_DAY_NUMBER_TEXT_SIZE.toFloat())
                 mMonthNumPaint?.setFakeBoldText(false)
             }
             i++
@@ -370,16 +370,16 @@ open class SimpleWeekView(context: Context) : View(context) {
             r.bottom = mHeight - 1
             r.left = mSelectedLeft + 1
             r.right = mSelectedRight - 1
-            p.setStrokeWidth(MINI_TODAY_OUTLINE_WIDTH as Float)
+            p.setStrokeWidth(MINI_TODAY_OUTLINE_WIDTH.toFloat())
             p.setStyle(Style.STROKE)
             p.setColor(mTodayOutlineColor)
             canvas.drawRect(r, p)
         }
         if (mShowWeekNum) {
             p.setColor(mDaySeparatorColor)
-            p.setStrokeWidth(DAY_SEPARATOR_WIDTH as Float)
+            p.setStrokeWidth(DAY_SEPARATOR_WIDTH.toFloat())
             val x = (mWidth - mPadding * 2) / mNumCells + mPadding
-            canvas.drawLine(x as Float, 0 as Float, x as Float, mHeight as Float, p)
+            canvas.drawLine(x.toFloat(), 0f, x.toFloat(), mHeight.toFloat(), p)
         }
     }
 
