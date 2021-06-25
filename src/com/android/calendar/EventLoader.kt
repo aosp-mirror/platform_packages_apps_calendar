@@ -31,7 +31,7 @@ import java.util.concurrent.atomic.AtomicInteger
 class EventLoader(context: Context) {
     private val mContext: Context
     private val mHandler: Handler = Handler()
-    private val mSequenceNumber: AtomicInteger = AtomicInteger()
+    private val mSequenceNumber: AtomicInteger? = AtomicInteger()
     private val mLoaderQueue: LinkedBlockingQueue<LoadRequest>
     private var mLoaderThread: LoaderThread? = null
     private val mResolver: ContentResolver
@@ -52,9 +52,12 @@ class EventLoader(context: Context) {
      * and filling in the eventDays array.
      *
      */
-    private class LoadEventDaysRequest(var startDay: Int, var numDays: Int,
-                                       var eventDays: BooleanArray,
-                                       uiCallback: Runnable) : LoadRequest {
+    private class LoadEventDaysRequest(
+        var startDay: Int,
+        var numDays: Int,
+        var eventDays: BooleanArray,
+        uiCallback: Runnable
+    ) : LoadRequest {
         var uiCallback: Runnable
         @Override
         override fun processRequest(eventLoader: EventLoader?) {
@@ -64,17 +67,17 @@ class EventLoader(context: Context) {
             // Clear the event days
             Arrays.fill(eventDays, false)
 
-            //query which days have events
+            // query which days have events
             val cursor: Cursor = EventDays.query(cr, startDay, numDays, PROJECTION)
             try {
                 val startDayColumnIndex: Int = cursor.getColumnIndexOrThrow(EventDays.STARTDAY)
                 val endDayColumnIndex: Int = cursor.getColumnIndexOrThrow(EventDays.ENDDAY)
 
-                //Set all the days with events to true
+                // Set all the days with events to true
                 while (cursor.moveToNext()) {
                     val firstDay: Int = cursor.getInt(startDayColumnIndex)
                     val lastDay: Int = cursor.getInt(endDayColumnIndex)
-                    //we want the entire range the event occurs, but only within the month
+                    // we want the entire range the event occurs, but only within the month
                     val firstIndex: Int = Math.max(firstDay - startDay, 0)
                     val lastIndex: Int = Math.min(lastDay - startDay, 30)
                     for (i in firstIndex..lastIndex) {
@@ -107,10 +110,15 @@ class EventLoader(context: Context) {
         }
     }
 
-    private class LoadEventsRequest(var id: Int, var startDay: Int, var numDays: Int,
-                                    events: ArrayList<Event>, successCallback: Runnable,
-                                    cancelCallback: Runnable) : LoadRequest {
-        var events: ArrayList<Event>
+    private class LoadEventsRequest(
+        var id: Int,
+        var startDay: Int,
+        var numDays: Int,
+        events: ArrayList<Event?>,
+        successCallback: Runnable,
+        cancelCallback: Runnable
+    ) : LoadRequest {
+        var events: ArrayList<Event?>
         var successCallback: Runnable
         var cancelCallback: Runnable
         @Override
@@ -138,8 +146,10 @@ class EventLoader(context: Context) {
         }
     }
 
-    private class LoaderThread(queue: LinkedBlockingQueue<LoadRequest>,
-                               eventLoader: EventLoader) : Thread() {
+    private class LoaderThread(
+        queue: LinkedBlockingQueue<LoadRequest>,
+        eventLoader: EventLoader
+    ) : Thread() {
         var mQueue: LinkedBlockingQueue<LoadRequest>
         var mEventLoader: EventLoader
         fun shutdown() {
@@ -210,13 +220,18 @@ class EventLoader(context: Context) {
      * created are used, and the most recent call's worth of data is loaded into events and posted
      * via the uiCallback.
      */
-    fun loadEventsInBackground(numDays: Int, events: ArrayList<Event>,
-                               startDay: Int, successCallback: Runnable, cancelCallback: Runnable) {
+    fun loadEventsInBackground(
+        numDays: Int,
+        events: ArrayList<Event?>,
+        startDay: Int,
+        successCallback: Runnable,
+        cancelCallback: Runnable
+    ) {
 
         // Increment the sequence number for requests.  We don't care if the
         // sequence numbers wrap around because we test for equality with the
         // latest one.
-        val id: Int = mSequenceNumber.incrementAndGet()
+        val id: Int = mSequenceNumber?.incrementAndGet() as Int
 
         // Send the load request to the background thread
         val request = LoadEventsRequest(id, startDay, numDays,
@@ -241,8 +256,12 @@ class EventLoader(context: Context) {
      * @param eventDay Whether or not an event exists on that day
      * @param uiCallback What to do when done (log data, redraw screen)
      */
-    fun loadEventDaysInBackground(startDay: Int, numDays: Int, eventDays: BooleanArray,
-                                  uiCallback: Runnable) {
+    fun loadEventDaysInBackground(
+        startDay: Int,
+        numDays: Int,
+        eventDays: BooleanArray,
+        uiCallback: Runnable
+    ) {
         // Send load request to the background thread
         val request = LoadEventDaysRequest(startDay, numDays,
                 eventDays, uiCallback)
