@@ -52,17 +52,23 @@ open class SimpleWeekView(context: Context) : View(context) {
     @JvmField protected var mMonthNumPaint: Paint? = null
     @JvmField protected var mSelectedDayLine: Drawable
 
+    // Cache the number strings so we don't have to recompute them each time
+    @JvmField protected var mDayNumbers: Array<String?>? = null
+
+    // Quick lookup for checking which days are in the focus month
+    @JvmField protected var mFocusDay: BooleanArray? = null
+
+    // Quick lookup for checking which days are in an odd month (to set a different background)
+    @JvmField protected var mOddMonth: BooleanArray? = null
+
     // The Julian day of the first day displayed by this item
-    var firstJulianDay = -1
-        protected set
+    @JvmField protected var mFirstJulianDay = -1
 
     // The month of the first day in this week
-    var firstMonth = -1
-        protected set
+    @JvmField protected var firstMonth = -1
 
     // The month of the last day in this week
-    var lastMonth = -1
-        protected set
+    @JvmField protected var lastMonth = -1
 
     // The position of this week, equivalent to weeks since the week of Jan 1st,
     // 1970
@@ -104,9 +110,6 @@ open class SimpleWeekView(context: Context) : View(context) {
     // The right edge of the selected day
     @JvmField protected var mSelectedRight = -1
 
-    // The Julian day of the first day displayed by this item
-    @JvmField protected var mFirstJulianDay = -1
-
     // The timezone to display times/dates in (used for determining when Today
     // is)
     @JvmField protected var mTimeZone: String = Time.getCurrentTimezone()
@@ -117,15 +120,6 @@ open class SimpleWeekView(context: Context) : View(context) {
     @JvmField protected var mDaySeparatorColor: Int
     @JvmField protected var mTodayOutlineColor: Int
     @JvmField protected var mWeekNumColor: Int
-
-    // Cache the number strings so we don't have to recompute them each time
-    @JvmField protected var mDayNumbers: Array<String?> = arrayOfNulls(mNumCells)
-
-    // Quick lookup for checking which days are in the focus month
-    @JvmField protected var mFocusDay: BooleanArray = BooleanArray(mNumCells)
-
-    // Quick lookup for checking which days are in an odd month (to set a different background)
-    @JvmField protected var mOddMonth: BooleanArray = BooleanArray(mNumCells)
 
     /**
      * Sets all the parameters for displaying this week. The only required
@@ -138,7 +132,7 @@ open class SimpleWeekView(context: Context) : View(context) {
      * [.VIEW_PARAMS_HEIGHT]
      * @param tz The time zone this view should reference times in
      */
-    open fun setWeekParams(params: HashMap<String?, Integer?>, tz: String) {
+    open fun setWeekParams(params: HashMap<String?, Int?>, tz: String) {
         if (!params.containsKey(VIEW_PARAMS_WEEK)) {
             throw InvalidParameterException("You must specify the week number for this view")
         }
@@ -146,24 +140,25 @@ open class SimpleWeekView(context: Context) : View(context) {
         mTimeZone = tz
         // We keep the current value for any params not present
         if (params.containsKey(VIEW_PARAMS_HEIGHT)) {
-            mHeight = (params.get(VIEW_PARAMS_HEIGHT) ?: 0) as Int
+            mHeight = params.get(VIEW_PARAMS_HEIGHT) as Int
             if (mHeight < MIN_HEIGHT) {
                 mHeight = MIN_HEIGHT
             }
         }
         if (params.containsKey(VIEW_PARAMS_SELECTED_DAY)) {
-            mSelectedDay = (params.get(VIEW_PARAMS_SELECTED_DAY) ?: 0) as Int
+            mSelectedDay = params.get(VIEW_PARAMS_SELECTED_DAY) as Int
         }
         mHasSelectedDay = mSelectedDay != -1
         if (params.containsKey(VIEW_PARAMS_NUM_DAYS)) {
-            mNumDays = (params.get(VIEW_PARAMS_NUM_DAYS) ?: 0) as Int
+            mNumDays = params.get(VIEW_PARAMS_NUM_DAYS) as Int
         }
         if (params.containsKey(VIEW_PARAMS_SHOW_WK_NUM)) {
-            mShowWeekNum = if ((params.get(VIEW_PARAMS_SHOW_WK_NUM) ?: 0) as Int != 0) {
-                true
-            } else {
-                false
-            }
+            mShowWeekNum =
+                if (params.get(VIEW_PARAMS_SHOW_WK_NUM) != 0) {
+                    true
+                } else {
+                    false
+                }
         }
         mNumCells = if (mShowWeekNum) mNumDays + 1 else mNumDays
 
@@ -171,7 +166,7 @@ open class SimpleWeekView(context: Context) : View(context) {
         mDayNumbers = arrayOfNulls(mNumCells)
         mFocusDay = BooleanArray(mNumCells)
         mOddMonth = BooleanArray(mNumCells)
-        mWeek = (params.get(VIEW_PARAMS_WEEK) ?: 0) as Int
+        mWeek = params.get(VIEW_PARAMS_WEEK) as Int
         val julianMonday: Int = Utils.getJulianMondayFromWeeksSinceEpoch(mWeek)
         val time = Time(tz)
         time.setJulianDay(julianMonday)
@@ -179,11 +174,11 @@ open class SimpleWeekView(context: Context) : View(context) {
         // If we're showing the week number calculate it based on Monday
         var i = 0
         if (mShowWeekNum) {
-            mDayNumbers[0] = Integer.toString(time.getWeekNumber())
+            mDayNumbers!![0] = Integer.toString(time.getWeekNumber())
             i++
         }
         if (params.containsKey(VIEW_PARAMS_WEEK_START)) {
-            mWeekStart = (params.get(VIEW_PARAMS_WEEK_START) ?: 0) as Int
+            mWeekStart = params.get(VIEW_PARAMS_WEEK_START) as Int
         }
 
         // Now adjust our starting day based on the start day of the week
@@ -197,7 +192,7 @@ open class SimpleWeekView(context: Context) : View(context) {
             time.monthDay -= diff
             time.normalize(true)
         }
-        firstJulianDay = Time.getJulianDay(time.toMillis(true), time.gmtoff)
+        mFirstJulianDay = Time.getJulianDay(time.toMillis(true), time.gmtoff)
         firstMonth = time.month
 
         // Figure out what day today is
@@ -206,22 +201,23 @@ open class SimpleWeekView(context: Context) : View(context) {
         mHasToday = false
         mToday = -1
         val focusMonth = if (params.containsKey(VIEW_PARAMS_FOCUS_MONTH)) params.get(
-                VIEW_PARAMS_FOCUS_MONTH) else DEFAULT_FOCUS_MONTH
+            VIEW_PARAMS_FOCUS_MONTH
+        ) else DEFAULT_FOCUS_MONTH
         while (i < mNumCells) {
             if (time.monthDay === 1) {
                 firstMonth = time.month
             }
-            mOddMonth[i] = time.month % 2 === 1
+            mOddMonth!![i] = time.month % 2 === 1
             if (time.month === focusMonth) {
-                mFocusDay[i] = true
+                mFocusDay!![i] = true
             } else {
-                mFocusDay[i] = false
+                mFocusDay!![i] = false
             }
             if (time.year === today.year && time.yearDay === today.yearDay) {
                 mHasToday = true
                 mToday = i
             }
-            mDayNumbers[i] = Integer.toString(time.monthDay++)
+            mDayNumbers!![i] = Integer.toString(time.monthDay++)
             time.normalize(true)
             i++
         }
@@ -239,7 +235,7 @@ open class SimpleWeekView(context: Context) : View(context) {
      * Sets up the text and style properties for painting. Override this if you
      * want to use a different paint.
      */
-    open protected fun initView() {
+    protected open fun initView() {
         p.setFakeBoldText(false)
         p.setAntiAlias(true)
         p.setTextSize(MINI_DAY_NUMBER_TEXT_SIZE.toFloat())
@@ -254,6 +250,33 @@ open class SimpleWeekView(context: Context) : View(context) {
     }
 
     /**
+     * Returns the month of the first day in this week
+     *
+     * @return The month the first day of this view is in
+     */
+    fun getFirstMonth(): Int {
+        return firstMonth
+    }
+
+    /**
+     * Returns the month of the last day in this week
+     *
+     * @return The month the last day of this view is in
+     */
+    fun getLastMonth(): Int {
+        return lastMonth
+    }
+
+    /**
+     * Returns the julian day of the first day in this view.
+     *
+     * @return The julian day of the first day in the view.
+     */
+    fun getFirstJulianDay(): Int {
+        return mFirstJulianDay
+    }
+
+    /**
      * Calculates the day that the given x position is in, accounting for week
      * number. Returns a Time referencing that day or null if
      *
@@ -262,14 +285,14 @@ open class SimpleWeekView(context: Context) : View(context) {
      * in a day
      */
     open fun getDayFromLocation(x: Float): Time? {
-        val dayStart = if (mShowWeekNum) (mWidth - mPadding * 2) / mNumCells + mPadding
-                       else mPadding
+        val dayStart =
+            if (mShowWeekNum) (mWidth - mPadding * 2) / mNumCells + mPadding else mPadding
         if (x < dayStart || x > mWidth - mPadding) {
             return null
         }
         // Selection is (x - start) / (pixels/day) == (x -s) * day / pixels
         val dayPosition = ((x - dayStart) * mNumDays / (mWidth - dayStart - mPadding)).toInt()
-        var day = firstJulianDay + dayPosition
+        var day = mFirstJulianDay + dayPosition
         val time = Time(mTimeZone)
         if (mWeek == 0) {
             // This week is weird...
@@ -286,7 +309,7 @@ open class SimpleWeekView(context: Context) : View(context) {
     }
 
     @Override
-    override protected fun onDraw(canvas: Canvas) {
+    protected override fun onDraw(canvas: Canvas) {
         drawBackground(canvas)
         drawWeekNums(canvas)
         drawDaySeparators(canvas)
@@ -298,7 +321,7 @@ open class SimpleWeekView(context: Context) : View(context) {
      *
      * @param canvas The canvas to draw on
      */
-    open protected fun drawBackground(canvas: Canvas) {
+    protected open fun drawBackground(canvas: Canvas) {
         if (mHasSelectedDay) {
             p.setColor(mSelectedWeekBGColor)
             p.setStyle(Style.FILL)
@@ -321,7 +344,7 @@ open class SimpleWeekView(context: Context) : View(context) {
      *
      * @param canvas The canvas to draw on
      */
-    open protected fun drawWeekNums(canvas: Canvas) {
+    protected open fun drawWeekNums(canvas: Canvas) {
         val y = (mHeight + MINI_DAY_NUMBER_TEXT_SIZE) / 2 - DAY_SEPARATOR_WIDTH
         val nDays = mNumCells
         var i = 0
@@ -333,15 +356,15 @@ open class SimpleWeekView(context: Context) : View(context) {
             p.setAntiAlias(true)
             p.setColor(mWeekNumColor)
             val x = (mWidth - mPadding * 2) / divisor + mPadding
-            canvas.drawText(mDayNumbers[0] ?: "", x.toFloat(), y.toFloat(), p)
+            canvas.drawText(mDayNumbers!![0] as String, x.toFloat(), y.toFloat(), p)
             i++
         }
-        var isFocusMonth = mFocusDay[i]
+        var isFocusMonth = mFocusDay!![i]
         mMonthNumPaint?.setColor(if (isFocusMonth) mFocusMonthColor else mOtherMonthColor)
         mMonthNumPaint?.setFakeBoldText(false)
         while (i < nDays) {
-            if (mFocusDay[i] != isFocusMonth) {
-                isFocusMonth = mFocusDay[i]
+            if (mFocusDay!![i] != isFocusMonth) {
+                isFocusMonth = mFocusDay!![i]
                 mMonthNumPaint?.setColor(if (isFocusMonth) mFocusMonthColor else mOtherMonthColor)
             }
             if (mHasToday && mToday == i) {
@@ -349,7 +372,8 @@ open class SimpleWeekView(context: Context) : View(context) {
                 mMonthNumPaint?.setFakeBoldText(true)
             }
             val x = (2 * i + 1) * (mWidth - mPadding * 2) / divisor + mPadding
-            canvas.drawText(mDayNumbers[i] ?: "", x.toFloat(), y.toFloat(), mMonthNumPaint ?: Paint())
+            canvas.drawText(mDayNumbers!![i] as String, x.toFloat(), y.toFloat(),
+                mMonthNumPaint as Paint)
             if (mHasToday && mToday == i) {
                 mMonthNumPaint?.setTextSize(MINI_DAY_NUMBER_TEXT_SIZE.toFloat())
                 mMonthNumPaint?.setFakeBoldText(false)
@@ -364,7 +388,7 @@ open class SimpleWeekView(context: Context) : View(context) {
      *
      * @param canvas The canvas to draw on
      */
-    open protected fun drawDaySeparators(canvas: Canvas) {
+    protected open fun drawDaySeparators(canvas: Canvas) {
         if (mHasSelectedDay) {
             r.top = 1
             r.bottom = mHeight - 1
@@ -384,7 +408,7 @@ open class SimpleWeekView(context: Context) : View(context) {
     }
 
     @Override
-    override protected fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+    protected override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         mWidth = w
         updateSelectionPositions()
     }
@@ -392,7 +416,7 @@ open class SimpleWeekView(context: Context) : View(context) {
     /**
      * This calculates the positions for the selected day lines.
      */
-    open protected fun updateSelectionPositions() {
+    protected open fun updateSelectionPositions() {
         if (mHasSelectedDay) {
             var selectedPosition = mSelectedDay - mWeekStart
             if (selectedPosition < 0) {
@@ -401,15 +425,15 @@ open class SimpleWeekView(context: Context) : View(context) {
             if (mShowWeekNum) {
                 selectedPosition++
             }
-            mSelectedLeft = (selectedPosition * (mWidth - mPadding * 2) / mNumCells
-                    + mPadding)
-            mSelectedRight = ((selectedPosition + 1) * (mWidth - mPadding * 2) / mNumCells
-                    + mPadding)
+            mSelectedLeft = (selectedPosition * (mWidth - mPadding * 2) / mNumCells +
+                mPadding)
+            mSelectedRight = ((selectedPosition + 1) * (mWidth - mPadding * 2) / mNumCells +
+                mPadding)
         }
     }
 
     @Override
-    override protected fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+    protected override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         setMeasuredDimension(MeasureSpec.getSize(widthMeasureSpec), mHeight)
     }
 
@@ -419,19 +443,22 @@ open class SimpleWeekView(context: Context) : View(context) {
         // only send accessibility events if accessibility and exploration are
         // on.
         val am: AccessibilityManager = context
-                .getSystemService(Service.ACCESSIBILITY_SERVICE) as AccessibilityManager
+            .getSystemService(Service.ACCESSIBILITY_SERVICE) as AccessibilityManager
         if (!am.isEnabled() || !am.isTouchExplorationEnabled()) {
             return super.onHoverEvent(event)
         }
         if (event.getAction() !== MotionEvent.ACTION_HOVER_EXIT) {
             val hover: Time? = getDayFromLocation(event.getX())
-            if (hover != null
-                    && (mLastHoverTime == null || Time.compare(hover, mLastHoverTime) !== 0)) {
+            if (hover != null &&
+                (mLastHoverTime == null || Time.compare(hover, mLastHoverTime) !== 0)
+            ) {
                 val millis: Long = hover.toMillis(true)
-                val date = Utils.formatDateRange(context, millis, millis,
-                        DateUtils.FORMAT_SHOW_DATE)
+                val date: String? = Utils.formatDateRange(
+                    context, millis, millis,
+                    DateUtils.FORMAT_SHOW_DATE
+                )
                 val accessEvent: AccessibilityEvent =
-                        AccessibilityEvent.obtain(AccessibilityEvent.TYPE_NOTIFICATION_STATE_CHANGED)
+                    AccessibilityEvent.obtain(AccessibilityEvent.TYPE_NOTIFICATION_STATE_CHANGED)
                 accessEvent.getText().add(date)
                 sendAccessibilityEventUnchecked(accessEvent)
                 mLastHoverTime = hover
