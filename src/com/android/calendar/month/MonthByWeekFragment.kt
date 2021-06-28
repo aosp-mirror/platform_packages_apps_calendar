@@ -16,6 +16,41 @@
 package com.android.calendar.month
 
 import android.app.Activity
+import android.app.LoaderManager
+import android.content.ContentUris
+import android.content.CursorLoader
+import android.content.Loader
+import android.content.res.Resources
+import android.database.Cursor
+import android.graphics.drawable.StateListDrawable
+import android.net.Uri
+import android.os.Bundle
+import android.provider.CalendarContract.Attendees
+import android.provider.CalendarContract.Calendars
+import android.provider.CalendarContract.Instances
+import android.text.format.DateUtils
+import android.text.format.Time
+import android.util.Log
+import android.view.LayoutInflater
+import android.view.MotionEvent
+import android.view.View
+import android.view.View.OnTouchListener
+import android.view.ViewConfiguration
+import android.view.ViewGroup
+import android.widget.AbsListView
+import android.widget.AbsListView.OnScrollListener
+
+import com.android.calendar.CalendarController
+import com.android.calendar.CalendarController.EventInfo
+import com.android.calendar.CalendarController.EventType
+import com.android.calendar.CalendarController.ViewType
+import com.android.calendar.Event
+import com.android.calendar.R
+import com.android.calendar.Utils
+
+import java.util.ArrayList
+import java.util.Calendar
+import java.util.HashMap
 
 class MonthByWeekFragment @JvmOverloads constructor(
     initialTime: Long = System.currentTimeMillis(),
@@ -36,10 +71,10 @@ class MonthByWeekFragment @JvmOverloads constructor(
     private var mEventsLoadingDelay = 0
     private var mShowCalendarControls = false
     private var mIsDetached = false
-    private val mTZUpdater: Runnable = object : Runnable() {
+    private val mTZUpdater: Runnable = object : Runnable {
         @Override
-        fun run() {
-            val tz: String = Utils.getTimeZone(mContext, this)
+        override fun run() {
+            val tz: String? = Utils.getTimeZone(mContext, this)
             mSelectedDay.timezone = tz
             mSelectedDay.normalize(true)
             mTempTime.timezone = tz
@@ -52,9 +87,9 @@ class MonthByWeekFragment @JvmOverloads constructor(
             }
         }
     }
-    private val mUpdateLoader: Runnable = object : Runnable() {
+    private val mUpdateLoader: Runnable = object : Runnable {
         @Override
-        fun run() {
+        override fun run() {
             synchronized(this) {
                 if (!mShouldLoad || mLoader == null) {
                     return
@@ -64,9 +99,9 @@ class MonthByWeekFragment @JvmOverloads constructor(
 
                 // Start the loader again
                 mEventUri = updateUri()
-                mLoader.setUri(mEventUri)
-                mLoader.startLoading()
-                mLoader.onContentChanged()
+                mLoader?.setUri(mEventUri)
+                mLoader?.startLoading()
+                mLoader?.onContentChanged()
                 if (Log.isLoggable(TAG, Log.DEBUG)) {
                     Log.d(TAG, "Started loader with uri: $mEventUri")
                 }
@@ -75,9 +110,9 @@ class MonthByWeekFragment @JvmOverloads constructor(
     }
 
     // Used to load the events when a delay is needed
-    var mLoadingRunnable: Runnable = object : Runnable() {
+    var mLoadingRunnable: Runnable = object : Runnable {
         @Override
-        fun run() {
+        override fun run() {
             if (!mIsDetached) {
                 mLoader = getLoaderManager().initLoader(
                     0, null,
@@ -94,9 +129,9 @@ class MonthByWeekFragment @JvmOverloads constructor(
      * @return The new Uri to use
      */
     private fun updateUri(): Uri {
-        val child: SimpleWeekView = mListView.getChildAt(0) as SimpleWeekView
+        val child: SimpleWeekView? = mListView.getChildAt(0) as? SimpleWeekView
         if (child != null) {
-            val julianDay: Int = child.getFirstJulianDay()
+            val julianDay: Int = child?.getFirstJulianDay()
             mFirstLoadedJulianDay = julianDay
         }
         // -1 to ensure we get all day events from any time zone
@@ -116,13 +151,13 @@ class MonthByWeekFragment @JvmOverloads constructor(
 
     // Extract range of julian days from URI
     private fun updateLoadedDays() {
-        val pathSegments: List<String> = mEventUri.getPathSegments()
-        val size: Int = pathSegments.size()
+        val pathSegments = mEventUri?.getPathSegments()
+        val size: Int = pathSegments?.size as Int
         if (size <= 2) {
             return
         }
-        val first: Long = Long.parseLong(pathSegments[size - 2])
-        val last: Long = Long.parseLong(pathSegments[size - 1])
+        val first: Long = (pathSegments!![size - 2])?.toLong() as Long
+        val last: Long = (pathSegments!![size - 1])?.toLong() as Long
         mTempTime.set(first)
         mFirstLoadedJulianDay = Time.getJulianDay(first, mTempTime.gmtoff)
         mTempTime.set(last)
@@ -133,8 +168,8 @@ class MonthByWeekFragment @JvmOverloads constructor(
         // TODO fix selection/selection args after b/3206641 is fixed
         var where = WHERE_CALENDARS_VISIBLE
         if (mHideDeclined || !mShowDetailsInMonth) {
-            where += (" AND " + Instances.SELF_ATTENDEE_STATUS.toString() + "!="
-              + Attendees.ATTENDEE_STATUS_DECLINED)
+            where += (" AND " + Instances.SELF_ATTENDEE_STATUS.toString() + "!=" +
+                Attendees.ATTENDEE_STATUS_DECLINED)
         }
         return where
     }
@@ -143,7 +178,7 @@ class MonthByWeekFragment @JvmOverloads constructor(
         synchronized(mUpdateLoader) {
             mHandler.removeCallbacks(mUpdateLoader)
             if (mLoader != null) {
-                mLoader.stopLoading()
+                mLoader?.stopLoading()
                 if (Log.isLoggable(TAG, Log.DEBUG)) {
                     Log.d(TAG, "Stopped loader from loading")
                 }
@@ -152,7 +187,7 @@ class MonthByWeekFragment @JvmOverloads constructor(
     }
 
     @Override
-    fun onAttach(activity: Activity) {
+    override fun onAttach(activity: Activity) {
         super.onAttach(activity)
         mTZUpdater.run()
         if (mAdapter != null) {
@@ -160,7 +195,7 @@ class MonthByWeekFragment @JvmOverloads constructor(
         }
         mIsDetached = false
         val viewConfig: ViewConfiguration = ViewConfiguration.get(activity)
-        mMinimumTwoMonthFlingVelocity = viewConfig.getScaledMaximumFlingVelocity() / 2
+        mMinimumTwoMonthFlingVelocity = viewConfig.getScaledMaximumFlingVelocity().toFloat() / 2f
         val res: Resources = activity.getResources()
         mShowCalendarControls = Utils.getConfigBool(activity, R.bool.show_calendar_controls)
         // Synchronized the loading time of the month's events with the animation of the
@@ -172,7 +207,7 @@ class MonthByWeekFragment @JvmOverloads constructor(
     }
 
     @Override
-    fun onDetach() {
+    override fun onDetach() {
         mIsDetached = true
         super.onDetach()
         if (mShowCalendarControls) {
@@ -183,10 +218,10 @@ class MonthByWeekFragment @JvmOverloads constructor(
     }
 
     @Override
-    protected fun setUpAdapter() {
+    protected override fun setUpAdapter() {
         mFirstDayOfWeek = Utils.getFirstDayOfWeek(mContext)
         mShowWeekNumber = Utils.getShowWeekNumber(mContext)
-        val weekParams: HashMap<String, Integer> = HashMap<String, Integer>()
+        val weekParams: HashMap<String, Int> = HashMap<String, Int>()
         weekParams.put(SimpleWeeksAdapter.WEEK_PARAMS_NUM_WEEKS, mNumWeeks)
         weekParams.put(SimpleWeeksAdapter.WEEK_PARAMS_SHOW_WEEK, if (mShowWeekNumber) 1 else 0)
         weekParams.put(SimpleWeeksAdapter.WEEK_PARAMS_WEEK_START, mFirstDayOfWeek)
@@ -206,8 +241,10 @@ class MonthByWeekFragment @JvmOverloads constructor(
     }
 
     @Override
-    fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
     ): View {
         val v: View
         v = if (mIsMiniMonth) {
@@ -220,7 +257,7 @@ class MonthByWeekFragment @JvmOverloads constructor(
     }
 
     @Override
-    fun onActivityCreated(savedInstanceState: Bundle?) {
+    override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
         mListView.setSelector(StateListDrawable())
         mListView.setOnTouchListener(this)
@@ -231,7 +268,7 @@ class MonthByWeekFragment @JvmOverloads constructor(
         // To get a smoother transition when showing this fragment, delay loading of events until
         // the fragment is expended fully and the calendar controls are gone.
         if (mShowCalendarControls) {
-            mListView.postDelayed(mLoadingRunnable, mEventsLoadingDelay)
+            mListView.postDelayed(mLoadingRunnable, mEventsLoadingDelay.toLong())
         } else {
             mLoader = getLoaderManager().initLoader(0, null, this) as CursorLoader
         }
@@ -239,14 +276,14 @@ class MonthByWeekFragment @JvmOverloads constructor(
     }
 
     @Override
-    protected fun setUpHeader() {
+    protected override fun setUpHeader() {
         if (mIsMiniMonth) {
             super.setUpHeader()
             return
         }
         mDayLabels = arrayOfNulls<String>(7)
         for (i in Calendar.SUNDAY..Calendar.SATURDAY) {
-            mDayLabels.get(i - Calendar.SUNDAY) = DateUtils.getDayOfWeekString(
+            mDayLabels[i - Calendar.SUNDAY] = DateUtils.getDayOfWeekString(
                 i,
                 DateUtils.LENGTH_MEDIUM
             ).toUpperCase()
@@ -255,22 +292,22 @@ class MonthByWeekFragment @JvmOverloads constructor(
 
     // TODO
     @Override
-    fun onCreateLoader(id: Int, args: Bundle?): Loader<Cursor>? {
+    override fun onCreateLoader(id: Int, args: Bundle?): Loader<Cursor?>? {
         if (mIsMiniMonth) {
             return null
         }
-        var loader: CursorLoader
+        var loader: CursorLoader?
         synchronized(mUpdateLoader) {
             mFirstLoadedJulianDay =
-                (Time.getJulianDay(mSelectedDay.toMillis(true), mSelectedDay.gmtoff)
-                  - mNumWeeks * 7 / 2)
+                (Time.getJulianDay(mSelectedDay.toMillis(true), mSelectedDay.gmtoff) -
+                    mNumWeeks * 7 / 2)
             mEventUri = updateUri()
             val where = updateWhere()
             loader = CursorLoader(
                 getActivity(), mEventUri, Event.EVENT_PROJECTION, where,
                 null /* WHERE_CALENDARS_SELECTED_ARGS */, INSTANCES_SORT_ORDER
             )
-            loader.setUpdateThrottle(LOADER_THROTTLE_DELAY)
+            loader?.setUpdateThrottle(LOADER_THROTTLE_DELAY.toLong())
         }
         if (Log.isLoggable(TAG, Log.DEBUG)) {
             Log.d(TAG, "Returning new loader with uri: $mEventUri")
@@ -279,13 +316,13 @@ class MonthByWeekFragment @JvmOverloads constructor(
     }
 
     @Override
-    fun doResumeUpdates() {
+    override fun doResumeUpdates() {
         mFirstDayOfWeek = Utils.getFirstDayOfWeek(mContext)
         mShowWeekNumber = Utils.getShowWeekNumber(mContext)
         val prevHideDeclined = mHideDeclined
         mHideDeclined = Utils.getHideDeclinedEvents(mContext)
         if (prevHideDeclined != mHideDeclined && mLoader != null) {
-            mLoader.setSelection(updateWhere())
+            mLoader?.setSelection(updateWhere())
         }
         mDaysPerWeek = Utils.getDaysPerWeek(mContext)
         updateHeader()
@@ -296,12 +333,12 @@ class MonthByWeekFragment @JvmOverloads constructor(
     }
 
     @Override
-    fun onLoadFinished(loader: Loader<Cursor?>, data: Cursor) {
+    override fun onLoadFinished(loader: Loader<Cursor?>?, data: Cursor?) {
         synchronized(mUpdateLoader) {
             if (Log.isLoggable(TAG, Log.DEBUG)) {
                 Log.d(
                     TAG,
-                    "Found " + data.getCount().toString() + " cursor entries for uri " + mEventUri
+                    "Found " + data?.getCount()?.toString() + " cursor entries for uri " + mEventUri
                 )
             }
             val cLoader: CursorLoader = loader as CursorLoader
@@ -314,7 +351,7 @@ class MonthByWeekFragment @JvmOverloads constructor(
                 // result
                 return
             }
-            val events: ArrayList<Event> = ArrayList<Event>()
+            val events: ArrayList<Event?>? = ArrayList<Event?>()
             Event.buildEventsFromCursor(
                 events, data, mContext, mFirstLoadedJulianDay, mLastLoadedJulianDay
             )
@@ -326,59 +363,62 @@ class MonthByWeekFragment @JvmOverloads constructor(
     }
 
     @Override
-    fun onLoaderReset(loader: Loader<Cursor?>?) {
+    override fun onLoaderReset(loader: Loader<Cursor?>?) {
     }
 
     @Override
-    fun eventsChanged() {
+    override fun eventsChanged() {
         // TODO remove this after b/3387924 is resolved
         if (mLoader != null) {
-            mLoader.forceLoad()
+            mLoader?.forceLoad()
         }
     }
 
-    @get:Override val supportedEventTypes: Long
+    @get:Override override val supportedEventTypes: Long
         get() = EventType.GO_TO or EventType.EVENTS_CHANGED
 
     @Override
-    fun handleEvent(event: EventInfo) {
-        if (event.eventType === EventType.GO_TO) {
+    override fun handleEvent(event: CalendarController.EventInfo?) {
+        if (event?.eventType === EventType.GO_TO) {
             var animate = true
             if (mDaysPerWeek * mNumWeeks * 2 < Math.abs(
-                    Time.getJulianDay(event.selectedTime.toMillis(true), event.selectedTime.gmtoff)
-                      - Time.getJulianDay(mFirstVisibleDay.toMillis(true), mFirstVisibleDay.gmtoff)
-                      - mDaysPerWeek * mNumWeeks / 2
+                    Time.getJulianDay(event?.selectedTime?.toMillis(true) as Long,
+                        event?.selectedTime?.gmtoff as Long) -
+                        Time.getJulianDay(mFirstVisibleDay?.toMillis(true) as Long,
+                        mFirstVisibleDay?.gmtoff as Long) -
+                        mDaysPerWeek * mNumWeeks / 2L
                 )
             ) {
                 animate = false
             }
-            mDesiredDay.set(event.selectedTime)
+            mDesiredDay.set(event?.selectedTime)
             mDesiredDay.normalize(true)
-            val animateToday = event.extraLong and CalendarController.EXTRA_GOTO_TODAY !== 0
+            val animateToday = event?.extraLong and
+                CalendarController.EXTRA_GOTO_TODAY.toLong() != 0L
             val delayAnimation: Boolean =
-                goTo(event.selectedTime.toMillis(true), animate, true, false)
+                goTo(event?.selectedTime?.toMillis(true)?.toLong() as Long, animate, true, false)
             if (animateToday) {
                 // If we need to flash today start the animation after any
                 // movement from listView has ended.
-                mHandler.postDelayed(object : Runnable() {
+                mHandler.postDelayed(object : Runnable {
                     @Override
-                    fun run() {
+                    override fun run() {
                         (mAdapter as MonthByWeekAdapter).animateToday()
                         mAdapter.notifyDataSetChanged()
                     }
-                }, if (delayAnimation) GOTO_SCROLL_DURATION else 0)
+                }, if (delayAnimation) GOTO_SCROLL_DURATION.toLong() else 0L)
             }
-        } else if (event.eventType === EventType.EVENTS_CHANGED) {
+        } else if (event?.eventType == EventType.EVENTS_CHANGED) {
             eventsChanged()
         }
     }
 
     @Override
-    protected fun setMonthDisplayed(time: Time, updateHighlight: Boolean) {
+    protected override fun setMonthDisplayed(time: Time, updateHighlight: Boolean) {
         super.setMonthDisplayed(time, updateHighlight)
         if (!mIsMiniMonth) {
             var useSelected = false
-            if (time.year === mDesiredDay.year && time.month === mDesiredDay.month) {
+            if (time.year == mDesiredDay.year && time.month === mDesiredDay.month) {
                 mSelectedDay.set(mDesiredDay)
                 mAdapter.setSelectedDay(mDesiredDay)
                 useSelected = true
@@ -393,21 +433,22 @@ class MonthByWeekFragment @JvmOverloads constructor(
                 mSelectedDay.minute = 0
             }
             val newTime: Long = mSelectedDay.normalize(true)
-            if (newTime != controller.getTime() && mUserScrolled) {
+            if (newTime != controller.time && mUserScrolled) {
                 val offset: Long =
                     if (useSelected) 0 else DateUtils.WEEK_IN_MILLIS * mNumWeeks / 3.toLong()
-                controller.setTime(newTime + offset)
+                controller.time = (newTime + offset)
             }
             controller.sendEvent(
-                this, EventType.UPDATE_TITLE, time, time, time, -1,
-                ViewType.CURRENT, DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_NO_MONTH_DAY
-                  or DateUtils.FORMAT_SHOW_YEAR, null, null
+                this as Object?, EventType.UPDATE_TITLE, time, time, time, -1,
+                ViewType.CURRENT, DateUtils.FORMAT_SHOW_DATE.toLong() or
+                    DateUtils.FORMAT_NO_MONTH_DAY.toLong() or
+                    DateUtils.FORMAT_SHOW_YEAR.toLong(), null, null
             )
         }
     }
 
     @Override
-    fun onScrollStateChanged(view: AbsListView?, scrollState: Int) {
+    override fun onScrollStateChanged(view: AbsListView?, scrollState: Int) {
         synchronized(mUpdateLoader) {
             if (scrollState != OnScrollListener.SCROLL_STATE_IDLE) {
                 mShouldLoad = false
@@ -416,7 +457,7 @@ class MonthByWeekFragment @JvmOverloads constructor(
             } else {
                 mHandler.removeCallbacks(mUpdateLoader)
                 mShouldLoad = true
-                mHandler.postDelayed(mUpdateLoader, LOADER_DELAY)
+                mHandler.postDelayed(mUpdateLoader, LOADER_DELAY.toLong())
             }
         }
         if (scrollState == OnScrollListener.SCROLL_STATE_TOUCH_SCROLL) {
@@ -426,7 +467,7 @@ class MonthByWeekFragment @JvmOverloads constructor(
     }
 
     @Override
-    fun onTouch(v: View?, event: MotionEvent?): Boolean {
+    override fun onTouch(v: View?, event: MotionEvent?): Boolean {
         mDesiredDay.setToNow()
         return false
     }
@@ -437,8 +478,8 @@ class MonthByWeekFragment @JvmOverloads constructor(
 
         // Selection and selection args for adding event queries
         private val WHERE_CALENDARS_VISIBLE: String = Calendars.VISIBLE.toString() + "=1"
-        private val INSTANCES_SORT_ORDER: String = (Instances.START_DAY.toString() + ","
-          + Instances.START_MINUTE + "," + Instances.TITLE)
+        private val INSTANCES_SORT_ORDER: String = (Instances.START_DAY.toString() + "," +
+            Instances.START_MINUTE + "," + Instances.TITLE)
         protected var mShowDetailsInMonth = false
         private const val WEEKS_BUFFER = 1
 
