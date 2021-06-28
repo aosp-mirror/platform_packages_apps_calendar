@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,140 +13,79 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.android.calendar.month
 
-package com.android.calendar.month;
+import android.app.Activity
 
-import android.app.Activity;
-import android.app.FragmentManager;
-import android.app.LoaderManager;
-import android.content.ContentUris;
-import android.content.CursorLoader;
-import android.content.Loader;
-import android.content.res.Resources;
-import android.database.Cursor;
-import android.graphics.drawable.StateListDrawable;
-import android.net.Uri;
-import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
-import android.provider.CalendarContract.Attendees;
-import android.provider.CalendarContract.Calendars;
-import android.provider.CalendarContract.Instances;
-import android.text.format.DateUtils;
-import android.text.format.Time;
-import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.MotionEvent;
-import android.view.View;
-import android.view.View.OnTouchListener;
-import android.view.ViewConfiguration;
-import android.view.ViewGroup;
-import android.widget.AbsListView;
-import android.widget.AbsListView.OnScrollListener;
+class MonthByWeekFragment @JvmOverloads constructor(
+    initialTime: Long = System.currentTimeMillis(),
+    protected var mIsMiniMonth: Boolean = true
+) : SimpleDayPickerFragment(initialTime), CalendarController.EventHandler,
+    LoaderManager.LoaderCallbacks<Cursor?>, OnScrollListener, OnTouchListener {
+    protected var mMinimumTwoMonthFlingVelocity = 0f
+    protected var mHideDeclined = false
+    protected var mFirstLoadedJulianDay = 0
+    protected var mLastLoadedJulianDay = 0
+    private var mLoader: CursorLoader? = null
+    private var mEventUri: Uri? = null
+    private val mDesiredDay: Time = Time()
 
-import com.android.calendar.CalendarController;
-import com.android.calendar.CalendarController.EventInfo;
-import com.android.calendar.CalendarController.EventType;
-import com.android.calendar.CalendarController.ViewType;
-import com.android.calendar.Event;
-import com.android.calendar.R;
-import com.android.calendar.Utils;
-
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.HashMap;
-import java.util.List;
-
-public class MonthByWeekFragment extends SimpleDayPickerFragment implements
-        CalendarController.EventHandler, LoaderManager.LoaderCallbacks<Cursor>, OnScrollListener,
-        OnTouchListener {
-    private static final String TAG = "MonthFragment";
-    private static final String TAG_EVENT_DIALOG = "event_dialog";
-
-    // Selection and selection args for adding event queries
-    private static final String WHERE_CALENDARS_VISIBLE = Calendars.VISIBLE + "=1";
-    private static final String INSTANCES_SORT_ORDER = Instances.START_DAY + ","
-            + Instances.START_MINUTE + "," + Instances.TITLE;
-    protected static boolean mShowDetailsInMonth = false;
-
-    protected float mMinimumTwoMonthFlingVelocity;
-    protected boolean mIsMiniMonth;
-    protected boolean mHideDeclined;
-
-    protected int mFirstLoadedJulianDay;
-    protected int mLastLoadedJulianDay;
-
-    private static final int WEEKS_BUFFER = 1;
-    // How long to wait after scroll stops before starting the loader
-    // Using scroll duration because scroll state changes don't update
-    // correctly when a scroll is triggered programmatically.
-    private static final int LOADER_DELAY = 200;
-    // The minimum time between requeries of the data if the db is
-    // changing
-    private static final int LOADER_THROTTLE_DELAY = 500;
-
-    private CursorLoader mLoader;
-    private Uri mEventUri;
-    private final Time mDesiredDay = new Time();
-
-    private volatile boolean mShouldLoad = true;
-    private boolean mUserScrolled = false;
-
-    private int mEventsLoadingDelay;
-    private boolean mShowCalendarControls;
-    private boolean mIsDetached;
-
-    private final Runnable mTZUpdater = new Runnable() {
+    @Volatile
+    private var mShouldLoad = true
+    private var mUserScrolled = false
+    private var mEventsLoadingDelay = 0
+    private var mShowCalendarControls = false
+    private var mIsDetached = false
+    private val mTZUpdater: Runnable = object : Runnable() {
         @Override
-        public void run() {
-            String tz = Utils.getTimeZone(mContext, mTZUpdater);
-            mSelectedDay.timezone = tz;
-            mSelectedDay.normalize(true);
-            mTempTime.timezone = tz;
-            mFirstDayOfMonth.timezone = tz;
-            mFirstDayOfMonth.normalize(true);
-            mFirstVisibleDay.timezone = tz;
-            mFirstVisibleDay.normalize(true);
+        fun run() {
+            val tz: String = Utils.getTimeZone(mContext, this)
+            mSelectedDay.timezone = tz
+            mSelectedDay.normalize(true)
+            mTempTime.timezone = tz
+            mFirstDayOfMonth.timezone = tz
+            mFirstDayOfMonth.normalize(true)
+            mFirstVisibleDay.timezone = tz
+            mFirstVisibleDay.normalize(true)
             if (mAdapter != null) {
-                mAdapter.refresh();
+                mAdapter.refresh()
             }
         }
-    };
-
-
-    private final Runnable mUpdateLoader = new Runnable() {
+    }
+    private val mUpdateLoader: Runnable = object : Runnable() {
         @Override
-        public void run() {
-            synchronized (this) {
+        fun run() {
+            synchronized(this) {
                 if (!mShouldLoad || mLoader == null) {
-                    return;
+                    return
                 }
                 // Stop any previous loads while we update the uri
-                stopLoader();
+                stopLoader()
 
                 // Start the loader again
-                mEventUri = updateUri();
-
-                mLoader.setUri(mEventUri);
-                mLoader.startLoading();
-                mLoader.onContentChanged();
+                mEventUri = updateUri()
+                mLoader.setUri(mEventUri)
+                mLoader.startLoading()
+                mLoader.onContentChanged()
                 if (Log.isLoggable(TAG, Log.DEBUG)) {
-                    Log.d(TAG, "Started loader with uri: " + mEventUri);
+                    Log.d(TAG, "Started loader with uri: $mEventUri")
                 }
             }
         }
-    };
+    }
+
     // Used to load the events when a delay is needed
-    Runnable mLoadingRunnable = new Runnable() {
+    var mLoadingRunnable: Runnable = object : Runnable() {
         @Override
-        public void run() {
+        fun run() {
             if (!mIsDetached) {
-                mLoader = (CursorLoader) getLoaderManager().initLoader(0, null,
-                        MonthByWeekFragment.this);
+                mLoader = getLoaderManager().initLoader(
+                    0, null,
+                    this@MonthByWeekFragment
+                ) as CursorLoader
             }
         }
-    };
-
+    }
 
     /**
      * Updates the uri used by the loader according to the current position of
@@ -154,341 +93,362 @@ public class MonthByWeekFragment extends SimpleDayPickerFragment implements
      *
      * @return The new Uri to use
      */
-    private Uri updateUri() {
-        SimpleWeekView child = (SimpleWeekView) mListView.getChildAt(0);
+    private fun updateUri(): Uri {
+        val child: SimpleWeekView = mListView.getChildAt(0) as SimpleWeekView
         if (child != null) {
-            int julianDay = child.getFirstJulianDay();
-            mFirstLoadedJulianDay = julianDay;
+            val julianDay: Int = child.getFirstJulianDay()
+            mFirstLoadedJulianDay = julianDay
         }
         // -1 to ensure we get all day events from any time zone
-        mTempTime.setJulianDay(mFirstLoadedJulianDay - 1);
-        long start = mTempTime.toMillis(true);
-        mLastLoadedJulianDay = mFirstLoadedJulianDay + (mNumWeeks + 2 * WEEKS_BUFFER) * 7;
+        mTempTime.setJulianDay(mFirstLoadedJulianDay - 1)
+        val start: Long = mTempTime.toMillis(true)
+        mLastLoadedJulianDay = mFirstLoadedJulianDay + (mNumWeeks + 2 * WEEKS_BUFFER) * 7
         // +1 to ensure we get all day events from any time zone
-        mTempTime.setJulianDay(mLastLoadedJulianDay + 1);
-        long end = mTempTime.toMillis(true);
+        mTempTime.setJulianDay(mLastLoadedJulianDay + 1)
+        val end: Long = mTempTime.toMillis(true)
 
         // Create a new uri with the updated times
-        Uri.Builder builder = Instances.CONTENT_URI.buildUpon();
-        ContentUris.appendId(builder, start);
-        ContentUris.appendId(builder, end);
-        return builder.build();
+        val builder: Uri.Builder = Instances.CONTENT_URI.buildUpon()
+        ContentUris.appendId(builder, start)
+        ContentUris.appendId(builder, end)
+        return builder.build()
     }
 
     // Extract range of julian days from URI
-    private void updateLoadedDays() {
-        List<String> pathSegments = mEventUri.getPathSegments();
-        int size = pathSegments.size();
+    private fun updateLoadedDays() {
+        val pathSegments: List<String> = mEventUri.getPathSegments()
+        val size: Int = pathSegments.size()
         if (size <= 2) {
-            return;
+            return
         }
-        long first = Long.parseLong(pathSegments.get(size - 2));
-        long last = Long.parseLong(pathSegments.get(size - 1));
-        mTempTime.set(first);
-        mFirstLoadedJulianDay = Time.getJulianDay(first, mTempTime.gmtoff);
-        mTempTime.set(last);
-        mLastLoadedJulianDay = Time.getJulianDay(last, mTempTime.gmtoff);
+        val first: Long = Long.parseLong(pathSegments[size - 2])
+        val last: Long = Long.parseLong(pathSegments[size - 1])
+        mTempTime.set(first)
+        mFirstLoadedJulianDay = Time.getJulianDay(first, mTempTime.gmtoff)
+        mTempTime.set(last)
+        mLastLoadedJulianDay = Time.getJulianDay(last, mTempTime.gmtoff)
     }
 
-    protected String updateWhere() {
+    protected fun updateWhere(): String {
         // TODO fix selection/selection args after b/3206641 is fixed
-        String where = WHERE_CALENDARS_VISIBLE;
+        var where = WHERE_CALENDARS_VISIBLE
         if (mHideDeclined || !mShowDetailsInMonth) {
-            where += " AND " + Instances.SELF_ATTENDEE_STATUS + "!="
-                    + Attendees.ATTENDEE_STATUS_DECLINED;
+            where += (" AND " + Instances.SELF_ATTENDEE_STATUS.toString() + "!="
+              + Attendees.ATTENDEE_STATUS_DECLINED)
         }
-        return where;
+        return where
     }
 
-    private void stopLoader() {
-        synchronized (mUpdateLoader) {
-            mHandler.removeCallbacks(mUpdateLoader);
+    private fun stopLoader() {
+        synchronized(mUpdateLoader) {
+            mHandler.removeCallbacks(mUpdateLoader)
             if (mLoader != null) {
-                mLoader.stopLoading();
+                mLoader.stopLoading()
                 if (Log.isLoggable(TAG, Log.DEBUG)) {
-                    Log.d(TAG, "Stopped loader from loading");
+                    Log.d(TAG, "Stopped loader from loading")
                 }
             }
         }
     }
 
     @Override
-    public void onAttach(Activity activity) {
-        super.onAttach(activity);
-        mTZUpdater.run();
+    fun onAttach(activity: Activity) {
+        super.onAttach(activity)
+        mTZUpdater.run()
         if (mAdapter != null) {
-            mAdapter.setSelectedDay(mSelectedDay);
+            mAdapter.setSelectedDay(mSelectedDay)
         }
-        mIsDetached = false;
-
-        ViewConfiguration viewConfig = ViewConfiguration.get(activity);
-        mMinimumTwoMonthFlingVelocity = viewConfig.getScaledMaximumFlingVelocity() / 2;
-        Resources res = activity.getResources();
-        mShowCalendarControls = Utils.getConfigBool(activity, R.bool.show_calendar_controls);
+        mIsDetached = false
+        val viewConfig: ViewConfiguration = ViewConfiguration.get(activity)
+        mMinimumTwoMonthFlingVelocity = viewConfig.getScaledMaximumFlingVelocity() / 2
+        val res: Resources = activity.getResources()
+        mShowCalendarControls = Utils.getConfigBool(activity, R.bool.show_calendar_controls)
         // Synchronized the loading time of the month's events with the animation of the
         // calendar controls.
         if (mShowCalendarControls) {
-            mEventsLoadingDelay = res.getInteger(R.integer.calendar_controls_animation_time);
+            mEventsLoadingDelay = res.getInteger(R.integer.calendar_controls_animation_time)
         }
-        mShowDetailsInMonth = res.getBoolean(R.bool.show_details_in_month);
+        mShowDetailsInMonth = res.getBoolean(R.bool.show_details_in_month)
     }
 
     @Override
-    public void onDetach() {
-        mIsDetached = true;
-        super.onDetach();
+    fun onDetach() {
+        mIsDetached = true
+        super.onDetach()
         if (mShowCalendarControls) {
             if (mListView != null) {
-                mListView.removeCallbacks(mLoadingRunnable);
+                mListView.removeCallbacks(mLoadingRunnable)
             }
         }
     }
 
     @Override
-    protected void setUpAdapter() {
-        mFirstDayOfWeek = Utils.getFirstDayOfWeek(mContext);
-        mShowWeekNumber = Utils.getShowWeekNumber(mContext);
-
-        HashMap<String, Integer> weekParams = new HashMap<String, Integer>();
-        weekParams.put(SimpleWeeksAdapter.WEEK_PARAMS_NUM_WEEKS, mNumWeeks);
-        weekParams.put(SimpleWeeksAdapter.WEEK_PARAMS_SHOW_WEEK, mShowWeekNumber ? 1 : 0);
-        weekParams.put(SimpleWeeksAdapter.WEEK_PARAMS_WEEK_START, mFirstDayOfWeek);
-        weekParams.put(MonthByWeekAdapter.WEEK_PARAMS_IS_MINI, mIsMiniMonth ? 1 : 0);
-        weekParams.put(SimpleWeeksAdapter.WEEK_PARAMS_JULIAN_DAY,
-                Time.getJulianDay(mSelectedDay.toMillis(true), mSelectedDay.gmtoff));
-        weekParams.put(SimpleWeeksAdapter.WEEK_PARAMS_DAYS_PER_WEEK, mDaysPerWeek);
+    protected fun setUpAdapter() {
+        mFirstDayOfWeek = Utils.getFirstDayOfWeek(mContext)
+        mShowWeekNumber = Utils.getShowWeekNumber(mContext)
+        val weekParams: HashMap<String, Integer> = HashMap<String, Integer>()
+        weekParams.put(SimpleWeeksAdapter.WEEK_PARAMS_NUM_WEEKS, mNumWeeks)
+        weekParams.put(SimpleWeeksAdapter.WEEK_PARAMS_SHOW_WEEK, if (mShowWeekNumber) 1 else 0)
+        weekParams.put(SimpleWeeksAdapter.WEEK_PARAMS_WEEK_START, mFirstDayOfWeek)
+        weekParams.put(MonthByWeekAdapter.WEEK_PARAMS_IS_MINI, if (mIsMiniMonth) 1 else 0)
+        weekParams.put(
+            SimpleWeeksAdapter.WEEK_PARAMS_JULIAN_DAY,
+            Time.getJulianDay(mSelectedDay.toMillis(true), mSelectedDay.gmtoff)
+        )
+        weekParams.put(SimpleWeeksAdapter.WEEK_PARAMS_DAYS_PER_WEEK, mDaysPerWeek)
         if (mAdapter == null) {
-            mAdapter = new MonthByWeekAdapter(getActivity(), weekParams);
-            mAdapter.registerDataSetObserver(mObserver);
+            mAdapter = MonthByWeekAdapter(getActivity(), weekParams)
+            mAdapter.registerDataSetObserver(mObserver)
         } else {
-            mAdapter.updateParams(weekParams);
+            mAdapter.updateParams(weekParams)
         }
-        mAdapter.notifyDataSetChanged();
+        mAdapter.notifyDataSetChanged()
     }
 
     @Override
-    public View onCreateView(
-            LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View v;
-        if (mIsMiniMonth) {
-            v = inflater.inflate(R.layout.month_by_week, container, false);
+    fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
+    ): View {
+        val v: View
+        v = if (mIsMiniMonth) {
+            inflater.inflate(R.layout.month_by_week, container, false)
         } else {
-            v = inflater.inflate(R.layout.full_month_by_week, container, false);
+            inflater.inflate(R.layout.full_month_by_week, container, false)
         }
-        mDayNamesHeader = (ViewGroup) v.findViewById(R.id.day_names);
-        return v;
+        mDayNamesHeader = v.findViewById(R.id.day_names) as ViewGroup
+        return v
     }
 
     @Override
-    public void onActivityCreated(Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-        mListView.setSelector(new StateListDrawable());
-        mListView.setOnTouchListener(this);
-
+    fun onActivityCreated(savedInstanceState: Bundle?) {
+        super.onActivityCreated(savedInstanceState)
+        mListView.setSelector(StateListDrawable())
+        mListView.setOnTouchListener(this)
         if (!mIsMiniMonth) {
-            mListView.setBackgroundColor(getResources().getColor(R.color.month_bgcolor));
+            mListView.setBackgroundColor(getResources().getColor(R.color.month_bgcolor))
         }
 
         // To get a smoother transition when showing this fragment, delay loading of events until
         // the fragment is expended fully and the calendar controls are gone.
         if (mShowCalendarControls) {
-            mListView.postDelayed(mLoadingRunnable, mEventsLoadingDelay);
+            mListView.postDelayed(mLoadingRunnable, mEventsLoadingDelay)
         } else {
-            mLoader = (CursorLoader) getLoaderManager().initLoader(0, null, this);
+            mLoader = getLoaderManager().initLoader(0, null, this) as CursorLoader
         }
-        mAdapter.setListView(mListView);
-    }
-
-    public MonthByWeekFragment() {
-        this(System.currentTimeMillis(), true);
-    }
-
-    public MonthByWeekFragment(long initialTime, boolean isMiniMonth) {
-        super(initialTime);
-        mIsMiniMonth = isMiniMonth;
+        mAdapter.setListView(mListView)
     }
 
     @Override
-    protected void setUpHeader() {
+    protected fun setUpHeader() {
         if (mIsMiniMonth) {
-            super.setUpHeader();
-            return;
+            super.setUpHeader()
+            return
         }
-
-        mDayLabels = new String[7];
-        for (int i = Calendar.SUNDAY; i <= Calendar.SATURDAY; i++) {
-            mDayLabels[i - Calendar.SUNDAY] = DateUtils.getDayOfWeekString(i,
-                    DateUtils.LENGTH_MEDIUM).toUpperCase();
+        mDayLabels = arrayOfNulls<String>(7)
+        for (i in Calendar.SUNDAY..Calendar.SATURDAY) {
+            mDayLabels.get(i - Calendar.SUNDAY) = DateUtils.getDayOfWeekString(
+                i,
+                DateUtils.LENGTH_MEDIUM
+            ).toUpperCase()
         }
     }
 
     // TODO
     @Override
-    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+    fun onCreateLoader(id: Int, args: Bundle?): Loader<Cursor>? {
         if (mIsMiniMonth) {
-            return null;
+            return null
         }
-        CursorLoader loader;
-        synchronized (mUpdateLoader) {
+        var loader: CursorLoader
+        synchronized(mUpdateLoader) {
             mFirstLoadedJulianDay =
-                    Time.getJulianDay(mSelectedDay.toMillis(true), mSelectedDay.gmtoff)
-                    - (mNumWeeks * 7 / 2);
-            mEventUri = updateUri();
-            String where = updateWhere();
-
-            loader = new CursorLoader(
-                    getActivity(), mEventUri, Event.EVENT_PROJECTION, where,
-                    null /* WHERE_CALENDARS_SELECTED_ARGS */, INSTANCES_SORT_ORDER);
-            loader.setUpdateThrottle(LOADER_THROTTLE_DELAY);
+                (Time.getJulianDay(mSelectedDay.toMillis(true), mSelectedDay.gmtoff)
+                  - mNumWeeks * 7 / 2)
+            mEventUri = updateUri()
+            val where = updateWhere()
+            loader = CursorLoader(
+                getActivity(), mEventUri, Event.EVENT_PROJECTION, where,
+                null /* WHERE_CALENDARS_SELECTED_ARGS */, INSTANCES_SORT_ORDER
+            )
+            loader.setUpdateThrottle(LOADER_THROTTLE_DELAY)
         }
         if (Log.isLoggable(TAG, Log.DEBUG)) {
-            Log.d(TAG, "Returning new loader with uri: " + mEventUri);
+            Log.d(TAG, "Returning new loader with uri: $mEventUri")
         }
-        return loader;
+        return loader
     }
 
     @Override
-    public void doResumeUpdates() {
-        mFirstDayOfWeek = Utils.getFirstDayOfWeek(mContext);
-        mShowWeekNumber = Utils.getShowWeekNumber(mContext);
-        boolean prevHideDeclined = mHideDeclined;
-        mHideDeclined = Utils.getHideDeclinedEvents(mContext);
+    fun doResumeUpdates() {
+        mFirstDayOfWeek = Utils.getFirstDayOfWeek(mContext)
+        mShowWeekNumber = Utils.getShowWeekNumber(mContext)
+        val prevHideDeclined = mHideDeclined
+        mHideDeclined = Utils.getHideDeclinedEvents(mContext)
         if (prevHideDeclined != mHideDeclined && mLoader != null) {
-            mLoader.setSelection(updateWhere());
+            mLoader.setSelection(updateWhere())
         }
-        mDaysPerWeek = Utils.getDaysPerWeek(mContext);
-        updateHeader();
-        mAdapter.setSelectedDay(mSelectedDay);
-        mTZUpdater.run();
-        mTodayUpdater.run();
-        goTo(mSelectedDay.toMillis(true), false, true, false);
+        mDaysPerWeek = Utils.getDaysPerWeek(mContext)
+        updateHeader()
+        mAdapter.setSelectedDay(mSelectedDay)
+        mTZUpdater.run()
+        mTodayUpdater.run()
+        goTo(mSelectedDay.toMillis(true), false, true, false)
     }
 
     @Override
-    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
-        synchronized (mUpdateLoader) {
+    fun onLoadFinished(loader: Loader<Cursor?>, data: Cursor) {
+        synchronized(mUpdateLoader) {
             if (Log.isLoggable(TAG, Log.DEBUG)) {
-                Log.d(TAG, "Found " + data.getCount() + " cursor entries for uri " + mEventUri);
+                Log.d(
+                    TAG,
+                    "Found " + data.getCount().toString() + " cursor entries for uri " + mEventUri
+                )
             }
-            CursorLoader cLoader = (CursorLoader) loader;
+            val cLoader: CursorLoader = loader as CursorLoader
             if (mEventUri == null) {
-                mEventUri = cLoader.getUri();
-                updateLoadedDays();
+                mEventUri = cLoader.getUri()
+                updateLoadedDays()
             }
-            if (cLoader.getUri().compareTo(mEventUri) != 0) {
+            if (cLoader.getUri().compareTo(mEventUri) !== 0) {
                 // We've started a new query since this loader ran so ignore the
                 // result
-                return;
+                return
             }
-            ArrayList<Event> events = new ArrayList<Event>();
+            val events: ArrayList<Event> = ArrayList<Event>()
             Event.buildEventsFromCursor(
-                    events, data, mContext, mFirstLoadedJulianDay, mLastLoadedJulianDay);
-            ((MonthByWeekAdapter) mAdapter).setEvents(mFirstLoadedJulianDay,
-                    mLastLoadedJulianDay - mFirstLoadedJulianDay + 1, events);
+                events, data, mContext, mFirstLoadedJulianDay, mLastLoadedJulianDay
+            )
+            (mAdapter as MonthByWeekAdapter).setEvents(
+                mFirstLoadedJulianDay,
+                mLastLoadedJulianDay - mFirstLoadedJulianDay + 1, events
+            )
         }
     }
 
     @Override
-    public void onLoaderReset(Loader<Cursor> loader) {
+    fun onLoaderReset(loader: Loader<Cursor?>?) {
     }
 
     @Override
-    public void eventsChanged() {
+    fun eventsChanged() {
         // TODO remove this after b/3387924 is resolved
         if (mLoader != null) {
-            mLoader.forceLoad();
+            mLoader.forceLoad()
         }
     }
 
-    @Override
-    public long getSupportedEventTypes() {
-        return EventType.GO_TO | EventType.EVENTS_CHANGED;
-    }
+    @get:Override val supportedEventTypes: Long
+        get() = EventType.GO_TO or EventType.EVENTS_CHANGED
 
     @Override
-    public void handleEvent(EventInfo event) {
-        if (event.eventType == EventType.GO_TO) {
-            boolean animate = true;
+    fun handleEvent(event: EventInfo) {
+        if (event.eventType === EventType.GO_TO) {
+            var animate = true
             if (mDaysPerWeek * mNumWeeks * 2 < Math.abs(
                     Time.getJulianDay(event.selectedTime.toMillis(true), event.selectedTime.gmtoff)
-                    - Time.getJulianDay(mFirstVisibleDay.toMillis(true), mFirstVisibleDay.gmtoff)
-                    - mDaysPerWeek * mNumWeeks / 2)) {
-                animate = false;
+                      - Time.getJulianDay(mFirstVisibleDay.toMillis(true), mFirstVisibleDay.gmtoff)
+                      - mDaysPerWeek * mNumWeeks / 2
+                )
+            ) {
+                animate = false
             }
-            mDesiredDay.set(event.selectedTime);
-            mDesiredDay.normalize(true);
-            boolean animateToday = (event.extraLong & CalendarController.EXTRA_GOTO_TODAY) != 0;
-            boolean delayAnimation = goTo(event.selectedTime.toMillis(true), animate, true, false);
+            mDesiredDay.set(event.selectedTime)
+            mDesiredDay.normalize(true)
+            val animateToday = event.extraLong and CalendarController.EXTRA_GOTO_TODAY !== 0
+            val delayAnimation: Boolean =
+                goTo(event.selectedTime.toMillis(true), animate, true, false)
             if (animateToday) {
                 // If we need to flash today start the animation after any
                 // movement from listView has ended.
-                mHandler.postDelayed(new Runnable() {
+                mHandler.postDelayed(object : Runnable() {
                     @Override
-                    public void run() {
-                        ((MonthByWeekAdapter) mAdapter).animateToday();
-                        mAdapter.notifyDataSetChanged();
+                    fun run() {
+                        (mAdapter as MonthByWeekAdapter).animateToday()
+                        mAdapter.notifyDataSetChanged()
                     }
-                }, delayAnimation ? GOTO_SCROLL_DURATION : 0);
+                }, if (delayAnimation) GOTO_SCROLL_DURATION else 0)
             }
-        } else if (event.eventType == EventType.EVENTS_CHANGED) {
-            eventsChanged();
+        } else if (event.eventType === EventType.EVENTS_CHANGED) {
+            eventsChanged()
         }
     }
 
     @Override
-    protected void setMonthDisplayed(Time time, boolean updateHighlight) {
-        super.setMonthDisplayed(time, updateHighlight);
+    protected fun setMonthDisplayed(time: Time, updateHighlight: Boolean) {
+        super.setMonthDisplayed(time, updateHighlight)
         if (!mIsMiniMonth) {
-            boolean useSelected = false;
-            if (time.year == mDesiredDay.year && time.month == mDesiredDay.month) {
-                mSelectedDay.set(mDesiredDay);
-                mAdapter.setSelectedDay(mDesiredDay);
-                useSelected = true;
+            var useSelected = false
+            if (time.year === mDesiredDay.year && time.month === mDesiredDay.month) {
+                mSelectedDay.set(mDesiredDay)
+                mAdapter.setSelectedDay(mDesiredDay)
+                useSelected = true
             } else {
-                mSelectedDay.set(time);
-                mAdapter.setSelectedDay(time);
+                mSelectedDay.set(time)
+                mAdapter.setSelectedDay(time)
             }
-            CalendarController controller = CalendarController.getInstance(mContext);
+            val controller: CalendarController = CalendarController.getInstance(mContext)
             if (mSelectedDay.minute >= 30) {
-                mSelectedDay.minute = 30;
+                mSelectedDay.minute = 30
             } else {
-                mSelectedDay.minute = 0;
+                mSelectedDay.minute = 0
             }
-            long newTime = mSelectedDay.normalize(true);
+            val newTime: Long = mSelectedDay.normalize(true)
             if (newTime != controller.getTime() && mUserScrolled) {
-                long offset = useSelected ? 0 : DateUtils.WEEK_IN_MILLIS * mNumWeeks / 3;
-                controller.setTime(newTime + offset);
+                val offset: Long =
+                    if (useSelected) 0 else DateUtils.WEEK_IN_MILLIS * mNumWeeks / 3.toLong()
+                controller.setTime(newTime + offset)
             }
-            controller.sendEvent(this, EventType.UPDATE_TITLE, time, time, time, -1,
-                    ViewType.CURRENT, DateUtils.FORMAT_SHOW_DATE | DateUtils.FORMAT_NO_MONTH_DAY
-                            | DateUtils.FORMAT_SHOW_YEAR, null, null);
+            controller.sendEvent(
+                this, EventType.UPDATE_TITLE, time, time, time, -1,
+                ViewType.CURRENT, DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_NO_MONTH_DAY
+                  or DateUtils.FORMAT_SHOW_YEAR, null, null
+            )
         }
     }
 
     @Override
-    public void onScrollStateChanged(AbsListView view, int scrollState) {
-
-        synchronized (mUpdateLoader) {
+    fun onScrollStateChanged(view: AbsListView?, scrollState: Int) {
+        synchronized(mUpdateLoader) {
             if (scrollState != OnScrollListener.SCROLL_STATE_IDLE) {
-                mShouldLoad = false;
-                stopLoader();
-                mDesiredDay.setToNow();
+                mShouldLoad = false
+                stopLoader()
+                mDesiredDay.setToNow()
             } else {
-                mHandler.removeCallbacks(mUpdateLoader);
-                mShouldLoad = true;
-                mHandler.postDelayed(mUpdateLoader, LOADER_DELAY);
+                mHandler.removeCallbacks(mUpdateLoader)
+                mShouldLoad = true
+                mHandler.postDelayed(mUpdateLoader, LOADER_DELAY)
             }
         }
         if (scrollState == OnScrollListener.SCROLL_STATE_TOUCH_SCROLL) {
-            mUserScrolled = true;
+            mUserScrolled = true
         }
-
-        mScrollStateChangedRunnable.doScrollStateChange(view, scrollState);
+        mScrollStateChangedRunnable.doScrollStateChange(view, scrollState)
     }
 
     @Override
-    public boolean onTouch(View v, MotionEvent event) {
-        mDesiredDay.setToNow();
-        return false;
+    fun onTouch(v: View?, event: MotionEvent?): Boolean {
+        mDesiredDay.setToNow()
+        return false
+    }
+
+    companion object {
+        private const val TAG = "MonthFragment"
+        private const val TAG_EVENT_DIALOG = "event_dialog"
+
+        // Selection and selection args for adding event queries
+        private val WHERE_CALENDARS_VISIBLE: String = Calendars.VISIBLE.toString() + "=1"
+        private val INSTANCES_SORT_ORDER: String = (Instances.START_DAY.toString() + ","
+          + Instances.START_MINUTE + "," + Instances.TITLE)
+        protected var mShowDetailsInMonth = false
+        private const val WEEKS_BUFFER = 1
+
+        // How long to wait after scroll stops before starting the loader
+        // Using scroll duration because scroll state changes don't update
+        // correctly when a scroll is triggered programmatically.
+        private const val LOADER_DELAY = 200
+
+        // The minimum time between requeries of the data if the db is
+        // changing
+        private const val LOADER_THROTTLE_DELAY = 500
     }
 }
