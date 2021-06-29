@@ -13,240 +13,215 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.android.calendar.month
 
-package com.android.calendar.month;
-
-import com.android.calendar.R;
-import com.android.calendar.Utils;
-
-import android.app.Activity;
-import android.app.ListFragment;
-import android.content.Context;
-import android.content.res.Resources;
-import android.database.DataSetObserver;
-import android.os.Bundle;
-import android.os.Handler;
-import android.text.TextUtils;
-import android.text.format.DateUtils;
-import android.text.format.Time;
-import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewConfiguration;
-import android.view.ViewGroup;
-import android.view.accessibility.AccessibilityEvent;
-import android.widget.AbsListView;
-import android.widget.AbsListView.OnScrollListener;
-import android.widget.ListView;
-import android.widget.TextView;
-
-import java.util.Calendar;
-import java.util.HashMap;
-import java.util.Locale;
+import com.android.calendar.R
+import com.android.calendar.Utils
+import android.app.Activity
+import android.app.ListFragment
+import android.content.Context
+import android.content.res.Resources
+import android.database.DataSetObserver
+import android.os.Bundle
+import android.os.Handler
+import android.text.TextUtils
+import android.text.format.DateUtils
+import android.text.format.Time
+import android.util.Log
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewConfiguration
+import android.view.ViewGroup
+import android.view.accessibility.AccessibilityEvent
+import android.widget.AbsListView
+import android.widget.AbsListView.OnScrollListener
+import android.widget.ListView
+import android.widget.TextView
+import java.util.Calendar
+import java.util.HashMap
+import java.util.Locale
 
 /**
- * <p>
+ *
+ *
  * This displays a titled list of weeks with selectable days. It can be
  * configured to display the week number, start the week on a given day, show a
  * reduced number of days, or display an arbitrary number of weeks at a time. By
  * overriding methods and changing variables this fragment can be customized to
  * easily display a month selection component in a given style.
- * </p>
+ *
  */
-public class SimpleDayPickerFragment extends ListFragment implements OnScrollListener {
-
-    private static final String TAG = "MonthFragment";
-    private static final String KEY_CURRENT_TIME = "current_time";
-
-    // Affects when the month selection will change while scrolling up
-    protected static final int SCROLL_HYST_WEEKS = 2;
-    // How long the GoTo fling animation should last
-    protected static final int GOTO_SCROLL_DURATION = 500;
-    // How long to wait after receiving an onScrollStateChanged notification
-    // before acting on it
-    protected static final int SCROLL_CHANGE_DELAY = 40;
-    // The number of days to display in each week
-    public static final int DAYS_PER_WEEK = 7;
-    // The size of the month name displayed above the week list
-    protected static final int MINI_MONTH_NAME_TEXT_SIZE = 18;
-    public static int LIST_TOP_OFFSET = -1;  // so that the top line will be under the separator
-    protected int WEEK_MIN_VISIBLE_HEIGHT = 12;
-    protected int BOTTOM_BUFFER = 20;
-    protected int mSaturdayColor = 0;
-    protected int mSundayColor = 0;
-    protected int mDayNameColor = 0;
+class SimpleDayPickerFragment(initialTime: Long) : ListFragment(), OnScrollListener {
+    protected var WEEK_MIN_VISIBLE_HEIGHT = 12
+    protected var BOTTOM_BUFFER = 20
+    protected var mSaturdayColor = 0
+    protected var mSundayColor = 0
+    protected var mDayNameColor = 0
 
     // You can override these numbers to get a different appearance
-    protected int mNumWeeks = 6;
-    protected boolean mShowWeekNumber = false;
-    protected int mDaysPerWeek = 7;
+    protected var mNumWeeks = 6
+    protected var mShowWeekNumber = false
+    protected var mDaysPerWeek = 7
 
     // These affect the scroll speed and feel
-    protected float mFriction = 1.0f;
-
-    protected Context mContext;
-    protected Handler mHandler;
-
-    protected float mMinimumFlingVelocity;
+    protected var mFriction = 1.0f
+    protected var mContext: Context? = null
+    protected var mHandler: Handler
+    protected var mMinimumFlingVelocity = 0f
 
     // highlighted time
-    protected Time mSelectedDay = new Time();
-    protected SimpleWeeksAdapter mAdapter;
-    protected ListView mListView;
-    protected ViewGroup mDayNamesHeader;
-    protected String[] mDayLabels;
+    protected var mSelectedDay: Time = Time()
+    protected var mAdapter: SimpleWeeksAdapter? = null
+    protected var mListView: ListView? = null
+    protected var mDayNamesHeader: ViewGroup? = null
+    protected var mDayLabels: Array<String?>
 
     // disposable variable used for time calculations
-    protected Time mTempTime = new Time();
+    protected var mTempTime: Time = Time()
 
-    private static float mScale = 0;
     // When the week starts; numbered like Time.<WEEKDAY> (e.g. SUNDAY=0).
-    protected int mFirstDayOfWeek;
+    protected var mFirstDayOfWeek = 0
+
     // The first day of the focus month
-    protected Time mFirstDayOfMonth = new Time();
+    protected var mFirstDayOfMonth: Time = Time()
+
     // The first day that is visible in the view
-    protected Time mFirstVisibleDay = new Time();
+    protected var mFirstVisibleDay: Time = Time()
+
     // The name of the month to display
-    protected TextView mMonthName;
+    protected var mMonthName: TextView? = null
+
     // The last name announced by accessibility
-    protected CharSequence mPrevMonthName;
+    protected var mPrevMonthName: CharSequence? = null
+
     // which month should be displayed/highlighted [0-11]
-    protected int mCurrentMonthDisplayed;
+    protected var mCurrentMonthDisplayed = 0
+
     // used for tracking during a scroll
-    protected long mPreviousScrollPosition;
+    protected var mPreviousScrollPosition: Long = 0
+
     // used for tracking which direction the view is scrolling
-    protected boolean mIsScrollingUp = false;
+    protected var mIsScrollingUp = false
+
     // used for tracking what state listview is in
-    protected int mPreviousScrollState = OnScrollListener.SCROLL_STATE_IDLE;
+    protected var mPreviousScrollState: Int = OnScrollListener.SCROLL_STATE_IDLE
+
     // used for tracking what state listview is in
-    protected int mCurrentScrollState = OnScrollListener.SCROLL_STATE_IDLE;
+    protected var mCurrentScrollState: Int = OnScrollListener.SCROLL_STATE_IDLE
 
     // This causes an update of the view at midnight
-    protected Runnable mTodayUpdater = new Runnable() {
+    protected var mTodayUpdater: Runnable = object : Runnable() {
         @Override
-        public void run() {
-            Time midnight = new Time(mFirstVisibleDay.timezone);
-            midnight.setToNow();
-            long currentMillis = midnight.toMillis(true);
-
-            midnight.hour = 0;
-            midnight.minute = 0;
-            midnight.second = 0;
-            midnight.monthDay++;
-            long millisToMidnight = midnight.normalize(true) - currentMillis;
-            mHandler.postDelayed(this, millisToMidnight);
-
+        fun run() {
+            val midnight = Time(mFirstVisibleDay.timezone)
+            midnight.setToNow()
+            val currentMillis: Long = midnight.toMillis(true)
+            midnight.hour = 0
+            midnight.minute = 0
+            midnight.second = 0
+            midnight.monthDay++
+            val millisToMidnight: Long = midnight.normalize(true) - currentMillis
+            mHandler.postDelayed(this, millisToMidnight)
             if (mAdapter != null) {
-                mAdapter.notifyDataSetChanged();
+                mAdapter.notifyDataSetChanged()
             }
         }
-    };
+    }
 
     // This allows us to update our position when a day is tapped
-    protected DataSetObserver mObserver = new DataSetObserver() {
+    protected var mObserver: DataSetObserver = object : DataSetObserver() {
         @Override
-        public void onChanged() {
-            Time day = mAdapter.getSelectedDay();
-            if (day.year != mSelectedDay.year || day.yearDay != mSelectedDay.yearDay) {
-                goTo(day.toMillis(true), true, true, false);
+        fun onChanged() {
+            val day: Time = mAdapter.getSelectedDay()
+            if (day.year !== mSelectedDay.year || day.yearDay !== mSelectedDay.yearDay) {
+                goTo(day.toMillis(true), true, true, false)
             }
         }
-    };
-
-    public SimpleDayPickerFragment(long initialTime) {
-        goTo(initialTime, false, true, true);
-        mHandler = new Handler();
     }
 
     @Override
-    public void onAttach(Activity activity) {
-        super.onAttach(activity);
-        mContext = activity;
-        String tz = Time.getCurrentTimezone();
-        ViewConfiguration viewConfig = ViewConfiguration.get(activity);
-        mMinimumFlingVelocity = viewConfig.getScaledMinimumFlingVelocity();
+    fun onAttach(activity: Activity) {
+        super.onAttach(activity)
+        mContext = activity
+        val tz: String = Time.getCurrentTimezone()
+        val viewConfig: ViewConfiguration = ViewConfiguration.get(activity)
+        mMinimumFlingVelocity = viewConfig.getScaledMinimumFlingVelocity()
 
         // Ensure we're in the correct time zone
-        mSelectedDay.switchTimezone(tz);
-        mSelectedDay.normalize(true);
-        mFirstDayOfMonth.timezone = tz;
-        mFirstDayOfMonth.normalize(true);
-        mFirstVisibleDay.timezone = tz;
-        mFirstVisibleDay.normalize(true);
-        mTempTime.timezone = tz;
-
-        Resources res = activity.getResources();
-        mSaturdayColor = res.getColor(R.color.month_saturday);
-        mSundayColor = res.getColor(R.color.month_sunday);
-        mDayNameColor = res.getColor(R.color.month_day_names_color);
+        mSelectedDay.switchTimezone(tz)
+        mSelectedDay.normalize(true)
+        mFirstDayOfMonth.timezone = tz
+        mFirstDayOfMonth.normalize(true)
+        mFirstVisibleDay.timezone = tz
+        mFirstVisibleDay.normalize(true)
+        mTempTime.timezone = tz
+        val res: Resources = activity.getResources()
+        mSaturdayColor = res.getColor(R.color.month_saturday)
+        mSundayColor = res.getColor(R.color.month_sunday)
+        mDayNameColor = res.getColor(R.color.month_day_names_color)
 
         // Adjust sizes for screen density
-        if (mScale == 0) {
-            mScale = activity.getResources().getDisplayMetrics().density;
-            if (mScale != 1) {
-                WEEK_MIN_VISIBLE_HEIGHT *= mScale;
-                BOTTOM_BUFFER *= mScale;
-                LIST_TOP_OFFSET *= mScale;
+        if (mScale == 0f) {
+            mScale = activity.getResources().getDisplayMetrics().density
+            if (mScale != 1f) {
+                WEEK_MIN_VISIBLE_HEIGHT *= mScale.toInt()
+                BOTTOM_BUFFER *= mScale.toInt()
+                LIST_TOP_OFFSET *= mScale.toInt()
             }
         }
-        setUpAdapter();
-        setListAdapter(mAdapter);
+        setUpAdapter()
+        setListAdapter(mAdapter)
     }
 
     /**
      * Creates a new adapter if necessary and sets up its parameters. Override
      * this method to provide a custom adapter.
      */
-    protected void setUpAdapter() {
-        HashMap<String, Integer> weekParams = new HashMap<String, Integer>();
-        weekParams.put(SimpleWeeksAdapter.WEEK_PARAMS_NUM_WEEKS, mNumWeeks);
-        weekParams.put(SimpleWeeksAdapter.WEEK_PARAMS_SHOW_WEEK, mShowWeekNumber ? 1 : 0);
-        weekParams.put(SimpleWeeksAdapter.WEEK_PARAMS_WEEK_START, mFirstDayOfWeek);
+    protected fun setUpAdapter() {
+        val weekParams: HashMap<String, Integer> = HashMap<String, Integer>()
+        weekParams.put(SimpleWeeksAdapter.WEEK_PARAMS_NUM_WEEKS, mNumWeeks)
+        weekParams.put(SimpleWeeksAdapter.WEEK_PARAMS_SHOW_WEEK, if (mShowWeekNumber) 1 else 0)
+        weekParams.put(SimpleWeeksAdapter.WEEK_PARAMS_WEEK_START, mFirstDayOfWeek)
         weekParams.put(SimpleWeeksAdapter.WEEK_PARAMS_JULIAN_DAY,
-                Time.getJulianDay(mSelectedDay.toMillis(false), mSelectedDay.gmtoff));
+                Time.getJulianDay(mSelectedDay.toMillis(false), mSelectedDay.gmtoff))
         if (mAdapter == null) {
-            mAdapter = new SimpleWeeksAdapter(getActivity(), weekParams);
-            mAdapter.registerDataSetObserver(mObserver);
+            mAdapter = SimpleWeeksAdapter(getActivity(), weekParams)
+            mAdapter.registerDataSetObserver(mObserver)
         } else {
-            mAdapter.updateParams(weekParams);
+            mAdapter.updateParams(weekParams)
         }
         // refresh the view with the new parameters
-        mAdapter.notifyDataSetChanged();
+        mAdapter.notifyDataSetChanged()
     }
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
     }
 
     @Override
-    public void onActivityCreated(Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-
-        setUpListView();
-        setUpHeader();
-
-        mMonthName = (TextView) getView().findViewById(R.id.month_name);
-        SimpleWeekView child = (SimpleWeekView) mListView.getChildAt(0);
-        if (child == null) {
-            return;
-        }
-        int julianDay = child.getFirstJulianDay();
-        mFirstVisibleDay.setJulianDay(julianDay);
+    fun onActivityCreated(savedInstanceState: Bundle?) {
+        super.onActivityCreated(savedInstanceState)
+        setUpListView()
+        setUpHeader()
+        mMonthName = getView().findViewById(R.id.month_name) as TextView
+        val child: SimpleWeekView = mListView.getChildAt(0) as SimpleWeekView ?: return
+        val julianDay: Int = child.getFirstJulianDay()
+        mFirstVisibleDay.setJulianDay(julianDay)
         // set the title to the month of the second week
-        mTempTime.setJulianDay(julianDay + DAYS_PER_WEEK);
-        setMonthDisplayed(mTempTime, true);
+        mTempTime.setJulianDay(julianDay + DAYS_PER_WEEK)
+        setMonthDisplayed(mTempTime, true)
     }
 
     /**
      * Sets up the strings to be used by the header. Override this method to use
      * different strings or modify the view params.
      */
-    protected void setUpHeader() {
-        mDayLabels = new String[7];
-        for (int i = Calendar.SUNDAY; i <= Calendar.SATURDAY; i++) {
+    protected fun setUpHeader() {
+        mDayLabels = arrayOfNulls(7)
+        for (i in Calendar.SUNDAY..Calendar.SATURDAY) {
             mDayLabels[i - Calendar.SUNDAY] = DateUtils.getDayOfWeekString(i,
-                    DateUtils.LENGTH_SHORTEST).toUpperCase();
+                    DateUtils.LENGTH_SHORTEST).toUpperCase()
         }
     }
 
@@ -254,97 +229,95 @@ public class SimpleDayPickerFragment extends ListFragment implements OnScrollLis
      * Sets all the required fields for the list view. Override this method to
      * set a different list view behavior.
      */
-    protected void setUpListView() {
+    protected fun setUpListView() {
         // Configure the listview
-        mListView = getListView();
+        mListView = getListView()
         // Transparent background on scroll
-        mListView.setCacheColorHint(0);
+        mListView.setCacheColorHint(0)
         // No dividers
-        mListView.setDivider(null);
+        mListView.setDivider(null)
         // Items are clickable
-        mListView.setItemsCanFocus(true);
+        mListView.setItemsCanFocus(true)
         // The thumb gets in the way, so disable it
-        mListView.setFastScrollEnabled(false);
-        mListView.setVerticalScrollBarEnabled(false);
-        mListView.setOnScrollListener(this);
-        mListView.setFadingEdgeLength(0);
+        mListView.setFastScrollEnabled(false)
+        mListView.setVerticalScrollBarEnabled(false)
+        mListView.setOnScrollListener(this)
+        mListView.setFadingEdgeLength(0)
         // Make the scrolling behavior nicer
-        mListView.setFriction(ViewConfiguration.getScrollFriction() * mFriction);
+        mListView.setFriction(ViewConfiguration.getScrollFriction() * mFriction)
     }
 
     @Override
-    public void onResume() {
-        super.onResume();
-        setUpAdapter();
-        doResumeUpdates();
+    fun onResume() {
+        super.onResume()
+        setUpAdapter()
+        doResumeUpdates()
     }
 
     @Override
-    public void onPause() {
-        super.onPause();
-        mHandler.removeCallbacks(mTodayUpdater);
+    fun onPause() {
+        super.onPause()
+        mHandler.removeCallbacks(mTodayUpdater)
     }
 
     @Override
-    public void onSaveInstanceState(Bundle outState) {
-        outState.putLong(KEY_CURRENT_TIME, mSelectedDay.toMillis(true));
+    fun onSaveInstanceState(outState: Bundle) {
+        outState.putLong(KEY_CURRENT_TIME, mSelectedDay.toMillis(true))
     }
 
     /**
      * Updates the user preference fields. Override this to use a different
      * preference space.
      */
-    protected void doResumeUpdates() {
+    protected fun doResumeUpdates() {
         // Get default week start based on locale, subtracting one for use with android Time.
-        Calendar cal = Calendar.getInstance(Locale.getDefault());
-        mFirstDayOfWeek = cal.getFirstDayOfWeek() - 1;
-
-        mShowWeekNumber = false;
-
-        updateHeader();
-        goTo(mSelectedDay.toMillis(true), false, false, false);
-        mAdapter.setSelectedDay(mSelectedDay);
-        mTodayUpdater.run();
+        val cal: Calendar = Calendar.getInstance(Locale.getDefault())
+        mFirstDayOfWeek = cal.getFirstDayOfWeek() - 1
+        mShowWeekNumber = false
+        updateHeader()
+        goTo(mSelectedDay.toMillis(true), false, false, false)
+        mAdapter.setSelectedDay(mSelectedDay)
+        mTodayUpdater.run()
     }
 
     /**
      * Fixes the day names header to provide correct spacing and updates the
      * label text. Override this to set up a custom header.
      */
-    protected void updateHeader() {
-        TextView label = (TextView) mDayNamesHeader.findViewById(R.id.wk_label);
+    protected fun updateHeader() {
+        var label: TextView = mDayNamesHeader.findViewById(R.id.wk_label) as TextView
         if (mShowWeekNumber) {
-            label.setVisibility(View.VISIBLE);
+            label.setVisibility(View.VISIBLE)
         } else {
-            label.setVisibility(View.GONE);
+            label.setVisibility(View.GONE)
         }
-        int offset = mFirstDayOfWeek - 1;
-        for (int i = 1; i < 8; i++) {
-            label = (TextView) mDayNamesHeader.getChildAt(i);
+        val offset = mFirstDayOfWeek - 1
+        for (i in 1..7) {
+            label = mDayNamesHeader.getChildAt(i) as TextView
             if (i < mDaysPerWeek + 1) {
-                int position = (offset + i) % 7;
-                label.setText(mDayLabels[position]);
-                label.setVisibility(View.VISIBLE);
+                val position = (offset + i) % 7
+                label.setText(mDayLabels[position])
+                label.setVisibility(View.VISIBLE)
                 if (position == Time.SATURDAY) {
-                    label.setTextColor(mSaturdayColor);
+                    label.setTextColor(mSaturdayColor)
                 } else if (position == Time.SUNDAY) {
-                    label.setTextColor(mSundayColor);
+                    label.setTextColor(mSundayColor)
                 } else {
-                    label.setTextColor(mDayNameColor);
+                    label.setTextColor(mDayNameColor)
                 }
             } else {
-                label.setVisibility(View.GONE);
+                label.setVisibility(View.GONE)
             }
         }
-        mDayNamesHeader.invalidate();
+        mDayNamesHeader.invalidate()
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View v = inflater.inflate(R.layout.month_by_week,
-                container, false);
-        mDayNamesHeader = (ViewGroup) v.findViewById(R.id.day_names);
-        return v;
+    fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
+        val v: View = inflater.inflate(R.layout.month_by_week,
+                container, false)
+        mDayNamesHeader = v.findViewById(R.id.day_names) as ViewGroup
+        return v
     }
 
     /**
@@ -353,9 +326,8 @@ public class SimpleDayPickerFragment extends ListFragment implements OnScrollLis
      *
      * @return
      */
-    public long getSelectedTime() {
-        return mSelectedDay.toMillis(true);
-    }
+    val selectedTime: Long
+        get() = mSelectedDay.toMillis(true)
 
     /**
      * This moves to the specified time in the view. If the time is not already
@@ -366,130 +338,120 @@ public class SimpleDayPickerFragment extends ListFragment implements OnScrollLis
      *
      * @param time The time to move to
      * @param animate Whether to scroll to the given time or just redraw at the
-     *            new location
+     * new location
      * @param setSelected Whether to set the given time as selected
      * @param forceScroll Whether to recenter even if the time is already
-     *            visible
+     * visible
      * @return Whether or not the view animated to the new location
      */
-    public boolean goTo(long time, boolean animate, boolean setSelected, boolean forceScroll) {
-        if (time == -1) {
-            Log.e(TAG, "time is invalid");
-            return false;
+    fun goTo(time: Long, animate: Boolean, setSelected: Boolean, forceScroll: Boolean): Boolean {
+        if (time == -1L) {
+            Log.e(TAG, "time is invalid")
+            return false
         }
 
         // Set the selected day
         if (setSelected) {
-            mSelectedDay.set(time);
-            mSelectedDay.normalize(true);
+            mSelectedDay.set(time)
+            mSelectedDay.normalize(true)
         }
 
         // If this view isn't returned yet we won't be able to load the lists
         // current position, so return after setting the selected day.
         if (!isResumed()) {
             if (Log.isLoggable(TAG, Log.DEBUG)) {
-                Log.d(TAG, "We're not visible yet");
+                Log.d(TAG, "We're not visible yet")
             }
-            return false;
+            return false
         }
-
-        mTempTime.set(time);
-        long millis = mTempTime.normalize(true);
+        mTempTime.set(time)
+        var millis: Long = mTempTime.normalize(true)
         // Get the week we're going to
         // TODO push Util function into Calendar public api.
-        int position = Utils.getWeeksSinceEpochFromJulianDay(
-                Time.getJulianDay(millis, mTempTime.gmtoff), mFirstDayOfWeek);
-
-        View child;
-        int i = 0;
-        int top = 0;
+        var position: Int = Utils.getWeeksSinceEpochFromJulianDay(
+                Time.getJulianDay(millis, mTempTime.gmtoff), mFirstDayOfWeek)
+        var child: View
+        var i = 0
+        var top = 0
         // Find a child that's completely in the view
         do {
-            child = mListView.getChildAt(i++);
+            child = mListView.getChildAt(i++)
             if (child == null) {
-                break;
+                break
             }
-            top = child.getTop();
+            top = child.getTop()
             if (Log.isLoggable(TAG, Log.DEBUG)) {
-                Log.d(TAG, "child at " + (i-1) + " has top " + top);
+                Log.d(TAG, "child at " + (i - 1) + " has top " + top)
             }
-        } while (top < 0);
+        } while (top < 0)
 
         // Compute the first and last position visible
-        int firstPosition;
-        if (child != null) {
-            firstPosition = mListView.getPositionForView(child);
+        val firstPosition: Int
+        firstPosition = if (child != null) {
+            mListView.getPositionForView(child)
         } else {
-            firstPosition = 0;
+            0
         }
-        int lastPosition = firstPosition + mNumWeeks - 1;
+        var lastPosition = firstPosition + mNumWeeks - 1
         if (top > BOTTOM_BUFFER) {
-            lastPosition--;
+            lastPosition--
         }
-
         if (setSelected) {
-            mAdapter.setSelectedDay(mSelectedDay);
+            mAdapter.setSelectedDay(mSelectedDay)
         }
-
         if (Log.isLoggable(TAG, Log.DEBUG)) {
-            Log.d(TAG, "GoTo position " + position);
+            Log.d(TAG, "GoTo position $position")
         }
         // Check if the selected day is now outside of our visible range
         // and if so scroll to the month that contains it
         if (position < firstPosition || position > lastPosition || forceScroll) {
-            mFirstDayOfMonth.set(mTempTime);
-            mFirstDayOfMonth.monthDay = 1;
-            millis = mFirstDayOfMonth.normalize(true);
-            setMonthDisplayed(mFirstDayOfMonth, true);
+            mFirstDayOfMonth.set(mTempTime)
+            mFirstDayOfMonth.monthDay = 1
+            millis = mFirstDayOfMonth.normalize(true)
+            setMonthDisplayed(mFirstDayOfMonth, true)
             position = Utils.getWeeksSinceEpochFromJulianDay(
-                    Time.getJulianDay(millis, mFirstDayOfMonth.gmtoff), mFirstDayOfWeek);
-
-            mPreviousScrollState = OnScrollListener.SCROLL_STATE_FLING;
+                    Time.getJulianDay(millis, mFirstDayOfMonth.gmtoff), mFirstDayOfWeek)
+            mPreviousScrollState = OnScrollListener.SCROLL_STATE_FLING
             if (animate) {
                 mListView.smoothScrollToPositionFromTop(
-                        position, LIST_TOP_OFFSET, GOTO_SCROLL_DURATION);
-                return true;
+                        position, LIST_TOP_OFFSET, GOTO_SCROLL_DURATION)
+                return true
             } else {
-                mListView.setSelectionFromTop(position, LIST_TOP_OFFSET);
+                mListView.setSelectionFromTop(position, LIST_TOP_OFFSET)
                 // Perform any after scroll operations that are needed
-                onScrollStateChanged(mListView, OnScrollListener.SCROLL_STATE_IDLE);
+                onScrollStateChanged(mListView, OnScrollListener.SCROLL_STATE_IDLE)
             }
         } else if (setSelected) {
             // Otherwise just set the selection
-            setMonthDisplayed(mSelectedDay, true);
+            setMonthDisplayed(mSelectedDay, true)
         }
-        return false;
+        return false
     }
 
-     /**
+    /**
      * Updates the title and selected month if the view has moved to a new
      * month.
      */
     @Override
-    public void onScroll(
-            AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
-        SimpleWeekView child = (SimpleWeekView)view.getChildAt(0);
-        if (child == null) {
-            return;
-        }
+    fun onScroll(
+            view: AbsListView, firstVisibleItem: Int, visibleItemCount: Int, totalItemCount: Int) {
+        val child: SimpleWeekView = view.getChildAt(0) as SimpleWeekView ?: return
 
         // Figure out where we are
-        long currScroll = view.getFirstVisiblePosition() * child.getHeight() - child.getBottom();
-        mFirstVisibleDay.setJulianDay(child.getFirstJulianDay());
+        val currScroll: Long = view.getFirstVisiblePosition() * child.getHeight() - child.getBottom()
+        mFirstVisibleDay.setJulianDay(child.getFirstJulianDay())
 
         // If we have moved since our last call update the direction
-        if (currScroll < mPreviousScrollPosition) {
-            mIsScrollingUp = true;
+        mIsScrollingUp = if (currScroll < mPreviousScrollPosition) {
+            true
         } else if (currScroll > mPreviousScrollPosition) {
-            mIsScrollingUp = false;
+            false
         } else {
-            return;
+            return
         }
-
-        mPreviousScrollPosition = currScroll;
-        mPreviousScrollState = mCurrentScrollState;
-
-        updateMonthHighlight(mListView);
+        mPreviousScrollPosition = currScroll
+        mPreviousScrollState = mCurrentScrollState
+        updateMonthHighlight(mListView)
     }
 
     /**
@@ -498,53 +460,49 @@ public class SimpleDayPickerFragment extends ListFragment implements OnScrollLis
      *
      * @param view The ListView containing the weeks
      */
-    private void updateMonthHighlight(AbsListView view) {
-        SimpleWeekView child = (SimpleWeekView) view.getChildAt(0);
-        if (child == null) {
-            return;
-        }
+    private fun updateMonthHighlight(view: AbsListView) {
+        var child: SimpleWeekView = view.getChildAt(0) as SimpleWeekView ?: return
 
         // Figure out where we are
-        int offset = child.getBottom() < WEEK_MIN_VISIBLE_HEIGHT ? 1 : 0;
+        val offset = if (child.getBottom() < WEEK_MIN_VISIBLE_HEIGHT) 1 else 0
         // Use some hysteresis for checking which month to highlight. This
         // causes the month to transition when two full weeks of a month are
         // visible.
-        child = (SimpleWeekView) view.getChildAt(SCROLL_HYST_WEEKS + offset);
-
+        child = view.getChildAt(SCROLL_HYST_WEEKS + offset) as SimpleWeekView
         if (child == null) {
-            return;
+            return
         }
 
         // Find out which month we're moving into
-        int month;
-        if (mIsScrollingUp) {
-            month = child.getFirstMonth();
+        val month: Int
+        month = if (mIsScrollingUp) {
+            child.getFirstMonth()
         } else {
-            month = child.getLastMonth();
+            child.getLastMonth()
         }
 
         // And how it relates to our current highlighted month
-        int monthDiff;
-        if (mCurrentMonthDisplayed == 11 && month == 0) {
-            monthDiff = 1;
+        val monthDiff: Int
+        monthDiff = if (mCurrentMonthDisplayed == 11 && month == 0) {
+            1
         } else if (mCurrentMonthDisplayed == 0 && month == 11) {
-            monthDiff = -1;
+            -1
         } else {
-            monthDiff = month - mCurrentMonthDisplayed;
+            month - mCurrentMonthDisplayed
         }
 
         // Only switch months if we're scrolling away from the currently
         // selected month
         if (monthDiff != 0) {
-            int julianDay = child.getFirstJulianDay();
+            var julianDay: Int = child.getFirstJulianDay()
             if (mIsScrollingUp) {
                 // Takes the start of the week
             } else {
                 // Takes the start of the following week
-                julianDay += DAYS_PER_WEEK;
+                julianDay += DAYS_PER_WEEK
             }
-            mTempTime.setJulianDay(julianDay);
-            setMonthDisplayed(mTempTime, false);
+            mTempTime.setJulianDay(julianDay)
+            setMonthDisplayed(mTempTime, false)
         }
     }
 
@@ -555,30 +513,30 @@ public class SimpleDayPickerFragment extends ListFragment implements OnScrollLis
      * @param time A day in the new focus month.
      * @param updateHighlight TODO(epastern):
      */
-    protected void setMonthDisplayed(Time time, boolean updateHighlight) {
-        CharSequence oldMonth = mMonthName.getText();
-        mMonthName.setText(Utils.formatMonthYear(mContext, time));
-        mMonthName.invalidate();
+    protected fun setMonthDisplayed(time: Time, updateHighlight: Boolean) {
+        val oldMonth: CharSequence = mMonthName.getText()
+        mMonthName.setText(Utils.formatMonthYear(mContext, time))
+        mMonthName.invalidate()
         if (!TextUtils.equals(oldMonth, mMonthName.getText())) {
-            mMonthName.sendAccessibilityEvent(AccessibilityEvent.TYPE_VIEW_FOCUSED);
+            mMonthName.sendAccessibilityEvent(AccessibilityEvent.TYPE_VIEW_FOCUSED)
         }
-        mCurrentMonthDisplayed = time.month;
+        mCurrentMonthDisplayed = time.month
         if (updateHighlight) {
-            mAdapter.updateFocusMonth(mCurrentMonthDisplayed);
+            mAdapter.updateFocusMonth(mCurrentMonthDisplayed)
         }
     }
 
     @Override
-    public void onScrollStateChanged(AbsListView view, int scrollState) {
+    fun onScrollStateChanged(view: AbsListView?, scrollState: Int) {
         // use a post to prevent re-entering onScrollStateChanged before it
         // exits
-        mScrollStateChangedRunnable.doScrollStateChange(view, scrollState);
+        mScrollStateChangedRunnable.doScrollStateChange(view, scrollState)
     }
 
-    protected ScrollStateRunnable mScrollStateChangedRunnable = new ScrollStateRunnable();
+    protected var mScrollStateChangedRunnable: ScrollStateRunnable = ScrollStateRunnable()
 
-    protected class ScrollStateRunnable implements Runnable {
-        private int mNewState;
+    protected inner class ScrollStateRunnable : Runnable {
+        private var mNewState = 0
 
         /**
          * Sets up the runnable with a short delay in case the scroll state
@@ -587,26 +545,54 @@ public class SimpleDayPickerFragment extends ListFragment implements OnScrollLis
          * @param view The list view that changed state
          * @param scrollState The new state it changed to
          */
-        public void doScrollStateChange(AbsListView view, int scrollState) {
-            mHandler.removeCallbacks(this);
-            mNewState = scrollState;
-            mHandler.postDelayed(this, SCROLL_CHANGE_DELAY);
+        fun doScrollStateChange(view: AbsListView?, scrollState: Int) {
+            mHandler.removeCallbacks(this)
+            mNewState = scrollState
+            mHandler.postDelayed(this, SCROLL_CHANGE_DELAY)
         }
 
-        public void run() {
-            mCurrentScrollState = mNewState;
+        fun run() {
+            mCurrentScrollState = mNewState
             if (Log.isLoggable(TAG, Log.DEBUG)) {
                 Log.d(TAG,
-                        "new scroll state: " + mNewState + " old state: " + mPreviousScrollState);
+                        "new scroll state: $mNewState old state: $mPreviousScrollState")
             }
             // Fix the position after a scroll or a fling ends
             if (mNewState == OnScrollListener.SCROLL_STATE_IDLE
                     && mPreviousScrollState != OnScrollListener.SCROLL_STATE_IDLE) {
-                mPreviousScrollState = mNewState;
-                mAdapter.updateFocusMonth(mCurrentMonthDisplayed);
+                mPreviousScrollState = mNewState
+                mAdapter.updateFocusMonth(mCurrentMonthDisplayed)
             } else {
-                mPreviousScrollState = mNewState;
+                mPreviousScrollState = mNewState
             }
         }
+    }
+
+    companion object {
+        private const val TAG = "MonthFragment"
+        private const val KEY_CURRENT_TIME = "current_time"
+
+        // Affects when the month selection will change while scrolling up
+        protected const val SCROLL_HYST_WEEKS = 2
+
+        // How long the GoTo fling animation should last
+        protected const val GOTO_SCROLL_DURATION = 500
+
+        // How long to wait after receiving an onScrollStateChanged notification
+        // before acting on it
+        protected const val SCROLL_CHANGE_DELAY = 40
+
+        // The number of days to display in each week
+        const val DAYS_PER_WEEK = 7
+
+        // The size of the month name displayed above the week list
+        protected const val MINI_MONTH_NAME_TEXT_SIZE = 18
+        var LIST_TOP_OFFSET = -1 // so that the top line will be under the separator
+        private var mScale = 0f
+    }
+
+    init {
+        goTo(initialTime, false, true, true)
+        mHandler = Handler()
     }
 }
