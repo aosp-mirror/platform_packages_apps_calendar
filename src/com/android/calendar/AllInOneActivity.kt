@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,61 @@
 package com.android.calendar
 
 import android.accounts.AccountManager
+import android.accounts.AccountManagerCallback
+import android.accounts.AccountManagerFuture
+import android.animation.Animator
+import android.animation.Animator.AnimatorListener
+import android.animation.ObjectAnimator
+import android.app.ActionBar
+import android.app.ActionBar.Tab
+import android.app.Activity
+import android.app.Fragment
+import android.app.FragmentManager
+import android.app.FragmentTransaction
+import android.content.AsyncQueryHandler
+import android.content.ContentResolver
+import android.content.Intent
+import android.content.SharedPreferences
+import android.content.SharedPreferences.OnSharedPreferenceChangeListener
+import android.content.res.Configuration
+import android.content.res.Resources
+import android.database.ContentObserver
+import android.database.Cursor
+import android.graphics.drawable.LayerDrawable
+import android.net.Uri
+import android.os.Bundle
+import android.os.Handler
+import android.provider.CalendarContract
+import android.provider.CalendarContract.Attendees
+import android.provider.CalendarContract.Calendars
+import android.provider.CalendarContract.Events
+import android.text.TextUtils
+import android.text.format.DateFormat
+import android.text.format.DateUtils
+import android.text.format.Time
+import android.util.Log
+import android.view.Menu
+import android.view.MenuItem
+import android.view.View
+import android.view.accessibility.AccessibilityEvent
+import android.widget.LinearLayout
+import android.widget.RelativeLayout
+import android.widget.RelativeLayout.LayoutParams
+import android.widget.TextView
+import com.android.calendar.CalendarController.EventHandler
+import com.android.calendar.CalendarController.EventInfo
+import com.android.calendar.CalendarController.EventType
+import com.android.calendar.CalendarController.ViewType
+import com.android.calendar.month.MonthByWeekFragment
+import java.util.Locale
+import java.util.TimeZone
+import android.provider.CalendarContract.Attendees.ATTENDEE_STATUS
+import android.provider.CalendarContract.EXTRA_EVENT_ALL_DAY
+import android.provider.CalendarContract.EXTRA_EVENT_BEGIN_TIME
+import android.provider.CalendarContract.EXTRA_EVENT_END_TIME
 
 class AllInOneActivity : Activity(), EventHandler, OnSharedPreferenceChangeListener,
-                         ActionBar.TabListener, ActionBar.OnNavigationListener {
+    ActionBar.TabListener, ActionBar.OnNavigationListener {
     private var mController: CalendarController? = null
     private var mOnSaveInstanceStateCalled = false
     private var mBackToPreviousView = false
@@ -68,31 +120,31 @@ class AllInOneActivity : Activity(), EventHandler, OnSharedPreferenceChangeListe
     // Params for animating the controls on the right
     private var mControlsParams: LayoutParams? = null
     private var mVerticalControlsParams: LinearLayout.LayoutParams? = null
-    private val mSlideAnimationDoneListener: AnimatorListener = object : AnimatorListener() {
+    private val mSlideAnimationDoneListener: AnimatorListener = object : AnimatorListener {
         @Override
-        fun onAnimationCancel(animation: Animator?) {
+        override fun onAnimationCancel(animation: Animator?) {
         }
 
         @Override
-        fun onAnimationEnd(animation: Animator?) {
+        override fun onAnimationEnd(animation: Animator?) {
             val visibility: Int = if (mShowSideViews) View.VISIBLE else View.GONE
-            mMiniMonth.setVisibility(visibility)
-            mCalendarsList.setVisibility(visibility)
-            mMiniMonthContainer.setVisibility(visibility)
+            mMiniMonth?.setVisibility(visibility)
+            mCalendarsList?.setVisibility(visibility)
+            mMiniMonthContainer?.setVisibility(visibility)
         }
 
         @Override
-        fun onAnimationRepeat(animation: Animator?) {
+        override fun onAnimationRepeat(animation: Animator?) {
         }
 
         @Override
-        fun onAnimationStart(animation: Animator?) {
+        override fun onAnimationStart(animation: Animator?) {
         }
     }
 
     private inner class QueryHandler(cr: ContentResolver?) : AsyncQueryHandler(cr) {
         @Override
-        protected fun onQueryComplete(token: Int, cookie: Object?, cursor: Cursor?) {
+        protected override fun onQueryComplete(token: Int, cookie: Any?, cursor: Cursor?) {
             mCheckForAccounts = false
             try {
                 // If the query didn't return a cursor for some reason return
@@ -112,19 +164,19 @@ class AllInOneActivity : Activity(), EventHandler, OnSharedPreferenceChangeListe
             options.putBoolean("allowSkip", true)
             val am: AccountManager = AccountManager.get(this@AllInOneActivity)
             am.addAccount("com.google", CalendarContract.AUTHORITY, null, options,
-                          this@AllInOneActivity,
-                          object : AccountManagerCallback<Bundle?>() {
-                              @Override
-                              fun run(future: AccountManagerFuture<Bundle?>?) {
-                              }
-                          }, null
+                this@AllInOneActivity,
+                    object : AccountManagerCallback<Bundle?> {
+                        @Override
+                        override fun run(future: AccountManagerFuture<Bundle?>?) {
+                        }
+                    }, null
             )
         }
     }
 
-    private val mHomeTimeUpdater: Runnable = object : Runnable() {
+    private val mHomeTimeUpdater: Runnable = object : Runnable {
         @Override
-        fun run() {
+        override fun run() {
             mTimeZone = Utils.getTimeZone(this@AllInOneActivity, this)
             updateSecondaryTitleFields(-1)
             this@AllInOneActivity.invalidateOptionsMenu()
@@ -133,9 +185,9 @@ class AllInOneActivity : Activity(), EventHandler, OnSharedPreferenceChangeListe
     }
 
     // runs every midnight/time changes and refreshes the today icon
-    private val mTimeChangesUpdater: Runnable = object : Runnable() {
+    private val mTimeChangesUpdater: Runnable = object : Runnable {
         @Override
-        fun run() {
+        override fun run() {
             mTimeZone = Utils.getTimeZone(this@AllInOneActivity, mHomeTimeUpdater)
             this@AllInOneActivity.invalidateOptionsMenu()
             Utils.setMidnightUpdater(mHandler, this, mTimeZone)
@@ -146,39 +198,40 @@ class AllInOneActivity : Activity(), EventHandler, OnSharedPreferenceChangeListe
     // Calendar event changes.
     private val mObserver: ContentObserver = object : ContentObserver(Handler()) {
         @Override
-        fun deliverSelfNotifications(): Boolean {
+        override fun deliverSelfNotifications(): Boolean {
             return true
         }
 
         @Override
-        fun onChange(selfChange: Boolean) {
+        override fun onChange(selfChange: Boolean) {
             eventsChanged()
         }
     }
 
     @Override
-    protected fun onNewIntent(intent: Intent) {
-        val action: String = intent.getAction()
+    protected override fun onNewIntent(intent: Intent) {
+        val action: String? = intent.getAction()
         if (DEBUG) Log.d(TAG, "New intent received " + intent.toString())
         // Don't change the date if we're just returning to the app's home
-        if (Intent.ACTION_VIEW.equals(action)
-            && !intent.getBooleanExtra(Utils.INTENT_KEY_HOME, false)
+        if (Intent.ACTION_VIEW.equals(action) &&
+            !intent.getBooleanExtra(Utils.INTENT_KEY_HOME, false)
         ) {
             var millis = parseViewAction(intent)
             if (millis == -1L) {
-                millis = Utils.timeFromIntentInMillis(intent)
+                millis = Utils.timeFromIntentInMillis(intent) as Long
             }
             if (millis != -1L && mViewEventId == -1L && mController != null) {
                 val time = Time(mTimeZone)
                 time.set(millis)
                 time.normalize(true)
-                mController.sendEvent(this, EventType.GO_TO, time, time, -1, ViewType.CURRENT)
+                mController?.sendEvent(this as Object?, EventType.GO_TO, time, time, -1,
+                    ViewType.CURRENT)
             }
         }
     }
 
     @Override
-    protected fun onCreate(icicle: Bundle?) {
+    protected override fun onCreate(icicle: Bundle?) {
         super.onCreate(icicle)
         if (icicle != null && icicle.containsKey(BUNDLE_KEY_CHECK_ACCOUNTS)) {
             mCheckForAccounts = icicle.getBoolean(BUNDLE_KEY_CHECK_ACCOUNTS)
@@ -187,7 +240,7 @@ class AllInOneActivity : Activity(), EventHandler, OnSharedPreferenceChangeListe
         // accounts yet
         if (mCheckForAccounts) {
             mHandler = QueryHandler(this.getContentResolver())
-            mHandler.startQuery(
+            mHandler?.startQuery(
                 0, null, Calendars.CONTENT_URI, arrayOf<String>(
                     Calendars._ID
                 ), null, null /* selection args */, null /* sort order */
@@ -197,7 +250,6 @@ class AllInOneActivity : Activity(), EventHandler, OnSharedPreferenceChangeListe
         // This needs to be created before setContentView
         mController = CalendarController.getInstance(this)
 
-
         // Get time from intent or icicle
         var timeMillis: Long = -1
         var viewType = -1
@@ -206,13 +258,13 @@ class AllInOneActivity : Activity(), EventHandler, OnSharedPreferenceChangeListe
             timeMillis = icicle.getLong(BUNDLE_KEY_RESTORE_TIME)
             viewType = icicle.getInt(BUNDLE_KEY_RESTORE_VIEW, -1)
         } else {
-            val action: String = intent.getAction()
+            val action: String? = intent.getAction()
             if (Intent.ACTION_VIEW.equals(action)) {
                 // Open EventInfo later
                 timeMillis = parseViewAction(intent)
             }
             if (timeMillis == -1L) {
-                timeMillis = Utils.timeFromIntentInMillis(intent)
+                timeMillis = Utils.timeFromIntentInMillis(intent) as Long
             }
         }
         if (viewType == -1 || viewType > ViewType.MAX_VALUE) {
@@ -236,23 +288,24 @@ class AllInOneActivity : Activity(), EventHandler, OnSharedPreferenceChangeListe
         mShowString = res.getString(R.string.show_controls)
         mOrientation = res.getConfiguration().orientation
         if (mOrientation == Configuration.ORIENTATION_LANDSCAPE) {
-            mControlsAnimateWidth = res.getDimension(R.dimen.calendar_controls_width)
+            mControlsAnimateWidth = res.getDimension(R.dimen.calendar_controls_width).toInt()
             if (mControlsParams == null) {
                 mControlsParams = LayoutParams(mControlsAnimateWidth, 0)
             }
-            mControlsParams.addRule(RelativeLayout.ALIGN_PARENT_RIGHT)
+            mControlsParams?.addRule(RelativeLayout.ALIGN_PARENT_RIGHT)
+                as RelativeLayout.LayoutParams
         } else {
             // Make sure width is in between allowed min and max width values
             mControlsAnimateWidth = Math.max(
                 res.getDisplayMetrics().widthPixels * 45 / 100,
-                res.getDimension(R.dimen.min_portrait_calendar_controls_width) as Int
+                res.getDimension(R.dimen.min_portrait_calendar_controls_width).toInt()
             )
             mControlsAnimateWidth = Math.min(
                 mControlsAnimateWidth,
-                res.getDimension(R.dimen.max_portrait_calendar_controls_width) as Int
+                res.getDimension(R.dimen.max_portrait_calendar_controls_width).toInt()
             )
         }
-        mControlsAnimateHeight = res.getDimension(R.dimen.calendar_controls_height)
+        mControlsAnimateHeight = res?.getDimension(R.dimen.calendar_controls_height).toInt()
         mHideControls = true
         mIsMultipane = Utils.getConfigBool(this, R.bool.multiple_pane_config)
         mIsTabletConfig = Utils.getConfigBool(this, R.bool.tablet_config)
@@ -277,7 +330,7 @@ class AllInOneActivity : Activity(), EventHandler, OnSharedPreferenceChangeListe
         mHomeTime = findViewById(R.id.home_time) as TextView?
         mMiniMonth = findViewById(R.id.mini_month)
         if (mIsTabletConfig && mOrientation == Configuration.ORIENTATION_PORTRAIT) {
-            mMiniMonth.setLayoutParams(
+            mMiniMonth?.setLayoutParams(
                 LayoutParams(
                     mControlsAnimateWidth,
                     mControlsAnimateHeight
@@ -291,30 +344,31 @@ class AllInOneActivity : Activity(), EventHandler, OnSharedPreferenceChangeListe
         // Must register as the first activity because this activity can modify
         // the list of event handlers in it's handle method. This affects who
         // the rest of the handlers the controller dispatches to are.
-        mController.registerFirstEventHandler(HANDLER_KEY, this)
+        mController?.registerFirstEventHandler(HANDLER_KEY, this)
         initFragments(timeMillis, viewType, icicle)
 
         // Listen for changes that would require this to be refreshed
-        val prefs: SharedPreferences = GeneralPreferences.getSharedPreferences(this)
-        prefs.registerOnSharedPreferenceChangeListener(this)
+        val prefs: SharedPreferences? = GeneralPreferences.getSharedPreferences(this)
+        prefs?.registerOnSharedPreferenceChangeListener(this)
         mContentResolver = getContentResolver()
     }
 
     private fun parseViewAction(intent: Intent?): Long {
         var timeMillis: Long = -1
-        val data: Uri = intent.getData()
-        if (data != null && data.isHierarchical()) {
-            val path: List<String> = data.getPathSegments()
-            if (path.size() === 2 && path[0].equals("events")) {
+        val data: Uri? = intent?.getData()
+        if (data != null && data?.isHierarchical()) {
+            val path = data.getPathSegments()
+            if (path?.size == 2 && path!![0].equals("events")) {
                 try {
-                    mViewEventId = Long.valueOf(data.getLastPathSegment())
+                    mViewEventId = data.getLastPathSegment()?.toLong() as Long
                     if (mViewEventId != -1L) {
-                        mIntentEventStartMillis = intent.getLongExtra(EXTRA_EVENT_BEGIN_TIME, 0)
-                        mIntentEventEndMillis = intent.getLongExtra(EXTRA_EVENT_END_TIME, 0)
-                        mIntentAttendeeResponse = intent.getIntExtra(
+                        mIntentEventStartMillis = intent?.getLongExtra(EXTRA_EVENT_BEGIN_TIME, 0)
+                        mIntentEventEndMillis = intent?.getLongExtra(EXTRA_EVENT_END_TIME, 0)
+                        mIntentAttendeeResponse = intent?.getIntExtra(
                             ATTENDEE_STATUS, Attendees.ATTENDEE_STATUS_NONE
                         )
-                        mIntentAllDay = intent.getBooleanExtra(EXTRA_EVENT_ALL_DAY, false)
+                        mIntentAllDay = intent?.getBooleanExtra(EXTRA_EVENT_ALL_DAY, false)
+                            as Boolean
                         timeMillis = mIntentEventStartMillis
                     }
                 } catch (e: NumberFormatException) {
@@ -328,11 +382,11 @@ class AllInOneActivity : Activity(), EventHandler, OnSharedPreferenceChangeListe
     private fun configureActionBar(viewType: Int) {
         createButtonsSpinner(viewType, mIsTabletConfig)
         if (mIsMultipane) {
-            mActionBar.setDisplayOptions(
+            mActionBar?.setDisplayOptions(
                 ActionBar.DISPLAY_SHOW_CUSTOM or ActionBar.DISPLAY_SHOW_HOME
             )
         } else {
-            mActionBar.setDisplayOptions(0)
+            mActionBar?.setDisplayOptions(0)
         }
     }
 
@@ -340,15 +394,15 @@ class AllInOneActivity : Activity(), EventHandler, OnSharedPreferenceChangeListe
         // If tablet configuration , show spinner with no dates
         mActionBarMenuSpinnerAdapter = CalendarViewAdapter(this, viewType, !tabletConfig)
         mActionBar = getActionBar()
-        mActionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_LIST)
-        mActionBar.setListNavigationCallbacks(mActionBarMenuSpinnerAdapter, this)
+        mActionBar?.setNavigationMode(ActionBar.NAVIGATION_MODE_LIST)
+        mActionBar?.setListNavigationCallbacks(mActionBarMenuSpinnerAdapter, this)
         when (viewType) {
             ViewType.AGENDA -> {
             }
-            ViewType.DAY -> mActionBar.setSelectedNavigationItem(BUTTON_DAY_INDEX)
-            ViewType.WEEK -> mActionBar.setSelectedNavigationItem(BUTTON_WEEK_INDEX)
-            ViewType.MONTH -> mActionBar.setSelectedNavigationItem(BUTTON_MONTH_INDEX)
-            else -> mActionBar.setSelectedNavigationItem(BUTTON_DAY_INDEX)
+            ViewType.DAY -> mActionBar?.setSelectedNavigationItem(BUTTON_DAY_INDEX)
+            ViewType.WEEK -> mActionBar?.setSelectedNavigationItem(BUTTON_WEEK_INDEX)
+            ViewType.MONTH -> mActionBar?.setSelectedNavigationItem(BUTTON_MONTH_INDEX)
+            else -> mActionBar?.setSelectedNavigationItem(BUTTON_DAY_INDEX)
         }
     }
 
@@ -357,14 +411,14 @@ class AllInOneActivity : Activity(), EventHandler, OnSharedPreferenceChangeListe
         if (mOptionsMenu == null) {
             return
         }
-        val cancelItem: MenuItem = mOptionsMenu.findItem(R.id.action_cancel)
+        val cancelItem: MenuItem? = mOptionsMenu?.findItem(R.id.action_cancel)
         if (cancelItem != null) {
-            cancelItem.setVisible(false)
+            cancelItem?.setVisible(false)
         }
     }
 
     @Override
-    protected fun onResume() {
+    protected override fun onResume() {
         super.onResume()
 
         // Check if the upgrade code has ever been run. If not, force a sync just this one time.
@@ -373,28 +427,28 @@ class AllInOneActivity : Activity(), EventHandler, OnSharedPreferenceChangeListe
         // Must register as the first activity because this activity can modify
         // the list of event handlers in it's handle method. This affects who
         // the rest of the handlers the controller dispatches to are.
-        mController.registerFirstEventHandler(HANDLER_KEY, this)
+        mController?.registerFirstEventHandler(HANDLER_KEY, this)
         mOnSaveInstanceStateCalled = false
-        mContentResolver.registerContentObserver(
+        mContentResolver?.registerContentObserver(
             CalendarContract.Events.CONTENT_URI,
             true, mObserver
         )
         if (mUpdateOnResume) {
-            initFragments(mController.getTime(), mController.getViewType(), null)
+            initFragments(mController?.time as Long, mController?.viewType as Int, null)
             mUpdateOnResume = false
         }
         val t = Time(mTimeZone)
-        t.set(mController.getTime())
-        mController.sendEvent(
-            this, EventType.UPDATE_TITLE, t, t, -1, ViewType.CURRENT,
-            mController.getDateFlags(), null, null
+        t.set(mController?.time as Long)
+        mController?.sendEvent(
+            this as Object?, EventType.UPDATE_TITLE, t, t, -1, ViewType.CURRENT,
+            mController?.dateFlags as Long, null, null
         )
         // Make sure the drop-down menu will get its date updated at midnight
         if (mActionBarMenuSpinnerAdapter != null) {
-            mActionBarMenuSpinnerAdapter.refresh(this)
+            mActionBarMenuSpinnerAdapter?.refresh(this)
         }
         if (mControlsMenu != null) {
-            mControlsMenu.setTitle(if (mHideControls) mShowString else mHideString)
+            mControlsMenu?.setTitle(if (mHideControls) mShowString else mHideString)
         }
         mPaused = false
         if (mViewEventId != -1L && mIntentEventStartMillis != -1L && mIntentEventEndMillis != -1L) {
@@ -403,8 +457,8 @@ class AllInOneActivity : Activity(), EventHandler, OnSharedPreferenceChangeListe
             if (currentMillis > mIntentEventStartMillis && currentMillis < mIntentEventEndMillis) {
                 selectedTime = currentMillis
             }
-            mController.sendEventRelatedEventWithExtra(
-                this, EventType.VIEW_EVENT, mViewEventId,
+            mController?.sendEventRelatedEventWithExtra(
+                this as Object?, EventType.VIEW_EVENT, mViewEventId,
                 mIntentEventStartMillis, mIntentEventEndMillis, -1, -1,
                 EventInfo.buildViewExtraLong(mIntentAttendeeResponse, mIntentAllDay),
                 selectedTime
@@ -420,45 +474,46 @@ class AllInOneActivity : Activity(), EventHandler, OnSharedPreferenceChangeListe
     }
 
     @Override
-    protected fun onPause() {
+    protected override fun onPause() {
         super.onPause()
-        mController.deregisterEventHandler(HANDLER_KEY)
+        mController?.deregisterEventHandler(HANDLER_KEY)
         mPaused = true
-        mHomeTime.removeCallbacks(mHomeTimeUpdater)
+        mHomeTime?.removeCallbacks(mHomeTimeUpdater)
         if (mActionBarMenuSpinnerAdapter != null) {
-            mActionBarMenuSpinnerAdapter.onPause()
+            mActionBarMenuSpinnerAdapter?.onPause()
         }
-        mContentResolver.unregisterContentObserver(mObserver)
+        mContentResolver?.unregisterContentObserver(mObserver)
         if (isFinishing()) {
             // Stop listening for changes that would require this to be refreshed
-            val prefs: SharedPreferences = GeneralPreferences.getSharedPreferences(this)
-            prefs.unregisterOnSharedPreferenceChangeListener(this)
+            val prefs: SharedPreferences? = GeneralPreferences.getSharedPreferences(this)
+            prefs?.unregisterOnSharedPreferenceChangeListener(this)
         }
         // FRAG_TODO save highlighted days of the week;
-        if (mController.getViewType() !== ViewType.EDIT) {
-            Utils.setDefaultView(this, mController.getViewType())
+        if (mController?.viewType != ViewType.EDIT) {
+            Utils.setDefaultView(this, mController?.viewType as Int)
         }
         Utils.resetMidnightUpdater(mHandler, mTimeChangesUpdater)
     }
 
     @Override
-    protected fun onUserLeaveHint() {
-        mController.sendEvent(this, EventType.USER_HOME, null, null, -1, ViewType.CURRENT)
+    protected override fun onUserLeaveHint() {
+        mController?.sendEvent(this as Object?, EventType.USER_HOME, null, null, -1,
+            ViewType.CURRENT)
         super.onUserLeaveHint()
     }
 
     @Override
-    fun onSaveInstanceState(outState: Bundle?) {
+    override fun onSaveInstanceState(outState: Bundle) {
         mOnSaveInstanceStateCalled = true
         super.onSaveInstanceState(outState)
     }
 
     @Override
-    protected fun onDestroy() {
+    protected override fun onDestroy() {
         super.onDestroy()
-        val prefs: SharedPreferences = GeneralPreferences.getSharedPreferences(this)
-        prefs.unregisterOnSharedPreferenceChangeListener(this)
-        mController.deregisterAllEventHandlers()
+        val prefs: SharedPreferences? = GeneralPreferences.getSharedPreferences(this)
+        prefs?.unregisterOnSharedPreferenceChangeListener(this)
+        mController?.deregisterAllEventHandlers()
         CalendarController.removeInstance(this)
     }
 
@@ -470,23 +525,23 @@ class AllInOneActivity : Activity(), EventHandler, OnSharedPreferenceChangeListe
         if (mShowCalendarControls) {
             val miniMonthFrag: Fragment = MonthByWeekFragment(timeMillis, true)
             ft.replace(R.id.mini_month, miniMonthFrag)
-            mController.registerEventHandler(R.id.mini_month, miniMonthFrag as EventHandler)
+            mController?.registerEventHandler(R.id.mini_month, miniMonthFrag as EventHandler)
         }
         if (!mShowCalendarControls || viewType == ViewType.EDIT) {
-            mMiniMonth.setVisibility(View.GONE)
-            mCalendarsList.setVisibility(View.GONE)
+            mMiniMonth?.setVisibility(View.GONE)
+            mCalendarsList?.setVisibility(View.GONE)
         }
         var info: EventInfo? = null
         if (viewType == ViewType.EDIT) {
-            mPreviousView = GeneralPreferences.getSharedPreferences(this).getInt(
+            mPreviousView = GeneralPreferences.getSharedPreferences(this)?.getInt(
                 GeneralPreferences.KEY_START_VIEW, GeneralPreferences.DEFAULT_START_VIEW
-            )
+            ) as Int
             var eventId: Long = -1
             val intent: Intent = getIntent()
-            val data: Uri = intent.getData()
+            val data: Uri? = intent.getData()
             if (data != null) {
                 try {
-                    eventId = Long.parseLong(data.getLastPathSegment())
+                    eventId = data?.getLastPathSegment()?.toLong() as Long
                 } catch (e: NumberFormatException) {
                     if (DEBUG) {
                         Log.d(TAG, "Create new event")
@@ -499,19 +554,19 @@ class AllInOneActivity : Activity(), EventHandler, OnSharedPreferenceChangeListe
             val end: Long = intent.getLongExtra(EXTRA_EVENT_END_TIME, -1)
             info = EventInfo()
             if (end != -1L) {
-                info.endTime = Time()
-                info.endTime.set(end)
+                info?.endTime = Time()
+                info?.endTime?.set(end)
             }
             if (begin != -1L) {
-                info.startTime = Time()
-                info.startTime.set(begin)
+                info?.startTime = Time()
+                info?.startTime?.set(begin)
             }
             info.id = eventId
             // We set the viewtype so if the user presses back when they are
             // done editing the controller knows we were in the Edit Event
             // screen. Likewise for eventId
-            mController.setViewType(viewType)
-            mController.setEventId(eventId)
+            mController?.viewType = viewType
+            mController?.eventId = eventId
         } else {
             mPreviousView = viewType
         }
@@ -520,21 +575,21 @@ class AllInOneActivity : Activity(), EventHandler, OnSharedPreferenceChangeListe
         val t = Time(mTimeZone)
         t.set(timeMillis)
         if (viewType != ViewType.EDIT) {
-            mController.sendEvent(this, EventType.GO_TO, t, null, -1, viewType)
+            mController?.sendEvent(this as Object?, EventType.GO_TO, t, null, -1, viewType)
         }
     }
 
     @Override
-    fun onBackPressed() {
+    override fun onBackPressed() {
         if (mCurrentView == ViewType.EDIT || mBackToPreviousView) {
-            mController.sendEvent(this, EventType.GO_TO, null, null, -1, mPreviousView)
+            mController?.sendEvent(this as Object?, EventType.GO_TO, null, null, -1, mPreviousView)
         } else {
             super.onBackPressed()
         }
     }
 
     @Override
-    fun onCreateOptionsMenu(menu: Menu): Boolean {
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
         super.onCreateOptionsMenu(menu)
         mOptionsMenu = menu
         getMenuInflater().inflate(R.menu.all_in_one_title_bar, menu)
@@ -544,14 +599,15 @@ class AllInOneActivity : Activity(), EventHandler, OnSharedPreferenceChangeListe
         mControlsMenu = menu.findItem(R.id.action_hide_controls)
         if (!mShowCalendarControls) {
             if (mControlsMenu != null) {
-                mControlsMenu.setVisible(false)
-                mControlsMenu.setEnabled(false)
+                mControlsMenu?.setVisible(false)
+                mControlsMenu?.setEnabled(false)
             }
-        } else if (mControlsMenu != null && mController != null && mController.getViewType() === ViewType.MONTH) {
-            mControlsMenu.setVisible(false)
-            mControlsMenu.setEnabled(false)
+        } else if (mControlsMenu != null && mController != null &&
+            mController?.viewType == ViewType.MONTH) {
+            mControlsMenu?.setVisible(false)
+            mControlsMenu?.setEnabled(false)
         } else if (mControlsMenu != null) {
-            mControlsMenu.setTitle(if (mHideControls) mShowString else mHideString)
+            mControlsMenu?.setTitle(if (mHideControls) mShowString else mHideString)
         }
         val menuItem: MenuItem = menu.findItem(R.id.action_today)
         if (Utils.isJellybeanOrLater()) {
@@ -566,7 +622,7 @@ class AllInOneActivity : Activity(), EventHandler, OnSharedPreferenceChangeListe
     }
 
     @Override
-    fun onOptionsItemSelected(item: MenuItem): Boolean {
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
         var t: Time? = null
         var viewType: Int = ViewType.CURRENT
         var extras: Long = CalendarController.EXTRA_GOTO_TIME
@@ -580,16 +636,16 @@ class AllInOneActivity : Activity(), EventHandler, OnSharedPreferenceChangeListe
             mHideControls = !mHideControls
             item.setTitle(if (mHideControls) mShowString else mHideString)
             if (!mHideControls) {
-                mMiniMonth.setVisibility(View.VISIBLE)
-                mCalendarsList.setVisibility(View.VISIBLE)
-                mMiniMonthContainer.setVisibility(View.VISIBLE)
+                mMiniMonth?.setVisibility(View.VISIBLE)
+                mCalendarsList?.setVisibility(View.VISIBLE)
+                mMiniMonthContainer?.setVisibility(View.VISIBLE)
             }
             val slideAnimation: ObjectAnimator = ObjectAnimator.ofInt(
                 this, "controlsOffset",
                 if (mHideControls) 0 else mControlsAnimateWidth,
                 if (mHideControls) mControlsAnimateWidth else 0
             )
-            slideAnimation.setDuration(mCalendarControlsAnimationTime)
+            slideAnimation.setDuration(mCalendarControlsAnimationTime.toLong())
             ObjectAnimator.setFrameDelay(0)
             slideAnimation.start()
             return true
@@ -597,7 +653,8 @@ class AllInOneActivity : Activity(), EventHandler, OnSharedPreferenceChangeListe
             Log.d(TAG, "Unsupported itemId: $itemId")
             return true
         }
-        mController.sendEvent(this, EventType.GO_TO, t, null, t, -1, viewType, extras, null, null)
+        mController?.sendEvent(this as Object?, EventType.GO_TO, t, null, t, -1,
+            viewType, extras, null, null)
         return true
     }
 
@@ -609,36 +666,40 @@ class AllInOneActivity : Activity(), EventHandler, OnSharedPreferenceChangeListe
      */
     fun setControlsOffset(controlsOffset: Int) {
         if (mOrientation == Configuration.ORIENTATION_LANDSCAPE) {
-            mMiniMonth.setTranslationX(controlsOffset)
-            mCalendarsList.setTranslationX(controlsOffset)
-            mControlsParams.width = Math.max(0, mControlsAnimateWidth - controlsOffset)
-            mMiniMonthContainer.setLayoutParams(mControlsParams)
+            mMiniMonth?.setTranslationX(controlsOffset.toFloat())
+            mCalendarsList?.setTranslationX(controlsOffset.toFloat())
+            mControlsParams?.width = Math.max(0, mControlsAnimateWidth - controlsOffset)
+            mMiniMonthContainer?.setLayoutParams(mControlsParams)
         } else {
-            mMiniMonth.setTranslationY(controlsOffset)
-            mCalendarsList.setTranslationY(controlsOffset)
+            mMiniMonth?.setTranslationY(controlsOffset.toFloat())
+            mCalendarsList?.setTranslationY(controlsOffset.toFloat())
             if (mVerticalControlsParams == null) {
                 mVerticalControlsParams = LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT, mControlsAnimateHeight
-                )
+                ) as LinearLayout.LayoutParams?
             }
-            mVerticalControlsParams.height = Math.max(0, mControlsAnimateHeight - controlsOffset)
-            mMiniMonthContainer.setLayoutParams(mVerticalControlsParams)
+            mVerticalControlsParams?.height = Math.max(0, mControlsAnimateHeight - controlsOffset)
+            mMiniMonthContainer?.setLayoutParams(mVerticalControlsParams)
         }
     }
 
     @Override
-    fun onSharedPreferenceChanged(prefs: SharedPreferences?, key: String) {
+    override fun onSharedPreferenceChanged(prefs: SharedPreferences?, key: String) {
         if (key.equals(GeneralPreferences.KEY_WEEK_START_DAY)) {
             if (mPaused) {
                 mUpdateOnResume = true
             } else {
-                initFragments(mController.getTime(), mController.getViewType(), null)
+                initFragments(mController?.time as Long, mController?.viewType as Int, null)
             }
         }
     }
 
     private fun setMainPane(
-        ft: FragmentTransaction?, viewId: Int, viewType: Int, timeMillis: Long, force: Boolean
+        ft: FragmentTransaction?,
+        viewId: Int,
+        viewType: Int,
+        timeMillis: Long,
+        force: Boolean
     ) {
         var ft: FragmentTransaction? = ft
         if (mOnSaveInstanceStateCalled) {
@@ -666,38 +727,38 @@ class AllInOneActivity : Activity(), EventHandler, OnSharedPreferenceChangeListe
             ViewType.AGENDA -> {
             }
             ViewType.DAY -> {
-                if (mActionBar != null && mActionBar.getSelectedTab() !== mDayTab) {
-                    mActionBar.selectTab(mDayTab)
+                if (mActionBar != null && mActionBar?.getSelectedTab() != mDayTab) {
+                    mActionBar?.selectTab(mDayTab)
                 }
                 if (mActionBarMenuSpinnerAdapter != null) {
-                    mActionBar.setSelectedNavigationItem(CalendarViewAdapter.DAY_BUTTON_INDEX)
+                    mActionBar?.setSelectedNavigationItem(CalendarViewAdapter.DAY_BUTTON_INDEX)
                 }
                 frag = DayFragment(timeMillis, 1)
             }
             ViewType.MONTH -> {
-                if (mActionBar != null && mActionBar.getSelectedTab() !== mMonthTab) {
-                    mActionBar.selectTab(mMonthTab)
+                if (mActionBar != null && mActionBar?.getSelectedTab() != mMonthTab) {
+                    mActionBar?.selectTab(mMonthTab)
                 }
                 if (mActionBarMenuSpinnerAdapter != null) {
-                    mActionBar.setSelectedNavigationItem(CalendarViewAdapter.MONTH_BUTTON_INDEX)
+                    mActionBar?.setSelectedNavigationItem(CalendarViewAdapter.MONTH_BUTTON_INDEX)
                 }
                 frag = MonthByWeekFragment(timeMillis, false)
             }
             ViewType.WEEK -> {
-                if (mActionBar != null && mActionBar.getSelectedTab() !== mWeekTab) {
-                    mActionBar.selectTab(mWeekTab)
+                if (mActionBar != null && mActionBar?.getSelectedTab() != mWeekTab) {
+                    mActionBar?.selectTab(mWeekTab)
                 }
                 if (mActionBarMenuSpinnerAdapter != null) {
-                    mActionBar.setSelectedNavigationItem(CalendarViewAdapter.WEEK_BUTTON_INDEX)
+                    mActionBar?.setSelectedNavigationItem(CalendarViewAdapter.WEEK_BUTTON_INDEX)
                 }
                 frag = DayFragment(timeMillis, 7)
             }
             else -> {
-                if (mActionBar != null && mActionBar.getSelectedTab() !== mWeekTab) {
-                    mActionBar.selectTab(mWeekTab)
+                if (mActionBar != null && mActionBar?.getSelectedTab() != mWeekTab) {
+                    mActionBar?.selectTab(mWeekTab)
                 }
                 if (mActionBarMenuSpinnerAdapter != null) {
-                    mActionBar.setSelectedNavigationItem(CalendarViewAdapter.WEEK_BUTTON_INDEX)
+                    mActionBar?.setSelectedNavigationItem(CalendarViewAdapter.WEEK_BUTTON_INDEX)
                 }
                 frag = DayFragment(timeMillis, 7)
             }
@@ -706,18 +767,17 @@ class AllInOneActivity : Activity(), EventHandler, OnSharedPreferenceChangeListe
         // Update the current view so that the menu can update its look according to the
         // current view.
         if (mActionBarMenuSpinnerAdapter != null) {
-            mActionBarMenuSpinnerAdapter.setMainView(viewType)
+            mActionBarMenuSpinnerAdapter?.setMainView(viewType)
             if (!mIsTabletConfig) {
-                mActionBarMenuSpinnerAdapter.setTime(timeMillis)
+                mActionBarMenuSpinnerAdapter?.setTime(timeMillis)
             }
         }
 
-
         // Show date only on tablet configurations in views different than Agenda
         if (!mIsTabletConfig) {
-            mDateRange.setVisibility(View.GONE)
+            mDateRange?.setVisibility(View.GONE)
         } else {
-            mDateRange.setVisibility(View.GONE)
+            mDateRange?.setVisibility(View.GONE)
         }
 
         // Clear unnecessary buttons from the option menu when switching from the agenda view
@@ -730,41 +790,46 @@ class AllInOneActivity : Activity(), EventHandler, OnSharedPreferenceChangeListe
             ft = fragmentManager.beginTransaction()
         }
         if (doTransition) {
-            ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
+            ft?.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
         }
-        ft.replace(viewId, frag)
+        ft?.replace(viewId, frag)
         if (DEBUG) {
             Log.d(TAG, "Adding handler with viewId $viewId and type $viewType")
         }
         // If the key is already registered this will replace it
-        mController.registerEventHandler(viewId, frag as EventHandler?)
+        mController?.registerEventHandler(viewId, frag as EventHandler?)
         if (doCommit) {
             if (DEBUG) {
                 Log.d(TAG, "setMainPane AllInOne=" + this + " finishing:" + this.isFinishing())
             }
-            ft.commit()
+            ft?.commit()
         }
     }
 
     private fun setTitleInActionBar(event: EventInfo) {
-        if (event.eventType !== EventType.UPDATE_TITLE || mActionBar == null) {
+        if (event.eventType != EventType.UPDATE_TITLE || mActionBar == null) {
             return
         }
-        val start: Long = event.startTime.toMillis(false /* use isDst */)
-        val end: Long
+        val start: Long? = event?.startTime?.toMillis(false /* use isDst */)
+        val end: Long?
         end = if (event.endTime != null) {
-            event.endTime.toMillis(false /* use isDst */)
+            event?.endTime?.toMillis(false /* use isDst */)
         } else {
             start
         }
-        val msg: String = Utils.formatDateRange(this, start, end, event.extraLong as Int)
-        val oldDate: CharSequence = mDateRange.getText()
-        mDateRange.setText(msg)
-        updateSecondaryTitleFields(if (event.selectedTime != null) event.selectedTime.toMillis(true) else start)
+        val msg: String? = Utils.formatDateRange(this,
+            start as Long,
+            end as Long,
+            event.extraLong.toInt()
+        )
+        val oldDate: CharSequence? = mDateRange?.getText()
+        mDateRange?.setText(msg)
+        updateSecondaryTitleFields(if (event?.selectedTime != null)
+            event?.selectedTime?.toMillis(true) as Long else start)
         if (!TextUtils.equals(oldDate, msg)) {
-            mDateRange.sendAccessibilityEvent(AccessibilityEvent.TYPE_VIEW_FOCUSED)
+            mDateRange?.sendAccessibilityEvent(AccessibilityEvent.TYPE_VIEW_FOCUSED)
             if (mShowWeekNum && mWeekTextView != null) {
-                mWeekTextView.sendAccessibilityEvent(AccessibilityEvent.TYPE_VIEW_FOCUSED)
+                mWeekTextView?.sendAccessibilityEvent(AccessibilityEvent.TYPE_VIEW_FOCUSED)
             }
         }
     }
@@ -776,16 +841,17 @@ class AllInOneActivity : Activity(), EventHandler, OnSharedPreferenceChangeListe
             val weekNum: Int = Utils.getWeekNumberFromTime(visibleMillisSinceEpoch, this)
             mWeekNum = weekNum
         }
-        if (mShowWeekNum && mCurrentView == ViewType.WEEK && mIsTabletConfig
-            && mWeekTextView != null
+        if (mShowWeekNum && mCurrentView == ViewType.WEEK && mIsTabletConfig &&
+            mWeekTextView != null
         ) {
             val weekString: String = getResources().getQuantityString(
                 R.plurals.weekN, mWeekNum,
                 mWeekNum
             )
-            mWeekTextView.setText(weekString)
-            mWeekTextView.setVisibility(View.VISIBLE)
-        } else if (visibleMillisSinceEpoch != -1L && mWeekTextView != null && mCurrentView == ViewType.DAY && mIsTabletConfig) {
+            mWeekTextView?.setText(weekString)
+            mWeekTextView?.setVisibility(View.VISIBLE)
+        } else if (visibleMillisSinceEpoch != -1L && mWeekTextView != null &&
+            mCurrentView == ViewType.DAY && mIsTabletConfig) {
             val time = Time(mTimeZone)
             time.set(visibleMillisSinceEpoch)
             val julianDay: Int = Time.getJulianDay(visibleMillisSinceEpoch, time.gmtoff)
@@ -797,13 +863,13 @@ class AllInOneActivity : Activity(), EventHandler, OnSharedPreferenceChangeListe
                 visibleMillisSinceEpoch,
                 this
             )
-            mWeekTextView.setText(dayString)
-            mWeekTextView.setVisibility(View.VISIBLE)
+            mWeekTextView?.setText(dayString)
+            mWeekTextView?.setVisibility(View.VISIBLE)
         } else if (mWeekTextView != null && (!mIsTabletConfig || mCurrentView != ViewType.DAY)) {
-            mWeekTextView.setVisibility(View.GONE)
+            mWeekTextView?.setVisibility(View.GONE)
         }
-        if (mHomeTime != null && (mCurrentView == ViewType.DAY || mCurrentView == ViewType.WEEK)
-            && !TextUtils.equals(mTimeZone, Time.getCurrentTimezone())
+        if (mHomeTime != null && (mCurrentView == ViewType.DAY || mCurrentView == ViewType.WEEK) &&
+            !TextUtils.equals(mTimeZone, Time.getCurrentTimezone())
         ) {
             val time = Time(mTimeZone)
             time.setToNow()
@@ -821,44 +887,46 @@ class AllInOneActivity : Activity(), EventHandler, OnSharedPreferenceChangeListe
                     isDST, TimeZone.SHORT, Locale.getDefault()
                 )
             ).toString()
-            mHomeTime.setText(timeString)
-            mHomeTime.setVisibility(View.VISIBLE)
+            mHomeTime?.setText(timeString)
+            mHomeTime?.setVisibility(View.VISIBLE)
             // Update when the minute changes
-            mHomeTime.removeCallbacks(mHomeTimeUpdater)
-            mHomeTime.postDelayed(
+            mHomeTime?.removeCallbacks(mHomeTimeUpdater)
+            mHomeTime?.postDelayed(
                 mHomeTimeUpdater,
                 DateUtils.MINUTE_IN_MILLIS - millis % DateUtils.MINUTE_IN_MILLIS
             )
         } else if (mHomeTime != null) {
-            mHomeTime.setVisibility(View.GONE)
+            mHomeTime?.setVisibility(View.GONE)
         }
     }
 
-    @get:Override val supportedEventTypes: Long
+    @get:Override override val supportedEventTypes: Long
         get() = EventType.GO_TO or EventType.UPDATE_TITLE
 
     @Override
-    fun handleEvent(event: EventInfo) {
+    override fun handleEvent(event: EventInfo?) {
         var displayTime: Long = -1
-        if (event.eventType === EventType.GO_TO) {
-            if (event.extraLong and CalendarController.EXTRA_GOTO_BACK_TO_PREVIOUS !== 0) {
+        if (event?.eventType == EventType.GO_TO) {
+            if (event?.extraLong and CalendarController.EXTRA_GOTO_BACK_TO_PREVIOUS != 0L) {
                 mBackToPreviousView = true
-            } else if (event.viewType !== mController.getPreviousViewType()
-                && event.viewType !== ViewType.EDIT
+            } else if (event?.viewType != mController?.previousViewType &&
+                event?.viewType != ViewType.EDIT
             ) {
                 // Clear the flag is change to a different view type
                 mBackToPreviousView = false
             }
             setMainPane(
-                null, R.id.main_pane, event.viewType, event.startTime.toMillis(false), false
+                null, R.id.main_pane, event?.viewType, event?.startTime?.toMillis(false)
+                    as Long, false
             )
             if (mShowCalendarControls) {
                 val animationSize =
-                    if (mOrientation == Configuration.ORIENTATION_LANDSCAPE) mControlsAnimateWidth else mControlsAnimateHeight
-                val noControlsView = event.viewType === ViewType.MONTH
+                    if (mOrientation == Configuration.ORIENTATION_LANDSCAPE) mControlsAnimateWidth
+                    else mControlsAnimateHeight
+                val noControlsView = event?.viewType == ViewType.MONTH
                 if (mControlsMenu != null) {
-                    mControlsMenu.setVisible(!noControlsView)
-                    mControlsMenu.setEnabled(!noControlsView)
+                    mControlsMenu?.setVisible(!noControlsView)
+                    mControlsMenu?.setEnabled(!noControlsView)
                 }
                 if (noControlsView || mHideControls) {
                     // hide minimonth and calendar frag
@@ -869,94 +937,97 @@ class AllInOneActivity : Activity(), EventHandler, OnSharedPreferenceChangeListe
                             "controlsOffset", 0, animationSize
                         )
                         slideAnimation.addListener(mSlideAnimationDoneListener)
-                        slideAnimation.setDuration(mCalendarControlsAnimationTime)
+                        slideAnimation.setDuration(mCalendarControlsAnimationTime.toLong())
                         ObjectAnimator.setFrameDelay(0)
                         slideAnimation.start()
                     } else {
-                        mMiniMonth.setVisibility(View.GONE)
-                        mCalendarsList.setVisibility(View.GONE)
-                        mMiniMonthContainer.setVisibility(View.GONE)
+                        mMiniMonth?.setVisibility(View.GONE)
+                        mCalendarsList?.setVisibility(View.GONE)
+                        mMiniMonthContainer?.setVisibility(View.GONE)
                     }
                 } else {
                     // show minimonth and calendar frag
                     mShowSideViews = true
-                    mMiniMonth.setVisibility(View.VISIBLE)
-                    mCalendarsList.setVisibility(View.VISIBLE)
-                    mMiniMonthContainer.setVisibility(View.VISIBLE)
+                    mMiniMonth?.setVisibility(View.VISIBLE)
+                    mCalendarsList?.setVisibility(View.VISIBLE)
+                    mMiniMonthContainer?.setVisibility(View.VISIBLE)
                     if (!mHideControls &&
-                        mController.getPreviousViewType() === ViewType.MONTH
+                        mController?.previousViewType == ViewType.MONTH
                     ) {
                         val slideAnimation: ObjectAnimator = ObjectAnimator.ofInt(
                             this,
                             "controlsOffset", animationSize, 0
                         )
-                        slideAnimation.setDuration(mCalendarControlsAnimationTime)
+                        slideAnimation.setDuration(mCalendarControlsAnimationTime.toLong())
                         ObjectAnimator.setFrameDelay(0)
                         slideAnimation.start()
                     }
                 }
             }
             displayTime =
-                if (event.selectedTime != null) event.selectedTime.toMillis(true) else event.startTime.toMillis(
-                    true
-                )
+                if (event?.selectedTime != null) event?.selectedTime?.toMillis(true) as Long
+                else event?.startTime?.toMillis(true) as Long
             if (!mIsTabletConfig) {
-                mActionBarMenuSpinnerAdapter.setTime(displayTime)
+                mActionBarMenuSpinnerAdapter?.setTime(displayTime)
             }
-        } else if (event.eventType === EventType.UPDATE_TITLE) {
-            setTitleInActionBar(event)
+        } else if (event?.eventType == EventType.UPDATE_TITLE) {
+            setTitleInActionBar(event as CalendarController.EventInfo)
             if (!mIsTabletConfig) {
-                mActionBarMenuSpinnerAdapter.setTime(mController.getTime())
+                mActionBarMenuSpinnerAdapter?.setTime(mController?.time as Long)
             }
         }
         updateSecondaryTitleFields(displayTime)
     }
 
     @Override
-    fun eventsChanged() {
-        mController.sendEvent(this, EventType.EVENTS_CHANGED, null, null, -1, ViewType.CURRENT)
+    override fun eventsChanged() {
+        mController?.sendEvent(this as Object?, EventType.EVENTS_CHANGED, null, null, -1,
+            ViewType.CURRENT)
     }
 
     @Override
-    fun onTabSelected(tab: Tab?, ft: FragmentTransaction?) {
+    override fun onTabSelected(tab: Tab?, ft: FragmentTransaction?) {
         Log.w(TAG, "TabSelected AllInOne=" + this + " finishing:" + this.isFinishing())
-        if (tab === mDayTab && mCurrentView != ViewType.DAY) {
-            mController.sendEvent(this, EventType.GO_TO, null, null, -1, ViewType.DAY)
-        } else if (tab === mWeekTab && mCurrentView != ViewType.WEEK) {
-            mController.sendEvent(this, EventType.GO_TO, null, null, -1, ViewType.WEEK)
-        } else if (tab === mMonthTab && mCurrentView != ViewType.MONTH) {
-            mController.sendEvent(this, EventType.GO_TO, null, null, -1, ViewType.MONTH)
+        if (tab == mDayTab && mCurrentView != ViewType.DAY) {
+            mController?.sendEvent(this as Object?, EventType.GO_TO, null, null, -1, ViewType.DAY)
+        } else if (tab == mWeekTab && mCurrentView != ViewType.WEEK) {
+            mController?.sendEvent(this as Object?, EventType.GO_TO, null, null, -1, ViewType.WEEK)
+        } else if (tab == mMonthTab && mCurrentView != ViewType.MONTH) {
+            mController?.sendEvent(this as Object?, EventType.GO_TO, null, null, -1, ViewType.MONTH)
         } else {
             Log.w(
-                TAG, "TabSelected event from unknown tab: "
-                  + if (tab == null) "null" else tab.getText()
+                TAG, "TabSelected event from unknown tab: " +
+                    if (tab == null) "null" else tab.getText()
             )
             Log.w(
-                TAG, "CurrentView:" + mCurrentView + " Tab:" + tab.toString() + " Day:" + mDayTab
-                  + " Week:" + mWeekTab + " Month:" + mMonthTab
+                TAG, "CurrentView:" + mCurrentView + " Tab:" + tab.toString() + " Day:" + mDayTab +
+                    " Week:" + mWeekTab + " Month:" + mMonthTab
             )
         }
     }
 
     @Override
-    fun onTabReselected(tab: Tab?, ft: FragmentTransaction?) {
+    override fun onTabReselected(tab: Tab?, ft: FragmentTransaction?) {
     }
 
     @Override
-    fun onTabUnselected(tab: Tab?, ft: FragmentTransaction?) {
+    override fun onTabUnselected(tab: Tab?, ft: FragmentTransaction?) {
     }
 
     @Override
-    fun onNavigationItemSelected(itemPosition: Int, itemId: Long): Boolean {
+    override fun onNavigationItemSelected(itemPosition: Int, itemId: Long): Boolean {
         when (itemPosition) {
             CalendarViewAdapter.DAY_BUTTON_INDEX -> if (mCurrentView != ViewType.DAY) {
-                mController.sendEvent(this, EventType.GO_TO, null, null, -1, ViewType.DAY)
+                mController?.sendEvent(this as Object?, EventType.GO_TO, null, null, -1,
+                    ViewType.DAY)
             }
             CalendarViewAdapter.WEEK_BUTTON_INDEX -> if (mCurrentView != ViewType.WEEK) {
-                mController.sendEvent(this, EventType.GO_TO, null, null, -1, ViewType.WEEK)
+                mController?.sendEvent(this as Object?, EventType.GO_TO, null, null, -1,
+                    ViewType.WEEK)
             }
             CalendarViewAdapter.MONTH_BUTTON_INDEX -> if (mCurrentView != ViewType.MONTH) {
-                mController.sendEvent(this, EventType.GO_TO, null, null, -1, ViewType.MONTH)
+                mController?.sendEvent(this as Object?, EventType.GO_TO, null, null, -1,
+                    ViewType.MONTH)
             }
             CalendarViewAdapter.AGENDA_BUTTON_INDEX -> {
             }
@@ -964,7 +1035,7 @@ class AllInOneActivity : Activity(), EventHandler, OnSharedPreferenceChangeListe
                 Log.w(TAG, "ItemSelected event from unknown button: $itemPosition")
                 Log.w(
                     TAG, "CurrentView:" + mCurrentView + " Button:" + itemPosition +
-                      " Day:" + mDayTab + " Week:" + mWeekTab + " Month:" + mMonthTab
+                        " Day:" + mDayTab + " Week:" + mWeekTab + " Month:" + mMonthTab
                 )
             }
         }
