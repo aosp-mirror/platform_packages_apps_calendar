@@ -27,6 +27,7 @@ exclude_srcsd = [
     "src/**/calendar/alerts/InitAlarmsService.java",
     "src/**/calendar/alerts/NotificationMgr.java",
     "src/**/calendar/alerts/QuickResponseActivity.java",
+    "src/**/calendar/month/MonthByWeekFragment.java",
     "src/**/calendar/widget/CalendarAppWidgetModel.java",
     "src/**/calendar/CalendarController.java",
     "src/**/calendar/DayOfMonthDrawable.java",
