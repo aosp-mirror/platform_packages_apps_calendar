@@ -44,26 +44,26 @@ class CalendarAppWidgetProvider : AppWidgetProvider() {
      * {@inheritDoc}
      */
     @Override
-    fun onReceive(context: Context, intent: Intent) {
+    override fun onReceive(context: Context?, intent: Intent?) {
         // Handle calendar-specific updates ourselves because they might be
         // coming in without extras, which AppWidgetProvider then blocks.
-        val action: String = intent.getAction()
+        val action: String? = intent?.getAction()
         if (LOGD) Log.d(TAG, "AppWidgetProvider got the intent: " + intent.toString())
-        if (Utils.getWidgetUpdateAction(context).equals(action)) {
+        if (Utils.getWidgetUpdateAction(context as Context).equals(action)) {
             val appWidgetManager: AppWidgetManager = AppWidgetManager.getInstance(context)
             performUpdate(
-                context, appWidgetManager,
+                context as Context, appWidgetManager,
                 appWidgetManager.getAppWidgetIds(getComponentName(context)),
                 null /* no eventIds */
             )
-        } else if (action != null && (action.equals(Intent.ACTION_PROVIDER_CHANGED)
-              || action.equals(Intent.ACTION_TIME_CHANGED)
-              || action.equals(Intent.ACTION_TIMEZONE_CHANGED)
-              || action.equals(Intent.ACTION_DATE_CHANGED)
-              || action.equals(Utils.getWidgetScheduledUpdateAction(context)))
+        } else if (action != null && (action.equals(Intent.ACTION_PROVIDER_CHANGED) ||
+            action.equals(Intent.ACTION_TIME_CHANGED) ||
+            action.equals(Intent.ACTION_TIMEZONE_CHANGED) ||
+            action.equals(Intent.ACTION_DATE_CHANGED) ||
+            action.equals(Utils.getWidgetScheduledUpdateAction(context as Context)))
         ) {
             val service = Intent(context, CalendarAppWidgetService::class.java)
-            context.startService(service)
+            context?.startService(service)
         } else {
             super.onReceive(context, intent)
         }
@@ -73,7 +73,7 @@ class CalendarAppWidgetProvider : AppWidgetProvider() {
      * {@inheritDoc}
      */
     @Override
-    fun onDisabled(context: Context) {
+    override fun onDisabled(context: Context) {
         // Unsubscribe from all AlarmManager updates
         val am: AlarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val pendingUpdate: PendingIntent = getUpdateIntent(context)
@@ -84,8 +84,13 @@ class CalendarAppWidgetProvider : AppWidgetProvider() {
      * {@inheritDoc}
      */
     @Override
-    fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
-        performUpdate(context, appWidgetManager, appWidgetIds, null /* no eventIds */)
+    override fun onUpdate(
+        context: Context,
+        appWidgetManager: AppWidgetManager,
+        appWidgetIds: IntArray
+    ) {
+        performUpdate(context, appWidgetManager,
+            appWidgetIds, null /* no eventIds */)
     }
 
     /**
@@ -102,7 +107,8 @@ class CalendarAppWidgetProvider : AppWidgetProvider() {
      */
     private fun performUpdate(
         context: Context,
-        appWidgetManager: AppWidgetManager, appWidgetIds: IntArray,
+        appWidgetManager: AppWidgetManager,
+        appWidgetIds: IntArray,
         changedEventIds: LongArray?
     ) {
         // Launch over to service so it can perform update
@@ -123,17 +129,16 @@ class CalendarAppWidgetProvider : AppWidgetProvider() {
                 time.weekDay + 1,
                 DateUtils.LENGTH_MEDIUM
             )
-            val date: String = Utils.formatDateRange(
+            val date: String? = Utils.formatDateRange(
                 context, millis, millis,
                 DateUtils.FORMAT_ABBREV_ALL or DateUtils.FORMAT_SHOW_DATE
-                  or DateUtils.FORMAT_NO_YEAR
+                or DateUtils.FORMAT_NO_YEAR
             )
             views.setTextViewText(R.id.day_of_week, dayOfWeek)
             views.setTextViewText(R.id.date, date)
             // Attach to list of events
             views.setRemoteAdapter(appWidgetId, R.id.events_list, updateIntent)
             appWidgetManager.notifyAppWidgetViewDataChanged(appWidgetId, R.id.events_list)
-
 
             // Launch calendar app when the user taps on the header
             val launchCalendarIntent = Intent(Intent.ACTION_VIEW)
@@ -165,8 +170,8 @@ class CalendarAppWidgetProvider : AppWidgetProvider() {
          * Build [ComponentName] describing this specific
          * [AppWidgetProvider]
          */
-        fun getComponentName(context: Context?): ComponentName {
-            return ComponentName(context, CalendarAppWidgetProvider::class.java)
+        @JvmStatic fun getComponentName(context: Context?): ComponentName {
+            return ComponentName(context as Context, CalendarAppWidgetProvider::class.java)
         }
 
         /**
@@ -177,8 +182,8 @@ class CalendarAppWidgetProvider : AppWidgetProvider() {
          *
          * @param context Context to use when building broadcast.
          */
-        fun getUpdateIntent(context: Context?): PendingIntent {
-            val intent = Intent(Utils.getWidgetScheduledUpdateAction(context))
+        @JvmStatic fun getUpdateIntent(context: Context?): PendingIntent {
+            val intent = Intent(Utils.getWidgetScheduledUpdateAction(context as Context))
             intent.setDataAndType(CalendarContract.CONTENT_URI, Utils.APPWIDGET_DATA_TYPE)
             return PendingIntent.getBroadcast(
                 context, 0 /* no requestCode */, intent,
@@ -190,14 +195,14 @@ class CalendarAppWidgetProvider : AppWidgetProvider() {
          * Build a [PendingIntent] to launch the Calendar app. This should be used
          * in combination with [RemoteViews.setPendingIntentTemplate].
          */
-        fun getLaunchPendingIntentTemplate(context: Context?): PendingIntent {
+        @JvmStatic fun getLaunchPendingIntentTemplate(context: Context?): PendingIntent {
             val launchIntent = Intent()
             launchIntent.setAction(Intent.ACTION_VIEW)
             launchIntent.setFlags(
                 Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK or
-                  Intent.FLAG_ACTIVITY_TASK_ON_HOME
+                Intent.FLAG_ACTIVITY_TASK_ON_HOME
             )
-            launchIntent.setClass(context, AllInOneActivity::class.java)
+            launchIntent.setClass(context as Context, AllInOneActivity::class.java)
             return PendingIntent.getActivity(
                 context, 0 /* no requestCode */, launchIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT
@@ -213,8 +218,11 @@ class CalendarAppWidgetProvider : AppWidgetProvider() {
          * @param goToTime time that calendar should take the user to, or 0 to
          * indicate no specific start time.
          */
-        fun getLaunchFillInIntent(
-            context: Context?, id: Long, start: Long, end: Long,
+        @JvmStatic fun getLaunchFillInIntent(
+            context: Context?,
+            id: Long,
+            start: Long,
+            end: Long,
             allDay: Boolean
         ): Intent {
             val fillInIntent = Intent()
@@ -223,14 +231,14 @@ class CalendarAppWidgetProvider : AppWidgetProvider() {
                 fillInIntent.putExtra(Utils.INTENT_KEY_DETAIL_VIEW, true)
                 fillInIntent.setFlags(
                     Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK or
-                      Intent.FLAG_ACTIVITY_TASK_ON_HOME
+                    Intent.FLAG_ACTIVITY_TASK_ON_HOME
                 )
                 dataString += "/$id"
                 // If we have an event id - start the event info activity
-                fillInIntent.setClass(context, EventInfoActivity::class.java)
+                fillInIntent.setClass(context as Context, EventInfoActivity::class.java)
             } else {
                 // If we do not have an event id - start AllInOne
-                fillInIntent.setClass(context, AllInOneActivity::class.java)
+                fillInIntent.setClass(context as Context, AllInOneActivity::class.java)
             }
             val data: Uri = Uri.parse(dataString)
             fillInIntent.setData(data)
