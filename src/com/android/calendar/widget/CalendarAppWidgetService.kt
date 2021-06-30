@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,349 +13,351 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.android.calendar.widget
 
-package com.android.calendar.widget;
+import android.app.AlarmManager
 
-import android.app.AlarmManager;
-import android.app.PendingIntent;
-import android.appwidget.AppWidgetManager;
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.CursorLoader;
-import android.content.Intent;
-import android.content.Loader;
-import android.content.res.Resources;
-import android.database.Cursor;
-import android.database.MatrixCursor;
-import android.net.Uri;
-import android.os.Handler;
-import android.provider.CalendarContract.Attendees;
-import android.provider.CalendarContract.Calendars;
-import android.provider.CalendarContract.Instances;
-import android.text.format.DateUtils;
-import android.text.format.Time;
-import android.util.Log;
-import android.view.View;
-import android.widget.RemoteViews;
-import android.widget.RemoteViewsService;
+class CalendarAppWidgetService : RemoteViewsService() {
+    companion object {
+        private const val TAG = "CalendarWidget"
+        const val EVENT_MIN_COUNT = 20
+        const val EVENT_MAX_COUNT = 100
 
-import com.android.calendar.R;
-import com.android.calendar.Utils;
-import com.android.calendar.widget.CalendarAppWidgetModel.DayInfo;
-import com.android.calendar.widget.CalendarAppWidgetModel.EventInfo;
-import com.android.calendar.widget.CalendarAppWidgetModel.RowInfo;
+        // Minimum delay between queries on the database for widget updates in ms
+        const val WIDGET_UPDATE_THROTTLE = 500
+        private val EVENT_SORT_ORDER: String = (Instances.START_DAY.toString() + " ASC, "
+          + Instances.START_MINUTE + " ASC, " + Instances.END_DAY + " ASC, "
+          + Instances.END_MINUTE + " ASC LIMIT " + EVENT_MAX_COUNT)
+        private val EVENT_SELECTION: String = Calendars.VISIBLE.toString() + "=1"
+        private val EVENT_SELECTION_HIDE_DECLINED: String =
+            (Calendars.VISIBLE.toString() + "=1 AND "
+              + Instances.SELF_ATTENDEE_STATUS + "!=" + Attendees.ATTENDEE_STATUS_DECLINED)
+        val EVENT_PROJECTION = arrayOf<String>(
+            Instances.ALL_DAY,
+            Instances.BEGIN,
+            Instances.END,
+            Instances.TITLE,
+            Instances.EVENT_LOCATION,
+            Instances.EVENT_ID,
+            Instances.START_DAY,
+            Instances.END_DAY,
+            Instances.DISPLAY_COLOR,  // If SDK < 16, set to Instances.CALENDAR_COLOR.
+            Instances.SELF_ATTENDEE_STATUS
+        )
+        const val INDEX_ALL_DAY = 0
+        const val INDEX_BEGIN = 1
+        const val INDEX_END = 2
+        const val INDEX_TITLE = 3
+        const val INDEX_EVENT_LOCATION = 4
+        const val INDEX_EVENT_ID = 5
+        const val INDEX_START_DAY = 6
+        const val INDEX_END_DAY = 7
+        const val INDEX_COLOR = 8
+        const val INDEX_SELF_ATTENDEE_STATUS = 9
+        const val MAX_DAYS = 7
+        private val SEARCH_DURATION: Long = MAX_DAYS * DateUtils.DAY_IN_MILLIS
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicInteger;
+        /**
+         * Update interval used when no next-update calculated, or bad trigger time in past.
+         * Unit: milliseconds.
+         */
+        private val UPDATE_TIME_NO_EVENTS: Long = DateUtils.HOUR_IN_MILLIS * 6
 
+        /**
+         * Format given time for debugging output.
+         *
+         * @param unixTime Target time to report.
+         * @param now Current system time from [System.currentTimeMillis]
+         * for calculating time difference.
+         */
+        fun formatDebugTime(unixTime: Long, now: Long): String {
+            val time = Time()
+            time.set(unixTime)
+            var delta = unixTime - now
+            return if (delta > DateUtils.MINUTE_IN_MILLIS) {
+                delta /= DateUtils.MINUTE_IN_MILLIS
+                String.format(
+                    "[%d] %s (%+d mins)", unixTime,
+                    time.format("%H:%M:%S"), delta
+                )
+            } else {
+                delta /= DateUtils.SECOND_IN_MILLIS
+                String.format(
+                    "[%d] %s (%+d secs)", unixTime,
+                    time.format("%H:%M:%S"), delta
+                )
+            }
+        }
 
-public class CalendarAppWidgetService extends RemoteViewsService {
-    private static final String TAG = "CalendarWidget";
-
-    static final int EVENT_MIN_COUNT = 20;
-    static final int EVENT_MAX_COUNT = 100;
-    // Minimum delay between queries on the database for widget updates in ms
-    static final int WIDGET_UPDATE_THROTTLE = 500;
-
-    private static final String EVENT_SORT_ORDER = Instances.START_DAY + " ASC, "
-            + Instances.START_MINUTE + " ASC, " + Instances.END_DAY + " ASC, "
-            + Instances.END_MINUTE + " ASC LIMIT " + EVENT_MAX_COUNT;
-
-    private static final String EVENT_SELECTION = Calendars.VISIBLE + "=1";
-    private static final String EVENT_SELECTION_HIDE_DECLINED = Calendars.VISIBLE + "=1 AND "
-            + Instances.SELF_ATTENDEE_STATUS + "!=" + Attendees.ATTENDEE_STATUS_DECLINED;
-
-    static final String[] EVENT_PROJECTION = new String[] {
-        Instances.ALL_DAY,
-        Instances.BEGIN,
-        Instances.END,
-        Instances.TITLE,
-        Instances.EVENT_LOCATION,
-        Instances.EVENT_ID,
-        Instances.START_DAY,
-        Instances.END_DAY,
-        Instances.DISPLAY_COLOR, // If SDK < 16, set to Instances.CALENDAR_COLOR.
-        Instances.SELF_ATTENDEE_STATUS,
-    };
-
-    static final int INDEX_ALL_DAY = 0;
-    static final int INDEX_BEGIN = 1;
-    static final int INDEX_END = 2;
-    static final int INDEX_TITLE = 3;
-    static final int INDEX_EVENT_LOCATION = 4;
-    static final int INDEX_EVENT_ID = 5;
-    static final int INDEX_START_DAY = 6;
-    static final int INDEX_END_DAY = 7;
-    static final int INDEX_COLOR = 8;
-    static final int INDEX_SELF_ATTENDEE_STATUS = 9;
-
-    static {
-        if (!Utils.isJellybeanOrLater()) {
-            EVENT_PROJECTION[INDEX_COLOR] = Instances.CALENDAR_COLOR;
+        init {
+            if (!Utils.isJellybeanOrLater()) {
+                EVENT_PROJECTION[INDEX_COLOR] = Instances.CALENDAR_COLOR
+            }
         }
     }
-    static final int MAX_DAYS = 7;
-
-    private static final long SEARCH_DURATION = MAX_DAYS * DateUtils.DAY_IN_MILLIS;
-
-    /**
-     * Update interval used when no next-update calculated, or bad trigger time in past.
-     * Unit: milliseconds.
-     */
-    private static final long UPDATE_TIME_NO_EVENTS = DateUtils.HOUR_IN_MILLIS * 6;
 
     @Override
-    public RemoteViewsFactory onGetViewFactory(Intent intent) {
-        return new CalendarFactory(getApplicationContext(), intent);
+    fun onGetViewFactory(intent: Intent): RemoteViewsFactory {
+        return CalendarFactory(getApplicationContext(), intent)
     }
 
-    public static class CalendarFactory extends BroadcastReceiver implements
-            RemoteViewsService.RemoteViewsFactory, Loader.OnLoadCompleteListener<Cursor> {
-        private static final boolean LOGD = false;
-
-        // Suppress unnecessary logging about update time. Need to be static as this object is
-        // re-instanciated frequently.
-        // TODO: It seems loadData() is called via onCreate() four times, which should mean
-        // unnecessary CalendarFactory object is created and dropped. It is not efficient.
-        private static long sLastUpdateTime = UPDATE_TIME_NO_EVENTS;
-
-        private Context mContext;
-        private Resources mResources;
-        private static CalendarAppWidgetModel mModel;
-        private static Object mLock = new Object();
-        private static volatile int mSerialNum = 0;
-        private int mLastSerialNum = -1;
-        private CursorLoader mLoader;
-        private final Handler mHandler = new Handler();
-        private static final AtomicInteger currentVersion = new AtomicInteger(0);
-        private final ExecutorService executor = Executors.newSingleThreadExecutor();
-        private int mAppWidgetId;
-        private int mDeclinedColor;
-        private int mStandardColor;
-        private int mAllDayColor;
-
-        private final Runnable mTimezoneChanged = new Runnable() {
+    class CalendarFactory : BroadcastReceiver, RemoteViewsService.RemoteViewsFactory,
+                            Loader.OnLoadCompleteListener<Cursor?> {
+        private var mContext: Context? = null
+        private var mResources: Resources? = null
+        private var mLastSerialNum = -1
+        private var mLoader: CursorLoader? = null
+        private val mHandler: Handler = Handler()
+        private val executor: ExecutorService = Executors.newSingleThreadExecutor()
+        private var mAppWidgetId = 0
+        private var mDeclinedColor = 0
+        private var mStandardColor = 0
+        private var mAllDayColor = 0
+        private val mTimezoneChanged: Runnable = object : Runnable() {
             @Override
-            public void run() {
+            fun run() {
                 if (mLoader != null) {
-                    mLoader.forceLoad();
+                    mLoader.forceLoad()
                 }
             }
-        };
+        }
 
-        private Runnable createUpdateLoaderRunnable(final String selection,
-                final PendingResult result, final int version) {
-            return new Runnable() {
+        private fun createUpdateLoaderRunnable(
+            selection: String,
+            result: PendingResult, version: Int
+        ): Runnable {
+            return object : Runnable() {
                 @Override
-                public void run() {
+                fun run() {
                     // If there is a newer load request in the queue, skip loading.
                     if (mLoader != null && version >= currentVersion.get()) {
-                        Uri uri = createLoaderUri();
-                        mLoader.setUri(uri);
-                        mLoader.setSelection(selection);
-                        synchronized (mLock) {
-                            mLastSerialNum = ++mSerialNum;
-                        }
-                        mLoader.forceLoad();
+                        val uri: Uri = createLoaderUri()
+                        mLoader.setUri(uri)
+                        mLoader.setSelection(selection)
+                        synchronized(mLock) { mLastSerialNum = ++mSerialNum }
+                        mLoader.forceLoad()
                     }
-                    result.finish();
+                    result.finish()
                 }
-            };
+            }
         }
 
-        protected CalendarFactory(Context context, Intent intent) {
-            mContext = context;
-            mResources = context.getResources();
+        constructor(context: Context, intent: Intent) {
+            mContext = context
+            mResources = context.getResources()
             mAppWidgetId = intent.getIntExtra(
-                    AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
-
-            mDeclinedColor = mResources.getColor(R.color.appwidget_item_declined_color);
-            mStandardColor = mResources.getColor(R.color.appwidget_item_standard_color);
-            mAllDayColor = mResources.getColor(R.color.appwidget_item_allday_color);
+                AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID
+            )
+            mDeclinedColor = mResources.getColor(R.color.appwidget_item_declined_color)
+            mStandardColor = mResources.getColor(R.color.appwidget_item_standard_color)
+            mAllDayColor = mResources.getColor(R.color.appwidget_item_allday_color)
         }
 
-        public CalendarFactory() {
+        constructor() {
             // This is being created as part of onReceive
-
         }
 
         @Override
-        public void onCreate() {
-            String selection = queryForSelection();
-            initLoader(selection);
+        fun onCreate() {
+            val selection = queryForSelection()
+            initLoader(selection)
         }
 
         @Override
-        public void onDataSetChanged() {
+        fun onDataSetChanged() {
         }
 
         @Override
-        public void onDestroy() {
+        fun onDestroy() {
             if (mLoader != null) {
-                mLoader.reset();
+                mLoader.reset()
             }
         }
 
-        @Override
-        public RemoteViews getLoadingView() {
-            RemoteViews views = new RemoteViews(mContext.getPackageName(),
-                    R.layout.appwidget_loading);
-            return views;
-        }
+        @get:Override val loadingView: RemoteViews
+            get() = RemoteViews(
+                mContext.getPackageName(),
+                R.layout.appwidget_loading
+            )
 
         @Override
-        public RemoteViews getViewAt(int position) {
+        fun getViewAt(position: Int): RemoteViews? {
             // we use getCount here so that it doesn't return null when empty
-            if (position < 0 || position >= getCount()) {
-                return null;
+            if (position < 0 || position >= count) {
+                return null
             }
-
             if (mModel == null) {
-                RemoteViews views = new RemoteViews(mContext.getPackageName(),
-                        R.layout.appwidget_loading);
-                final Intent intent = CalendarAppWidgetProvider.getLaunchFillInIntent(mContext, 0,
-                        0, 0, false);
-                views.setOnClickFillInIntent(R.id.appwidget_loading, intent);
-                return views;
-
+                val views = RemoteViews(
+                    mContext.getPackageName(),
+                    R.layout.appwidget_loading
+                )
+                val intent: Intent = CalendarAppWidgetProvider.getLaunchFillInIntent(
+                    mContext,
+                    0,
+                    0,
+                    0,
+                    false
+                )
+                views.setOnClickFillInIntent(R.id.appwidget_loading, intent)
+                return views
             }
             if (mModel.mEventInfos.isEmpty() || mModel.mRowInfos.isEmpty()) {
-                RemoteViews views = new RemoteViews(mContext.getPackageName(),
-                        R.layout.appwidget_no_events);
-                final Intent intent = CalendarAppWidgetProvider.getLaunchFillInIntent(mContext, 0,
-                        0, 0, false);
-                views.setOnClickFillInIntent(R.id.appwidget_no_events, intent);
-                return views;
+                val views = RemoteViews(
+                    mContext.getPackageName(),
+                    R.layout.appwidget_no_events
+                )
+                val intent: Intent = CalendarAppWidgetProvider.getLaunchFillInIntent(
+                    mContext,
+                    0,
+                    0,
+                    0,
+                    false
+                )
+                views.setOnClickFillInIntent(R.id.appwidget_no_events, intent)
+                return views
             }
-
-            RowInfo rowInfo = mModel.mRowInfos.get(position);
-            if (rowInfo.mType == RowInfo.TYPE_DAY) {
-                RemoteViews views = new RemoteViews(mContext.getPackageName(),
-                        R.layout.appwidget_day);
-                DayInfo dayInfo = mModel.mDayInfos.get(rowInfo.mIndex);
-                updateTextView(views, R.id.date, View.VISIBLE, dayInfo.mDayLabel);
-                return views;
+            val rowInfo: RowInfo = mModel.mRowInfos.get(position)
+            return if (rowInfo.mType === RowInfo.TYPE_DAY) {
+                val views = RemoteViews(
+                    mContext.getPackageName(),
+                    R.layout.appwidget_day
+                )
+                val dayInfo: DayInfo = mModel.mDayInfos.get(rowInfo.mIndex)
+                updateTextView(views, R.id.date, View.VISIBLE, dayInfo.mDayLabel)
+                views
             } else {
-                RemoteViews views;
-                final EventInfo eventInfo = mModel.mEventInfos.get(rowInfo.mIndex);
+                val views: RemoteViews
+                val eventInfo: EventInfo = mModel.mEventInfos.get(rowInfo.mIndex)
                 if (eventInfo.allDay) {
-                    views = new RemoteViews(mContext.getPackageName(),
-                            R.layout.widget_all_day_item);
+                    views = RemoteViews(
+                        mContext.getPackageName(),
+                        R.layout.widget_all_day_item
+                    )
                 } else {
-                    views = new RemoteViews(mContext.getPackageName(), R.layout.widget_item);
+                    views = RemoteViews(mContext.getPackageName(), R.layout.widget_item)
                 }
-                int displayColor = Utils.getDisplayColorFromColor(eventInfo.color);
-
-                final long now = System.currentTimeMillis();
+                val displayColor: Int = Utils.getDisplayColorFromColor(eventInfo.color)
+                val now: Long = System.currentTimeMillis()
                 if (!eventInfo.allDay && eventInfo.start <= now && now <= eventInfo.end) {
-                    views.setInt(R.id.widget_row, "setBackgroundResource",
-                            R.drawable.agenda_item_bg_secondary);
+                    views.setInt(
+                        R.id.widget_row, "setBackgroundResource",
+                        R.drawable.agenda_item_bg_secondary
+                    )
                 } else {
-                    views.setInt(R.id.widget_row, "setBackgroundResource",
-                            R.drawable.agenda_item_bg_primary);
+                    views.setInt(
+                        R.id.widget_row, "setBackgroundResource",
+                        R.drawable.agenda_item_bg_primary
+                    )
                 }
-
                 if (!eventInfo.allDay) {
-                    updateTextView(views, R.id.when, eventInfo.visibWhen, eventInfo.when);
-                    updateTextView(views, R.id.where, eventInfo.visibWhere, eventInfo.where);
+                    updateTextView(views, R.id.`when`, eventInfo.visibWhen, eventInfo.`when`)
+                    updateTextView(views, R.id.where, eventInfo.visibWhere, eventInfo.where)
                 }
-                updateTextView(views, R.id.title, eventInfo.visibTitle, eventInfo.title);
-
-                views.setViewVisibility(R.id.agenda_item_color, View.VISIBLE);
-
-                int selfAttendeeStatus = eventInfo.selfAttendeeStatus;
+                updateTextView(views, R.id.title, eventInfo.visibTitle, eventInfo.title)
+                views.setViewVisibility(R.id.agenda_item_color, View.VISIBLE)
+                val selfAttendeeStatus: Int = eventInfo.selfAttendeeStatus
                 if (eventInfo.allDay) {
                     if (selfAttendeeStatus == Attendees.ATTENDEE_STATUS_INVITED) {
-                        views.setInt(R.id.agenda_item_color, "setImageResource",
-                                R.drawable.widget_chip_not_responded_bg);
-                        views.setInt(R.id.title, "setTextColor", displayColor);
+                        views.setInt(
+                            R.id.agenda_item_color, "setImageResource",
+                            R.drawable.widget_chip_not_responded_bg
+                        )
+                        views.setInt(R.id.title, "setTextColor", displayColor)
                     } else {
-                        views.setInt(R.id.agenda_item_color, "setImageResource",
-                                R.drawable.widget_chip_responded_bg);
-                        views.setInt(R.id.title, "setTextColor", mAllDayColor);
+                        views.setInt(
+                            R.id.agenda_item_color, "setImageResource",
+                            R.drawable.widget_chip_responded_bg
+                        )
+                        views.setInt(R.id.title, "setTextColor", mAllDayColor)
                     }
                     if (selfAttendeeStatus == Attendees.ATTENDEE_STATUS_DECLINED) {
                         // 40% opacity
-                        views.setInt(R.id.agenda_item_color, "setColorFilter",
-                                Utils.getDeclinedColorFromColor(displayColor));
+                        views.setInt(
+                            R.id.agenda_item_color, "setColorFilter",
+                            Utils.getDeclinedColorFromColor(displayColor)
+                        )
                     } else {
-                        views.setInt(R.id.agenda_item_color, "setColorFilter", displayColor);
+                        views.setInt(R.id.agenda_item_color, "setColorFilter", displayColor)
                     }
                 } else if (selfAttendeeStatus == Attendees.ATTENDEE_STATUS_DECLINED) {
-                    views.setInt(R.id.title, "setTextColor", mDeclinedColor);
-                    views.setInt(R.id.when, "setTextColor", mDeclinedColor);
-                    views.setInt(R.id.where, "setTextColor", mDeclinedColor);
-                    views.setInt(R.id.agenda_item_color, "setImageResource",
-                            R.drawable.widget_chip_responded_bg);
+                    views.setInt(R.id.title, "setTextColor", mDeclinedColor)
+                    views.setInt(R.id.`when`, "setTextColor", mDeclinedColor)
+                    views.setInt(R.id.where, "setTextColor", mDeclinedColor)
+                    views.setInt(
+                        R.id.agenda_item_color, "setImageResource",
+                        R.drawable.widget_chip_responded_bg
+                    )
                     // 40% opacity
-                    views.setInt(R.id.agenda_item_color, "setColorFilter",
-                            Utils.getDeclinedColorFromColor(displayColor));
+                    views.setInt(
+                        R.id.agenda_item_color, "setColorFilter",
+                        Utils.getDeclinedColorFromColor(displayColor)
+                    )
                 } else {
-                    views.setInt(R.id.title, "setTextColor", mStandardColor);
-                    views.setInt(R.id.when, "setTextColor", mStandardColor);
-                    views.setInt(R.id.where, "setTextColor", mStandardColor);
+                    views.setInt(R.id.title, "setTextColor", mStandardColor)
+                    views.setInt(R.id.`when`, "setTextColor", mStandardColor)
+                    views.setInt(R.id.where, "setTextColor", mStandardColor)
                     if (selfAttendeeStatus == Attendees.ATTENDEE_STATUS_INVITED) {
-                        views.setInt(R.id.agenda_item_color, "setImageResource",
-                                R.drawable.widget_chip_not_responded_bg);
+                        views.setInt(
+                            R.id.agenda_item_color, "setImageResource",
+                            R.drawable.widget_chip_not_responded_bg
+                        )
                     } else {
-                        views.setInt(R.id.agenda_item_color, "setImageResource",
-                                R.drawable.widget_chip_responded_bg);
+                        views.setInt(
+                            R.id.agenda_item_color, "setImageResource",
+                            R.drawable.widget_chip_responded_bg
+                        )
                     }
-                    views.setInt(R.id.agenda_item_color, "setColorFilter", displayColor);
+                    views.setInt(R.id.agenda_item_color, "setColorFilter", displayColor)
                 }
-
-                long start = eventInfo.start;
-                long end = eventInfo.end;
+                var start: Long = eventInfo.start
+                var end: Long = eventInfo.end
                 // An element in ListView.
                 if (eventInfo.allDay) {
-                    String tz = Utils.getTimeZone(mContext, null);
-                    Time recycle = new Time();
-                    start = Utils.convertAlldayLocalToUTC(recycle, start, tz);
-                    end = Utils.convertAlldayLocalToUTC(recycle, end, tz);
+                    val tz: String = Utils.getTimeZone(mContext, null)
+                    val recycle = Time()
+                    start = Utils.convertAlldayLocalToUTC(recycle, start, tz)
+                    end = Utils.convertAlldayLocalToUTC(recycle, end, tz)
                 }
-                final Intent fillInIntent = CalendarAppWidgetProvider.getLaunchFillInIntent(
-                        mContext, eventInfo.id, start, end, eventInfo.allDay);
-                views.setOnClickFillInIntent(R.id.widget_row, fillInIntent);
-                return views;
+                val fillInIntent: Intent = CalendarAppWidgetProvider.getLaunchFillInIntent(
+                    mContext, eventInfo.id, start, end, eventInfo.allDay
+                )
+                views.setOnClickFillInIntent(R.id.widget_row, fillInIntent)
+                views
             }
         }
 
+        @get:Override val viewTypeCount: Int
+            get() = 5
+
+        // if there are no events, we still return 1 to represent the "no
+        // events" view
+        @get:Override val count: Int
+            get() =// if there are no events, we still return 1 to represent the "no
+                // events" view
+                if (mModel == null) {
+                    1
+                } else Math.max(1, mModel.mRowInfos.size())
+
         @Override
-        public int getViewTypeCount() {
-            return 5;
+        fun getItemId(position: Int): Long {
+            if (mModel == null || mModel.mRowInfos.isEmpty() || position >= count) {
+                return 0
+            }
+            val rowInfo: RowInfo = mModel.mRowInfos.get(position)
+            if (rowInfo.mType === RowInfo.TYPE_DAY) {
+                return rowInfo.mIndex
+            }
+            val eventInfo: EventInfo = mModel.mEventInfos.get(rowInfo.mIndex)
+            val prime: Long = 31
+            var result: Long = 1
+            result = prime * result + (eventInfo.id xor (eventInfo.id ushr 32)) as Int
+            result = prime * result + (eventInfo.start xor (eventInfo.start ushr 32)) as Int
+            return result
         }
 
         @Override
-        public int getCount() {
-            // if there are no events, we still return 1 to represent the "no
-            // events" view
-            if (mModel == null) {
-                return 1;
-            }
-            return Math.max(1, mModel.mRowInfos.size());
-        }
-
-        @Override
-        public long getItemId(int position) {
-            if (mModel == null ||  mModel.mRowInfos.isEmpty() || position >= getCount()) {
-                return 0;
-            }
-            RowInfo rowInfo = mModel.mRowInfos.get(position);
-            if (rowInfo.mType == RowInfo.TYPE_DAY) {
-                return rowInfo.mIndex;
-            }
-            EventInfo eventInfo = mModel.mEventInfos.get(rowInfo.mIndex);
-            long prime = 31;
-            long result = 1;
-            result = prime * result + (int) (eventInfo.id ^ (eventInfo.id >>> 32));
-            result = prime * result + (int) (eventInfo.start ^ (eventInfo.start >>> 32));
-            return result;
-        }
-
-        @Override
-        public boolean hasStableIds() {
-            return true;
+        fun hasStableIds(): Boolean {
+            return true
         }
 
         /**
@@ -368,100 +370,68 @@ public class CalendarAppWidgetService extends RemoteViewsService {
          *
          * @param selection The selection string for the loader to filter the query with.
          */
-        public void initLoader(String selection) {
-            if (LOGD)
-                Log.d(TAG, "Querying for widget events...");
+        fun initLoader(selection: String?) {
+            if (LOGD) Log.d(TAG, "Querying for widget events...")
 
             // Search for events from now until some time in the future
-            Uri uri = createLoaderUri();
-            mLoader = new CursorLoader(mContext, uri, EVENT_PROJECTION, selection, null,
-                    EVENT_SORT_ORDER);
-            mLoader.setUpdateThrottle(WIDGET_UPDATE_THROTTLE);
-            synchronized (mLock) {
-                mLastSerialNum = ++mSerialNum;
-            }
-            mLoader.registerListener(mAppWidgetId, this);
-            mLoader.startLoading();
-
+            val uri: Uri = createLoaderUri()
+            mLoader = CursorLoader(
+                mContext, uri, EVENT_PROJECTION, selection, null,
+                EVENT_SORT_ORDER
+            )
+            mLoader.setUpdateThrottle(WIDGET_UPDATE_THROTTLE)
+            synchronized(mLock) { mLastSerialNum = ++mSerialNum }
+            mLoader.registerListener(mAppWidgetId, this)
+            mLoader.startLoading()
         }
 
         /**
          * This gets the selection string for the loader.  This ends up doing a query in the
          * shared preferences.
          */
-        private String queryForSelection() {
-            return Utils.getHideDeclinedEvents(mContext) ? EVENT_SELECTION_HIDE_DECLINED
-                    : EVENT_SELECTION;
+        private fun queryForSelection(): String {
+            return if (Utils.getHideDeclinedEvents(mContext)) EVENT_SELECTION_HIDE_DECLINED else EVENT_SELECTION
         }
 
         /**
          * @return The uri for the loader
          */
-        private Uri createLoaderUri() {
-            long now = System.currentTimeMillis();
+        private fun createLoaderUri(): Uri {
+            val now: Long = System.currentTimeMillis()
             // Add a day on either side to catch all-day events
-            long begin = now - DateUtils.DAY_IN_MILLIS;
-            long end = now + SEARCH_DURATION + DateUtils.DAY_IN_MILLIS;
-
-            Uri uri = Uri.withAppendedPath(Instances.CONTENT_URI, Long.toString(begin) + "/" + end);
-            return uri;
-        }
-
-        /* @VisibleForTesting */
-        protected static CalendarAppWidgetModel buildAppWidgetModel(
-                Context context, Cursor cursor, String timeZone) {
-            CalendarAppWidgetModel model = new CalendarAppWidgetModel(context, timeZone);
-            model.buildFromCursor(cursor, timeZone);
-            return model;
+            val begin: Long = now - DateUtils.DAY_IN_MILLIS
+            val end: Long =
+                now + SEARCH_DURATION + DateUtils.DAY_IN_MILLIS
+            return Uri.withAppendedPath(
+                Instances.CONTENT_URI,
+                toString(begin) + "/" + end
+            )
         }
 
         /**
          * Calculates and returns the next time we should push widget updates.
          */
-        private long calculateUpdateTime(CalendarAppWidgetModel model, long now, String timeZone) {
+        private fun calculateUpdateTime(
+            model: CalendarAppWidgetModel?,
+            now: Long,
+            timeZone: String
+        ): Long {
             // Make sure an update happens at midnight or earlier
-            long minUpdateTime = getNextMidnightTimeMillis(timeZone);
-            for (EventInfo event : model.mEventInfos) {
-                final long start;
-                final long end;
-                start = event.start;
-                end = event.end;
+            var minUpdateTime = getNextMidnightTimeMillis(timeZone)
+            for (event in model.mEventInfos) {
+                val start: Long
+                val end: Long
+                start = event.start
+                end = event.end
 
                 // We want to update widget when we enter/exit time range of an event.
                 if (now < start) {
-                    minUpdateTime = Math.min(minUpdateTime, start);
+                    minUpdateTime = Math.min(minUpdateTime, start)
                 } else if (now < end) {
-                    minUpdateTime = Math.min(minUpdateTime, end);
+                    minUpdateTime = Math.min(minUpdateTime, end)
                 }
             }
-            return minUpdateTime;
-        }
-
-        private static long getNextMidnightTimeMillis(String timezone) {
-            Time time = new Time();
-            time.setToNow();
-            time.monthDay++;
-            time.hour = 0;
-            time.minute = 0;
-            time.second = 0;
-            long midnightDeviceTz = time.normalize(true);
-
-            time.timezone = timezone;
-            time.setToNow();
-            time.monthDay++;
-            time.hour = 0;
-            time.minute = 0;
-            time.second = 0;
-            long midnightHomeTz = time.normalize(true);
-
-            return Math.min(midnightDeviceTz, midnightHomeTz);
-        }
-
-        static void updateTextView(RemoteViews views, int id, int visibility, String string) {
-            views.setViewVisibility(id, visibility);
-            if (visibility == View.VISIBLE) {
-                views.setTextViewText(id, string);
-            }
+            return minUpdateTime
         }
 
         /*
@@ -471,36 +441,33 @@ public class CalendarAppWidgetService extends RemoteViewsService {
          * .content.Loader, java.lang.Object)
          */
         @Override
-        public void onLoadComplete(Loader<Cursor> loader, Cursor cursor) {
+        fun onLoadComplete(loader: Loader<Cursor?>?, cursor: Cursor?) {
             if (cursor == null) {
-                return;
+                return
             }
             // If a newer update has happened since we started clean up and
             // return
-            synchronized (mLock) {
+            synchronized(mLock) {
                 if (cursor.isClosed()) {
-                    Log.wtf(TAG, "Got a closed cursor from onLoadComplete");
-                    return;
+                    Log.wtf(TAG, "Got a closed cursor from onLoadComplete")
+                    return
                 }
-
                 if (mLastSerialNum != mSerialNum) {
-                    return;
+                    return
                 }
-
-                final long now = System.currentTimeMillis();
-                String tz = Utils.getTimeZone(mContext, mTimezoneChanged);
+                val now: Long = System.currentTimeMillis()
+                val tz: String = Utils.getTimeZone(mContext, mTimezoneChanged)
 
                 // Copy it to a local static cursor.
-                MatrixCursor matrixCursor = Utils.matrixCursorFromCursor(cursor);
+                val matrixCursor: MatrixCursor = Utils.matrixCursorFromCursor(cursor)
                 try {
-                    mModel = buildAppWidgetModel(mContext, matrixCursor, tz);
+                    mModel = buildAppWidgetModel(mContext, matrixCursor, tz)
                 } finally {
                     if (matrixCursor != null) {
-                        matrixCursor.close();
+                        matrixCursor.close()
                     }
-
                     if (cursor != null) {
-                        cursor.close();
+                        cursor.close()
                     }
                 }
 
@@ -508,59 +475,55 @@ public class CalendarAppWidgetService extends RemoteViewsService {
                 // We also cancel
                 // all existing wake-ups because PendingIntents don't match
                 // against extras.
-                long triggerTime = calculateUpdateTime(mModel, now, tz);
+                var triggerTime = calculateUpdateTime(mModel, now, tz)
 
                 // If no next-update calculated, or bad trigger time in past,
                 // schedule
                 // update about six hours from now.
                 if (triggerTime < now) {
-                    Log.w(TAG, "Encountered bad trigger time " + formatDebugTime(triggerTime, now));
-                    triggerTime = now + UPDATE_TIME_NO_EVENTS;
+                    Log.w(TAG, "Encountered bad trigger time " + formatDebugTime(triggerTime, now))
+                    triggerTime = now + UPDATE_TIME_NO_EVENTS
                 }
-
-                final AlarmManager alertManager = (AlarmManager) mContext
-                        .getSystemService(Context.ALARM_SERVICE);
-                final PendingIntent pendingUpdate = CalendarAppWidgetProvider
-                        .getUpdateIntent(mContext);
-
-                alertManager.cancel(pendingUpdate);
-                alertManager.set(AlarmManager.RTC, triggerTime, pendingUpdate);
-                Time time = new Time(Utils.getTimeZone(mContext, null));
-                time.setToNow();
-
-                if (time.normalize(true) != sLastUpdateTime) {
-                    Time time2 = new Time(Utils.getTimeZone(mContext, null));
-                    time2.set(sLastUpdateTime);
-                    time2.normalize(true);
-                    if (time.year != time2.year || time.yearDay != time2.yearDay) {
-                        final Intent updateIntent = new Intent(
-                                Utils.getWidgetUpdateAction(mContext));
-                        mContext.sendBroadcast(updateIntent);
+                val alertManager: AlarmManager = mContext
+                    .getSystemService(Context.ALARM_SERVICE) as AlarmManager
+                val pendingUpdate: PendingIntent = CalendarAppWidgetProvider
+                    .getUpdateIntent(mContext)
+                alertManager.cancel(pendingUpdate)
+                alertManager.set(AlarmManager.RTC, triggerTime, pendingUpdate)
+                val time = Time(Utils.getTimeZone(mContext, null))
+                time.setToNow()
+                if (time.normalize(true) !== sLastUpdateTime) {
+                    val time2 = Time(Utils.getTimeZone(mContext, null))
+                    time2.set(sLastUpdateTime)
+                    time2.normalize(true)
+                    if (time.year !== time2.year || time.yearDay !== time2.yearDay) {
+                        val updateIntent = Intent(
+                            Utils.getWidgetUpdateAction(mContext)
+                        )
+                        mContext.sendBroadcast(updateIntent)
                     }
-
-                    sLastUpdateTime = time.toMillis(true);
+                    sLastUpdateTime = time.toMillis(true)
                 }
-
-                AppWidgetManager widgetManager = AppWidgetManager.getInstance(mContext);
+                val widgetManager: AppWidgetManager = AppWidgetManager.getInstance(mContext)
                 if (widgetManager == null) {
-                    return;
+                    return
                 }
                 if (mAppWidgetId == -1) {
-                    int[] ids = widgetManager.getAppWidgetIds(CalendarAppWidgetProvider
-                            .getComponentName(mContext));
-
-                    widgetManager.notifyAppWidgetViewDataChanged(ids, R.id.events_list);
+                    val ids: IntArray = widgetManager.getAppWidgetIds(
+                        CalendarAppWidgetProvider
+                            .getComponentName(mContext)
+                    )
+                    widgetManager.notifyAppWidgetViewDataChanged(ids, R.id.events_list)
                 } else {
-                    widgetManager.notifyAppWidgetViewDataChanged(mAppWidgetId, R.id.events_list);
+                    widgetManager.notifyAppWidgetViewDataChanged(mAppWidgetId, R.id.events_list)
                 }
             }
         }
 
         @Override
-        public void onReceive(Context context, Intent intent) {
-            if (LOGD)
-                Log.d(TAG, "AppWidgetService received an intent. It was " + intent.toString());
-            mContext = context;
+        fun onReceive(context: Context?, intent: Intent) {
+            if (LOGD) Log.d(TAG, "AppWidgetService received an intent. It was " + intent.toString())
+            mContext = context
 
             // We cannot do any queries from the UI thread, so push the 'selection' query
             // to a background thread.  However the implementation of the latter query
@@ -573,54 +536,84 @@ public class CalendarAppWidgetService extends RemoteViewsService {
             // TODO: Remove use of mHandler and CursorLoader, and do all the work synchronously
             // in the background thread.  All the handshaking going on here between the UI and
             // background thread with using goAsync, mHandler, and CursorLoader is confusing.
-            final PendingResult result = goAsync();
-            executor.submit(new Runnable() {
+            val result: PendingResult = goAsync()
+            executor.submit(object : Runnable() {
                 @Override
-                public void run() {
+                fun run() {
                     // We always complete queryForSelection() even if the load task ends up being
                     // canceled because of a more recent one.  Optimizing this to allow
                     // canceling would require keeping track of all the PendingResults
                     // (from goAsync) to abort them.  Defer this until it becomes a problem.
-                    final String selection = queryForSelection();
-
+                    val selection = queryForSelection()
                     if (mLoader == null) {
-                        mAppWidgetId = -1;
-                        mHandler.post(new Runnable() {
+                        mAppWidgetId = -1
+                        mHandler.post(object : Runnable() {
                             @Override
-                            public void run() {
-                                initLoader(selection);
-                                result.finish();
+                            fun run() {
+                                initLoader(selection)
+                                result.finish()
                             }
-                        });
+                        })
                     } else {
-                        mHandler.post(createUpdateLoaderRunnable(selection, result,
-                                currentVersion.incrementAndGet()));
+                        mHandler.post(
+                            createUpdateLoaderRunnable(
+                                selection, result,
+                                currentVersion.incrementAndGet()
+                            )
+                        )
                     }
                 }
-            });
+            })
         }
-    }
 
-    /**
-     * Format given time for debugging output.
-     *
-     * @param unixTime Target time to report.
-     * @param now Current system time from {@link System#currentTimeMillis()}
-     *            for calculating time difference.
-     */
-    static String formatDebugTime(long unixTime, long now) {
-        Time time = new Time();
-        time.set(unixTime);
+        companion object {
+            private const val LOGD = false
 
-        long delta = unixTime - now;
-        if (delta > DateUtils.MINUTE_IN_MILLIS) {
-            delta /= DateUtils.MINUTE_IN_MILLIS;
-            return String.format("[%d] %s (%+d mins)", unixTime,
-                    time.format("%H:%M:%S"), delta);
-        } else {
-            delta /= DateUtils.SECOND_IN_MILLIS;
-            return String.format("[%d] %s (%+d secs)", unixTime,
-                    time.format("%H:%M:%S"), delta);
+            // Suppress unnecessary logging about update time. Need to be static as this object is
+            // re-instantiated frequently.
+            // TODO: It seems loadData() is called via onCreate() four times, which should mean
+            // unnecessary CalendarFactory object is created and dropped. It is not efficient.
+            private var sLastUpdateTime = UPDATE_TIME_NO_EVENTS
+            private var mModel: CalendarAppWidgetModel? = null
+            private val mLock: Object = Object()
+
+            @Volatile
+            private var mSerialNum = 0
+            private val currentVersion: AtomicInteger = AtomicInteger(0)
+
+            /* @VisibleForTesting */
+            protected fun buildAppWidgetModel(
+                context: Context?, cursor: Cursor?, timeZone: String?
+            ): CalendarAppWidgetModel {
+                val model = CalendarAppWidgetModel(context, timeZone)
+                model.buildFromCursor(cursor, timeZone)
+                return model
+            }
+
+            private fun getNextMidnightTimeMillis(timezone: String): Long {
+                val time = Time()
+                time.setToNow()
+                time.monthDay++
+                time.hour = 0
+                time.minute = 0
+                time.second = 0
+                val midnightDeviceTz: Long = time.normalize(true)
+                time.timezone = timezone
+                time.setToNow()
+                time.monthDay++
+                time.hour = 0
+                time.minute = 0
+                time.second = 0
+                val midnightHomeTz: Long = time.normalize(true)
+                return Math.min(midnightDeviceTz, midnightHomeTz)
+            }
+
+            fun updateTextView(views: RemoteViews, id: Int, visibility: Int, string: String?) {
+                views.setViewVisibility(id, visibility)
+                if (visibility == View.VISIBLE) {
+                    views.setTextViewText(id, string)
+                }
+            }
         }
     }
 }
