@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,66 +13,59 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.android.calendar.widget
 
-package com.android.calendar.widget;
-
-import static android.provider.CalendarContract.EXTRA_EVENT_ALL_DAY;
-import static android.provider.CalendarContract.EXTRA_EVENT_BEGIN_TIME;
-import static android.provider.CalendarContract.EXTRA_EVENT_END_TIME;
-
-import android.app.AlarmManager;
-import android.app.PendingIntent;
-import android.appwidget.AppWidgetManager;
-import android.appwidget.AppWidgetProvider;
-import android.content.ComponentName;
-import android.content.Context;
-import android.content.Intent;
-import android.net.Uri;
-import android.provider.CalendarContract;
-import android.text.format.DateUtils;
-import android.text.format.Time;
-import android.util.Log;
-import android.widget.RemoteViews;
-
-import com.android.calendar.AllInOneActivity;
-import com.android.calendar.EventInfoActivity;
-import com.android.calendar.R;
-import com.android.calendar.Utils;
+import android.provider.CalendarContract.EXTRA_EVENT_ALL_DAY
+import android.provider.CalendarContract.EXTRA_EVENT_BEGIN_TIME
+import android.provider.CalendarContract.EXTRA_EVENT_END_TIME
+import android.app.AlarmManager
+import android.app.PendingIntent
+import android.appwidget.AppWidgetManager
+import android.appwidget.AppWidgetProvider
+import android.content.ComponentName
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.provider.CalendarContract
+import android.text.format.DateUtils
+import android.text.format.Time
+import android.util.Log
+import android.widget.RemoteViews
+import com.android.calendar.AllInOneActivity
+import com.android.calendar.EventInfoActivity
+import com.android.calendar.R
+import com.android.calendar.Utils
 
 /**
  * Simple widget to show next upcoming calendar event.
  */
-public class CalendarAppWidgetProvider extends AppWidgetProvider {
-    static final String TAG = "CalendarAppWidgetProvider";
-    static final boolean LOGD = false;
-
-    // TODO Move these to Calendar.java
-    static final String EXTRA_EVENT_IDS = "com.android.calendar.EXTRA_EVENT_IDS";
-
+class CalendarAppWidgetProvider : AppWidgetProvider() {
     /**
      * {@inheritDoc}
      */
     @Override
-    public void onReceive(Context context, Intent intent) {
+    fun onReceive(context: Context, intent: Intent) {
         // Handle calendar-specific updates ourselves because they might be
         // coming in without extras, which AppWidgetProvider then blocks.
-        final String action = intent.getAction();
-        if (LOGD)
-            Log.d(TAG, "AppWidgetProvider got the intent: " + intent.toString());
+        val action: String = intent.getAction()
+        if (LOGD) Log.d(TAG, "AppWidgetProvider got the intent: " + intent.toString())
         if (Utils.getWidgetUpdateAction(context).equals(action)) {
-            AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
-            performUpdate(context, appWidgetManager,
-                    appWidgetManager.getAppWidgetIds(getComponentName(context)),
-                    null /* no eventIds */);
+            val appWidgetManager: AppWidgetManager = AppWidgetManager.getInstance(context)
+            performUpdate(
+                context, appWidgetManager,
+                appWidgetManager.getAppWidgetIds(getComponentName(context)),
+                null /* no eventIds */
+            )
         } else if (action != null && (action.equals(Intent.ACTION_PROVIDER_CHANGED)
-                || action.equals(Intent.ACTION_TIME_CHANGED)
-                || action.equals(Intent.ACTION_TIMEZONE_CHANGED)
-                || action.equals(Intent.ACTION_DATE_CHANGED)
-                || action.equals(Utils.getWidgetScheduledUpdateAction(context)))) {
-            Intent service = new Intent(context, CalendarAppWidgetService.class);
-            context.startService(service);
+              || action.equals(Intent.ACTION_TIME_CHANGED)
+              || action.equals(Intent.ACTION_TIMEZONE_CHANGED)
+              || action.equals(Intent.ACTION_DATE_CHANGED)
+              || action.equals(Utils.getWidgetScheduledUpdateAction(context)))
+        ) {
+            val service = Intent(context, CalendarAppWidgetService::class.java)
+            context.startService(service)
         } else {
-            super.onReceive(context, intent);
+            super.onReceive(context, intent)
         }
     }
 
@@ -80,151 +73,171 @@ public class CalendarAppWidgetProvider extends AppWidgetProvider {
      * {@inheritDoc}
      */
     @Override
-    public void onDisabled(Context context) {
+    fun onDisabled(context: Context) {
         // Unsubscribe from all AlarmManager updates
-        AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-        PendingIntent pendingUpdate = getUpdateIntent(context);
-        am.cancel(pendingUpdate);
+        val am: AlarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val pendingUpdate: PendingIntent = getUpdateIntent(context)
+        am.cancel(pendingUpdate)
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
-        performUpdate(context, appWidgetManager, appWidgetIds, null /* no eventIds */);
-    }
-
-
-    /**
-     * Build {@link ComponentName} describing this specific
-     * {@link AppWidgetProvider}
-     */
-    static ComponentName getComponentName(Context context) {
-        return new ComponentName(context, CalendarAppWidgetProvider.class);
+    fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
+        performUpdate(context, appWidgetManager, appWidgetIds, null /* no eventIds */)
     }
 
     /**
      * Process and push out an update for the given appWidgetIds. This call
-     * actually fires an intent to start {@link CalendarAppWidgetService} as a
+     * actually fires an intent to start [CalendarAppWidgetService] as a
      * background service which handles the actual update, to prevent ANR'ing
      * during database queries.
      *
-     * @param context Context to use when starting {@link CalendarAppWidgetService}.
+     * @param context Context to use when starting [CalendarAppWidgetService].
      * @param appWidgetIds List of specific appWidgetIds to update, or null for
-     *            all.
+     * all.
      * @param changedEventIds Specific events known to be changed. If present,
-     *            we use it to decide if an update is necessary.
+     * we use it to decide if an update is necessary.
      */
-    private void performUpdate(Context context,
-            AppWidgetManager appWidgetManager, int[] appWidgetIds,
-            long[] changedEventIds) {
+    private fun performUpdate(
+        context: Context,
+        appWidgetManager: AppWidgetManager, appWidgetIds: IntArray,
+        changedEventIds: LongArray?
+    ) {
         // Launch over to service so it can perform update
-        for (int appWidgetId : appWidgetIds) {
-            if (LOGD) Log.d(TAG, "Building widget update...");
-            Intent updateIntent = new Intent(context, CalendarAppWidgetService.class);
-            updateIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
+        for (appWidgetId in appWidgetIds) {
+            if (LOGD) Log.d(TAG, "Building widget update...")
+            val updateIntent = Intent(context, CalendarAppWidgetService::class.java)
+            updateIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
             if (changedEventIds != null) {
-                updateIntent.putExtra(EXTRA_EVENT_IDS, changedEventIds);
+                updateIntent.putExtra(EXTRA_EVENT_IDS, changedEventIds)
             }
-            updateIntent.setData(Uri.parse(updateIntent.toUri(Intent.URI_INTENT_SCHEME)));
-
-            RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.appwidget);
+            updateIntent.setData(Uri.parse(updateIntent.toUri(Intent.URI_INTENT_SCHEME)))
+            val views = RemoteViews(context.getPackageName(), R.layout.appwidget)
             // Calendar header
-            Time time = new Time(Utils.getTimeZone(context, null));
-            time.setToNow();
-            long millis = time.toMillis(true);
-            final String dayOfWeek = DateUtils.getDayOfWeekString(time.weekDay + 1,
-                    DateUtils.LENGTH_MEDIUM);
-            final String date = Utils.formatDateRange(context, millis, millis,
-                    DateUtils.FORMAT_ABBREV_ALL | DateUtils.FORMAT_SHOW_DATE
-                            | DateUtils.FORMAT_NO_YEAR);
-            views.setTextViewText(R.id.day_of_week, dayOfWeek);
-            views.setTextViewText(R.id.date, date);
+            val time = Time(Utils.getTimeZone(context, null))
+            time.setToNow()
+            val millis: Long = time.toMillis(true)
+            val dayOfWeek: String = DateUtils.getDayOfWeekString(
+                time.weekDay + 1,
+                DateUtils.LENGTH_MEDIUM
+            )
+            val date: String = Utils.formatDateRange(
+                context, millis, millis,
+                DateUtils.FORMAT_ABBREV_ALL or DateUtils.FORMAT_SHOW_DATE
+                  or DateUtils.FORMAT_NO_YEAR
+            )
+            views.setTextViewText(R.id.day_of_week, dayOfWeek)
+            views.setTextViewText(R.id.date, date)
             // Attach to list of events
-            views.setRemoteAdapter(appWidgetId, R.id.events_list, updateIntent);
-            appWidgetManager.notifyAppWidgetViewDataChanged(appWidgetId, R.id.events_list);
+            views.setRemoteAdapter(appWidgetId, R.id.events_list, updateIntent)
+            appWidgetManager.notifyAppWidgetViewDataChanged(appWidgetId, R.id.events_list)
 
 
             // Launch calendar app when the user taps on the header
-            final Intent launchCalendarIntent = new Intent(Intent.ACTION_VIEW);
-            launchCalendarIntent.setClass(context, AllInOneActivity.class);
+            val launchCalendarIntent = Intent(Intent.ACTION_VIEW)
+            launchCalendarIntent.setClass(context, AllInOneActivity::class.java)
             launchCalendarIntent
-                    .setData(Uri.parse("content://com.android.calendar/time/" + millis));
-            final PendingIntent launchCalendarPendingIntent = PendingIntent.getActivity(
-                    context, 0 /* no requestCode */, launchCalendarIntent, 0 /* no flags */);
-            views.setOnClickPendingIntent(R.id.header, launchCalendarPendingIntent);
+                .setData(Uri.parse("content://com.android.calendar/time/$millis"))
+            val launchCalendarPendingIntent: PendingIntent = PendingIntent.getActivity(
+                context, 0 /* no requestCode */, launchCalendarIntent, 0 /* no flags */
+            )
+            views.setOnClickPendingIntent(R.id.header, launchCalendarPendingIntent)
 
             // Each list item will call setOnClickExtra() to let the list know
             // which item
             // is selected by a user.
-            final PendingIntent updateEventIntent = getLaunchPendingIntentTemplate(context);
-            views.setPendingIntentTemplate(R.id.events_list, updateEventIntent);
-
-            appWidgetManager.updateAppWidget(appWidgetId, views);
+            val updateEventIntent: PendingIntent = getLaunchPendingIntentTemplate(context)
+            views.setPendingIntentTemplate(R.id.events_list, updateEventIntent)
+            appWidgetManager.updateAppWidget(appWidgetId, views)
         }
     }
 
-    /**
-     * Build the {@link PendingIntent} used to trigger an update of all calendar
-     * widgets. Uses {@link Utils#getWidgetScheduledUpdateAction(Context)} to
-     * directly target all widgets instead of using
-     * {@link AppWidgetManager#EXTRA_APPWIDGET_IDS}.
-     *
-     * @param context Context to use when building broadcast.
-     */
-    static PendingIntent getUpdateIntent(Context context) {
-        Intent intent = new Intent(Utils.getWidgetScheduledUpdateAction(context));
-        intent.setDataAndType(CalendarContract.CONTENT_URI, Utils.APPWIDGET_DATA_TYPE);
-        return PendingIntent.getBroadcast(context, 0 /* no requestCode */, intent,
-                0 /* no flags */);
-    }
+    companion object {
+        const val TAG = "CalendarAppWidgetProvider"
+        const val LOGD = false
 
-    /**
-     * Build a {@link PendingIntent} to launch the Calendar app. This should be used
-     * in combination with {@link RemoteViews#setPendingIntentTemplate(int, PendingIntent)}.
-     */
-    static PendingIntent getLaunchPendingIntentTemplate(Context context) {
-        Intent launchIntent = new Intent();
-        launchIntent.setAction(Intent.ACTION_VIEW);
-        launchIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK |
-                Intent.FLAG_ACTIVITY_TASK_ON_HOME);
-            launchIntent.setClass(context, AllInOneActivity.class);
-            return PendingIntent.getActivity(context, 0 /* no requestCode */, launchIntent,
-                    PendingIntent.FLAG_UPDATE_CURRENT);
-    }
+        // TODO Move these to Calendar.java
+        const val EXTRA_EVENT_IDS = "com.android.calendar.EXTRA_EVENT_IDS"
 
-    /**
-     * Build an {@link Intent} available as FillInIntent to launch the Calendar app.
-     * This should be used in combination with
-     * {@link RemoteViews#setOnClickFillInIntent(int, Intent)}.
-     * If the go to time is 0, then calendar will be launched without a starting time.
-     *
-     * @param goToTime time that calendar should take the user to, or 0 to
-     *            indicate no specific start time.
-     */
-    static Intent getLaunchFillInIntent(Context context, long id, long start, long end,
-            boolean allDay) {
-        final Intent fillInIntent = new Intent();
-        String dataString = "content://com.android.calendar/events";
-        if (id != 0) {
-            fillInIntent.putExtra(Utils.INTENT_KEY_DETAIL_VIEW, true);
-            fillInIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK |
-            Intent.FLAG_ACTIVITY_TASK_ON_HOME);
-
-            dataString += "/" + id;
-            // If we have an event id - start the event info activity
-            fillInIntent.setClass(context, EventInfoActivity.class);
-        } else {
-            // If we do not have an event id - start AllInOne
-            fillInIntent.setClass(context, AllInOneActivity.class);
+        /**
+         * Build [ComponentName] describing this specific
+         * [AppWidgetProvider]
+         */
+        fun getComponentName(context: Context?): ComponentName {
+            return ComponentName(context, CalendarAppWidgetProvider::class.java)
         }
-        Uri data = Uri.parse(dataString);
-        fillInIntent.setData(data);
-        fillInIntent.putExtra(EXTRA_EVENT_BEGIN_TIME, start);
-        fillInIntent.putExtra(EXTRA_EVENT_END_TIME, end);
-        fillInIntent.putExtra(EXTRA_EVENT_ALL_DAY, allDay);
 
-        return fillInIntent;
+        /**
+         * Build the [PendingIntent] used to trigger an update of all calendar
+         * widgets. Uses [Utils.getWidgetScheduledUpdateAction] to
+         * directly target all widgets instead of using
+         * [AppWidgetManager.EXTRA_APPWIDGET_IDS].
+         *
+         * @param context Context to use when building broadcast.
+         */
+        fun getUpdateIntent(context: Context?): PendingIntent {
+            val intent = Intent(Utils.getWidgetScheduledUpdateAction(context))
+            intent.setDataAndType(CalendarContract.CONTENT_URI, Utils.APPWIDGET_DATA_TYPE)
+            return PendingIntent.getBroadcast(
+                context, 0 /* no requestCode */, intent,
+                0 /* no flags */
+            )
+        }
+
+        /**
+         * Build a [PendingIntent] to launch the Calendar app. This should be used
+         * in combination with [RemoteViews.setPendingIntentTemplate].
+         */
+        fun getLaunchPendingIntentTemplate(context: Context?): PendingIntent {
+            val launchIntent = Intent()
+            launchIntent.setAction(Intent.ACTION_VIEW)
+            launchIntent.setFlags(
+                Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK or
+                  Intent.FLAG_ACTIVITY_TASK_ON_HOME
+            )
+            launchIntent.setClass(context, AllInOneActivity::class.java)
+            return PendingIntent.getActivity(
+                context, 0 /* no requestCode */, launchIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT
+            )
+        }
+
+        /**
+         * Build an [Intent] available as FillInIntent to launch the Calendar app.
+         * This should be used in combination with
+         * [RemoteViews.setOnClickFillInIntent].
+         * If the go to time is 0, then calendar will be launched without a starting time.
+         *
+         * @param goToTime time that calendar should take the user to, or 0 to
+         * indicate no specific start time.
+         */
+        fun getLaunchFillInIntent(
+            context: Context?, id: Long, start: Long, end: Long,
+            allDay: Boolean
+        ): Intent {
+            val fillInIntent = Intent()
+            var dataString = "content://com.android.calendar/events"
+            if (id != 0L) {
+                fillInIntent.putExtra(Utils.INTENT_KEY_DETAIL_VIEW, true)
+                fillInIntent.setFlags(
+                    Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK or
+                      Intent.FLAG_ACTIVITY_TASK_ON_HOME
+                )
+                dataString += "/$id"
+                // If we have an event id - start the event info activity
+                fillInIntent.setClass(context, EventInfoActivity::class.java)
+            } else {
+                // If we do not have an event id - start AllInOne
+                fillInIntent.setClass(context, AllInOneActivity::class.java)
+            }
+            val data: Uri = Uri.parse(dataString)
+            fillInIntent.setData(data)
+            fillInIntent.putExtra(EXTRA_EVENT_BEGIN_TIME, start)
+            fillInIntent.putExtra(EXTRA_EVENT_END_TIME, end)
+            fillInIntent.putExtra(EXTRA_EVENT_ALL_DAY, allDay)
+            return fillInIntent
+        }
     }
 }
