@@ -16,6 +16,35 @@
 package com.android.calendar.widget
 
 import android.app.AlarmManager
+import android.app.PendingIntent
+import android.appwidget.AppWidgetManager
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.CursorLoader
+import android.content.Intent
+import android.content.Loader
+import android.content.res.Resources
+import android.database.Cursor
+import android.database.MatrixCursor
+import android.net.Uri
+import android.os.Handler
+import android.provider.CalendarContract.Attendees
+import android.provider.CalendarContract.Calendars
+import android.provider.CalendarContract.Instances
+import android.text.format.DateUtils
+import android.text.format.Time
+import android.util.Log
+import android.view.View
+import android.widget.RemoteViews
+import android.widget.RemoteViewsService
+import com.android.calendar.R
+import com.android.calendar.Utils
+import com.android.calendar.widget.CalendarAppWidgetModel.DayInfo
+import com.android.calendar.widget.CalendarAppWidgetModel.EventInfo
+import com.android.calendar.widget.CalendarAppWidgetModel.RowInfo
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicInteger
 
 class CalendarAppWidgetService : RemoteViewsService() {
     companion object {
@@ -25,13 +54,14 @@ class CalendarAppWidgetService : RemoteViewsService() {
 
         // Minimum delay between queries on the database for widget updates in ms
         const val WIDGET_UPDATE_THROTTLE = 500
-        private val EVENT_SORT_ORDER: String = (Instances.START_DAY.toString() + " ASC, "
-          + Instances.START_MINUTE + " ASC, " + Instances.END_DAY + " ASC, "
-          + Instances.END_MINUTE + " ASC LIMIT " + EVENT_MAX_COUNT)
+        private val EVENT_SORT_ORDER: String = (Instances.START_DAY.toString() + " ASC, " +
+            Instances.START_MINUTE + " ASC, " + Instances.END_DAY + " ASC, " +
+            Instances.END_MINUTE + " ASC LIMIT " + EVENT_MAX_COUNT)
         private val EVENT_SELECTION: String = Calendars.VISIBLE.toString() + "=1"
         private val EVENT_SELECTION_HIDE_DECLINED: String =
-            (Calendars.VISIBLE.toString() + "=1 AND "
-              + Instances.SELF_ATTENDEE_STATUS + "!=" + Attendees.ATTENDEE_STATUS_DECLINED)
+            (Calendars.VISIBLE.toString() + "=1 AND " +
+                Instances.SELF_ATTENDEE_STATUS + "!=" + Attendees.ATTENDEE_STATUS_DECLINED)
+        @JvmField
         val EVENT_PROJECTION = arrayOf<String>(
             Instances.ALL_DAY,
             Instances.BEGIN,
@@ -41,7 +71,7 @@ class CalendarAppWidgetService : RemoteViewsService() {
             Instances.EVENT_ID,
             Instances.START_DAY,
             Instances.END_DAY,
-            Instances.DISPLAY_COLOR,  // If SDK < 16, set to Instances.CALENDAR_COLOR.
+            Instances.DISPLAY_COLOR, // If SDK < 16, set to Instances.CALENDAR_COLOR.
             Instances.SELF_ATTENDEE_STATUS
         )
         const val INDEX_ALL_DAY = 0
@@ -97,7 +127,7 @@ class CalendarAppWidgetService : RemoteViewsService() {
     }
 
     @Override
-    fun onGetViewFactory(intent: Intent): RemoteViewsFactory {
+    override fun onGetViewFactory(intent: Intent): RemoteViewsFactory {
         return CalendarFactory(getApplicationContext(), intent)
     }
 
@@ -113,29 +143,30 @@ class CalendarAppWidgetService : RemoteViewsService() {
         private var mDeclinedColor = 0
         private var mStandardColor = 0
         private var mAllDayColor = 0
-        private val mTimezoneChanged: Runnable = object : Runnable() {
+        private val mTimezoneChanged: Runnable = object : Runnable {
             @Override
-            fun run() {
+            override fun run() {
                 if (mLoader != null) {
-                    mLoader.forceLoad()
+                    mLoader?.forceLoad()
                 }
             }
         }
 
         private fun createUpdateLoaderRunnable(
             selection: String,
-            result: PendingResult, version: Int
+            result: PendingResult,
+            version: Int
         ): Runnable {
-            return object : Runnable() {
+            return object : Runnable {
                 @Override
-                fun run() {
+                override fun run() {
                     // If there is a newer load request in the queue, skip loading.
                     if (mLoader != null && version >= currentVersion.get()) {
                         val uri: Uri = createLoaderUri()
-                        mLoader.setUri(uri)
-                        mLoader.setSelection(selection)
+                        mLoader?.setUri(uri)
+                        mLoader?.setSelection(selection)
                         synchronized(mLock) { mLastSerialNum = ++mSerialNum }
-                        mLoader.forceLoad()
+                        mLoader?.forceLoad()
                     }
                     result.finish()
                 }
@@ -148,9 +179,9 @@ class CalendarAppWidgetService : RemoteViewsService() {
             mAppWidgetId = intent.getIntExtra(
                 AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID
             )
-            mDeclinedColor = mResources.getColor(R.color.appwidget_item_declined_color)
-            mStandardColor = mResources.getColor(R.color.appwidget_item_standard_color)
-            mAllDayColor = mResources.getColor(R.color.appwidget_item_allday_color)
+            mDeclinedColor = mResources?.getColor(R.color.appwidget_item_declined_color) as Int
+            mStandardColor = mResources?.getColor(R.color.appwidget_item_standard_color) as Int
+            mAllDayColor = mResources?.getColor(R.color.appwidget_item_allday_color) as Int
         }
 
         constructor() {
@@ -158,37 +189,37 @@ class CalendarAppWidgetService : RemoteViewsService() {
         }
 
         @Override
-        fun onCreate() {
+        override fun onCreate() {
             val selection = queryForSelection()
             initLoader(selection)
         }
 
         @Override
-        fun onDataSetChanged() {
+        override fun onDataSetChanged() {
         }
 
         @Override
-        fun onDestroy() {
+        override fun onDestroy() {
             if (mLoader != null) {
-                mLoader.reset()
+                mLoader?.reset()
             }
         }
 
-        @get:Override val loadingView: RemoteViews
-            get() = RemoteViews(
-                mContext.getPackageName(),
-                R.layout.appwidget_loading
-            )
+        @Override
+        override fun getLoadingView(): RemoteViews {
+            val views = RemoteViews(mContext?.getPackageName(), R.layout.appwidget_loading)
+            return views
+        }
 
         @Override
-        fun getViewAt(position: Int): RemoteViews? {
+        override fun getViewAt(position: Int): RemoteViews? {
             // we use getCount here so that it doesn't return null when empty
-            if (position < 0 || position >= count) {
+            if (position < 0 || position >= getCount()) {
                 return null
             }
             if (mModel == null) {
                 val views = RemoteViews(
-                    mContext.getPackageName(),
+                    mContext?.getPackageName(),
                     R.layout.appwidget_loading
                 )
                 val intent: Intent = CalendarAppWidgetProvider.getLaunchFillInIntent(
@@ -201,9 +232,9 @@ class CalendarAppWidgetService : RemoteViewsService() {
                 views.setOnClickFillInIntent(R.id.appwidget_loading, intent)
                 return views
             }
-            if (mModel.mEventInfos.isEmpty() || mModel.mRowInfos.isEmpty()) {
+            if (mModel!!.mEventInfos!!.isEmpty() || mModel!!.mRowInfos!!.isEmpty()) {
                 val views = RemoteViews(
-                    mContext.getPackageName(),
+                    mContext?.getPackageName(),
                     R.layout.appwidget_no_events
                 )
                 val intent: Intent = CalendarAppWidgetProvider.getLaunchFillInIntent(
@@ -216,138 +247,144 @@ class CalendarAppWidgetService : RemoteViewsService() {
                 views.setOnClickFillInIntent(R.id.appwidget_no_events, intent)
                 return views
             }
-            val rowInfo: RowInfo = mModel.mRowInfos.get(position)
-            return if (rowInfo.mType === RowInfo.TYPE_DAY) {
+            val rowInfo: RowInfo? = mModel?.mRowInfos?.get(position)
+            return if (rowInfo!!.mType == RowInfo!!.TYPE_DAY) {
                 val views = RemoteViews(
-                    mContext.getPackageName(),
+                    mContext?.getPackageName(),
                     R.layout.appwidget_day
                 )
-                val dayInfo: DayInfo = mModel.mDayInfos.get(rowInfo.mIndex)
-                updateTextView(views, R.id.date, View.VISIBLE, dayInfo.mDayLabel)
+                val dayInfo: DayInfo? = mModel?.mDayInfos?.get(rowInfo!!.mIndex)
+                updateTextView(views, R.id.date, View.VISIBLE, dayInfo!!.mDayLabel)
                 views
             } else {
-                val views: RemoteViews
-                val eventInfo: EventInfo = mModel.mEventInfos.get(rowInfo.mIndex)
-                if (eventInfo.allDay) {
+                val views: RemoteViews?
+                val eventInfo: EventInfo? = mModel?.mEventInfos?.get(rowInfo.mIndex)
+                if (eventInfo!!.allDay) {
                     views = RemoteViews(
-                        mContext.getPackageName(),
+                        mContext?.getPackageName(),
                         R.layout.widget_all_day_item
                     )
                 } else {
-                    views = RemoteViews(mContext.getPackageName(), R.layout.widget_item)
+                    views = RemoteViews(mContext?.getPackageName(), R.layout.widget_item)
                 }
-                val displayColor: Int = Utils.getDisplayColorFromColor(eventInfo.color)
+                val displayColor: Int = Utils.getDisplayColorFromColor(eventInfo!!.color)
                 val now: Long = System.currentTimeMillis()
-                if (!eventInfo.allDay && eventInfo.start <= now && now <= eventInfo.end) {
-                    views.setInt(
+                if (!eventInfo!!.allDay && eventInfo!!.start <= now && now <= eventInfo!!.end) {
+                    views?.setInt(
                         R.id.widget_row, "setBackgroundResource",
                         R.drawable.agenda_item_bg_secondary
                     )
                 } else {
-                    views.setInt(
+                    views?.setInt(
                         R.id.widget_row, "setBackgroundResource",
                         R.drawable.agenda_item_bg_primary
                     )
                 }
-                if (!eventInfo.allDay) {
-                    updateTextView(views, R.id.`when`, eventInfo.visibWhen, eventInfo.`when`)
-                    updateTextView(views, R.id.where, eventInfo.visibWhere, eventInfo.where)
+                if (!eventInfo?.allDay) {
+                    updateTextView(views, R.id.`when`, eventInfo?.visibWhen
+                        as Int, eventInfo?.`when`)
+                    updateTextView(views, R.id.where, eventInfo?.visibWhere
+                        as Int, eventInfo?.where)
                 }
-                updateTextView(views, R.id.title, eventInfo.visibTitle, eventInfo.title)
+                updateTextView(views, R.id.title, eventInfo?.visibTitle as Int, eventInfo?.title)
                 views.setViewVisibility(R.id.agenda_item_color, View.VISIBLE)
-                val selfAttendeeStatus: Int = eventInfo.selfAttendeeStatus
-                if (eventInfo.allDay) {
+                val selfAttendeeStatus: Int = eventInfo?.selfAttendeeStatus as Int
+                if (eventInfo!!.allDay) {
                     if (selfAttendeeStatus == Attendees.ATTENDEE_STATUS_INVITED) {
-                        views.setInt(
+                        views?.setInt(
                             R.id.agenda_item_color, "setImageResource",
                             R.drawable.widget_chip_not_responded_bg
                         )
-                        views.setInt(R.id.title, "setTextColor", displayColor)
+                        views?.setInt(R.id.title, "setTextColor", displayColor)
                     } else {
-                        views.setInt(
+                        views?.setInt(
                             R.id.agenda_item_color, "setImageResource",
                             R.drawable.widget_chip_responded_bg
                         )
-                        views.setInt(R.id.title, "setTextColor", mAllDayColor)
+                        views?.setInt(R.id.title, "setTextColor", mAllDayColor)
                     }
                     if (selfAttendeeStatus == Attendees.ATTENDEE_STATUS_DECLINED) {
                         // 40% opacity
-                        views.setInt(
+                        views?.setInt(
                             R.id.agenda_item_color, "setColorFilter",
                             Utils.getDeclinedColorFromColor(displayColor)
                         )
                     } else {
-                        views.setInt(R.id.agenda_item_color, "setColorFilter", displayColor)
+                        views?.setInt(R.id.agenda_item_color, "setColorFilter", displayColor)
                     }
                 } else if (selfAttendeeStatus == Attendees.ATTENDEE_STATUS_DECLINED) {
-                    views.setInt(R.id.title, "setTextColor", mDeclinedColor)
-                    views.setInt(R.id.`when`, "setTextColor", mDeclinedColor)
-                    views.setInt(R.id.where, "setTextColor", mDeclinedColor)
-                    views.setInt(
+                    views?.setInt(R.id.title, "setTextColor", mDeclinedColor)
+                    views?.setInt(R.id.`when`, "setTextColor", mDeclinedColor)
+                    views?.setInt(R.id.where, "setTextColor", mDeclinedColor)
+                    views?.setInt(
                         R.id.agenda_item_color, "setImageResource",
                         R.drawable.widget_chip_responded_bg
                     )
                     // 40% opacity
-                    views.setInt(
+                    views?.setInt(
                         R.id.agenda_item_color, "setColorFilter",
                         Utils.getDeclinedColorFromColor(displayColor)
                     )
                 } else {
-                    views.setInt(R.id.title, "setTextColor", mStandardColor)
-                    views.setInt(R.id.`when`, "setTextColor", mStandardColor)
-                    views.setInt(R.id.where, "setTextColor", mStandardColor)
+                    views?.setInt(R.id.title, "setTextColor", mStandardColor)
+                    views?.setInt(R.id.`when`, "setTextColor", mStandardColor)
+                    views?.setInt(R.id.where, "setTextColor", mStandardColor)
                     if (selfAttendeeStatus == Attendees.ATTENDEE_STATUS_INVITED) {
-                        views.setInt(
+                        views?.setInt(
                             R.id.agenda_item_color, "setImageResource",
                             R.drawable.widget_chip_not_responded_bg
                         )
                     } else {
-                        views.setInt(
+                        views?.setInt(
                             R.id.agenda_item_color, "setImageResource",
                             R.drawable.widget_chip_responded_bg
                         )
                     }
-                    views.setInt(R.id.agenda_item_color, "setColorFilter", displayColor)
+                    views?.setInt(R.id.agenda_item_color, "setColorFilter", displayColor)
                 }
-                var start: Long = eventInfo.start
-                var end: Long = eventInfo.end
+                var start: Long = eventInfo?.start as Long
+                var end: Long = eventInfo?.end as Long
                 // An element in ListView.
-                if (eventInfo.allDay) {
-                    val tz: String = Utils.getTimeZone(mContext, null)
+                if (eventInfo!!.allDay) {
+                    val tz: String? = Utils.getTimeZone(mContext, null)
                     val recycle = Time()
-                    start = Utils.convertAlldayLocalToUTC(recycle, start, tz)
-                    end = Utils.convertAlldayLocalToUTC(recycle, end, tz)
+                    start = Utils.convertAlldayLocalToUTC(recycle, start, tz as String)
+                    end = Utils.convertAlldayLocalToUTC(recycle, end, tz as String)
                 }
                 val fillInIntent: Intent = CalendarAppWidgetProvider.getLaunchFillInIntent(
-                    mContext, eventInfo.id, start, end, eventInfo.allDay
+                    mContext, eventInfo?.id, start, end, eventInfo?.allDay
                 )
                 views.setOnClickFillInIntent(R.id.widget_row, fillInIntent)
                 views
             }
         }
 
-        @get:Override val viewTypeCount: Int
-            get() = 5
-
-        // if there are no events, we still return 1 to represent the "no
-        // events" view
-        @get:Override val count: Int
-            get() =// if there are no events, we still return 1 to represent the "no
-                // events" view
-                if (mModel == null) {
-                    1
-                } else Math.max(1, mModel.mRowInfos.size())
+        @Override
+        override fun getViewTypeCount(): Int {
+            return 5
+        }
 
         @Override
-        fun getItemId(position: Int): Long {
-            if (mModel == null || mModel.mRowInfos.isEmpty() || position >= count) {
+        override fun getCount(): Int {
+            // if there are no events, we still return 1 to represent the "no
+            // events" view
+            if (mModel == null) {
+                return 1
+            }
+            return Math.max(1, mModel?.mRowInfos?.size as Int)
+        }
+
+        @Override
+        override fun getItemId(position: Int): Long {
+            if (mModel == null || mModel?.mRowInfos?.isEmpty() as Boolean ||
+                position >= getCount()) {
                 return 0
             }
-            val rowInfo: RowInfo = mModel.mRowInfos.get(position)
-            if (rowInfo.mType === RowInfo.TYPE_DAY) {
-                return rowInfo.mIndex
+            val rowInfo: RowInfo = mModel?.mRowInfos?.get(position) as RowInfo
+            if (rowInfo.mType == RowInfo.TYPE_DAY) {
+                return rowInfo.mIndex.toLong()
             }
-            val eventInfo: EventInfo = mModel.mEventInfos.get(rowInfo.mIndex)
+            val eventInfo: EventInfo = mModel?.mEventInfos?.get(rowInfo.mIndex) as EventInfo
             val prime: Long = 31
             var result: Long = 1
             result = prime * result + (eventInfo.id xor (eventInfo.id ushr 32)) as Int
@@ -356,7 +393,7 @@ class CalendarAppWidgetService : RemoteViewsService() {
         }
 
         @Override
-        fun hasStableIds(): Boolean {
+        override fun hasStableIds(): Boolean {
             return true
         }
 
@@ -379,10 +416,10 @@ class CalendarAppWidgetService : RemoteViewsService() {
                 mContext, uri, EVENT_PROJECTION, selection, null,
                 EVENT_SORT_ORDER
             )
-            mLoader.setUpdateThrottle(WIDGET_UPDATE_THROTTLE)
+            mLoader?.setUpdateThrottle(WIDGET_UPDATE_THROTTLE.toLong())
             synchronized(mLock) { mLastSerialNum = ++mSerialNum }
-            mLoader.registerListener(mAppWidgetId, this)
-            mLoader.startLoading()
+            mLoader?.registerListener(mAppWidgetId, this)
+            mLoader?.startLoading()
         }
 
         /**
@@ -390,7 +427,8 @@ class CalendarAppWidgetService : RemoteViewsService() {
          * shared preferences.
          */
         private fun queryForSelection(): String {
-            return if (Utils.getHideDeclinedEvents(mContext)) EVENT_SELECTION_HIDE_DECLINED else EVENT_SELECTION
+            return if (Utils.getHideDeclinedEvents(mContext)) EVENT_SELECTION_HIDE_DECLINED
+            else EVENT_SELECTION
         }
 
         /**
@@ -404,7 +442,7 @@ class CalendarAppWidgetService : RemoteViewsService() {
                 now + SEARCH_DURATION + DateUtils.DAY_IN_MILLIS
             return Uri.withAppendedPath(
                 Instances.CONTENT_URI,
-                toString(begin) + "/" + end
+                begin.toString() + "/" + end
             )
         }
 
@@ -412,7 +450,7 @@ class CalendarAppWidgetService : RemoteViewsService() {
          * Calculates and returns the next time we should push widget updates.
          */
         private fun calculateUpdateTime(
-            model: CalendarAppWidgetModel?,
+            model: CalendarAppWidgetModel,
             now: Long,
             timeZone: String
         ): Long {
@@ -441,7 +479,7 @@ class CalendarAppWidgetService : RemoteViewsService() {
          * .content.Loader, java.lang.Object)
          */
         @Override
-        fun onLoadComplete(loader: Loader<Cursor?>?, cursor: Cursor?) {
+        override fun onLoadComplete(loader: Loader<Cursor?>?, cursor: Cursor?) {
             if (cursor == null) {
                 return
             }
@@ -456,18 +494,18 @@ class CalendarAppWidgetService : RemoteViewsService() {
                     return
                 }
                 val now: Long = System.currentTimeMillis()
-                val tz: String = Utils.getTimeZone(mContext, mTimezoneChanged)
+                val tz: String? = Utils.getTimeZone(mContext, mTimezoneChanged)
 
                 // Copy it to a local static cursor.
-                val matrixCursor: MatrixCursor = Utils.matrixCursorFromCursor(cursor)
+                val matrixCursor: MatrixCursor? = Utils.matrixCursorFromCursor(cursor)
                 try {
                     mModel = buildAppWidgetModel(mContext, matrixCursor, tz)
                 } finally {
                     if (matrixCursor != null) {
-                        matrixCursor.close()
+                        matrixCursor?.close()
                     }
                     if (cursor != null) {
-                        cursor.close()
+                        cursor?.close()
                     }
                 }
 
@@ -475,7 +513,8 @@ class CalendarAppWidgetService : RemoteViewsService() {
                 // We also cancel
                 // all existing wake-ups because PendingIntents don't match
                 // against extras.
-                var triggerTime = calculateUpdateTime(mModel, now, tz)
+                var triggerTime = calculateUpdateTime(mModel as CalendarAppWidgetModel,
+                    now, tz as String)
 
                 // If no next-update calculated, or bad trigger time in past,
                 // schedule
@@ -485,7 +524,7 @@ class CalendarAppWidgetService : RemoteViewsService() {
                     triggerTime = now + UPDATE_TIME_NO_EVENTS
                 }
                 val alertManager: AlarmManager = mContext
-                    .getSystemService(Context.ALARM_SERVICE) as AlarmManager
+                    ?.getSystemService(Context.ALARM_SERVICE) as AlarmManager
                 val pendingUpdate: PendingIntent = CalendarAppWidgetProvider
                     .getUpdateIntent(mContext)
                 alertManager.cancel(pendingUpdate)
@@ -498,9 +537,9 @@ class CalendarAppWidgetService : RemoteViewsService() {
                     time2.normalize(true)
                     if (time.year !== time2.year || time.yearDay !== time2.yearDay) {
                         val updateIntent = Intent(
-                            Utils.getWidgetUpdateAction(mContext)
+                            Utils.getWidgetUpdateAction(mContext as Context)
                         )
-                        mContext.sendBroadcast(updateIntent)
+                        mContext?.sendBroadcast(updateIntent)
                     }
                     sLastUpdateTime = time.toMillis(true)
                 }
@@ -521,7 +560,7 @@ class CalendarAppWidgetService : RemoteViewsService() {
         }
 
         @Override
-        fun onReceive(context: Context?, intent: Intent) {
+        override fun onReceive(context: Context?, intent: Intent) {
             if (LOGD) Log.d(TAG, "AppWidgetService received an intent. It was " + intent.toString())
             mContext = context
 
@@ -537,9 +576,9 @@ class CalendarAppWidgetService : RemoteViewsService() {
             // in the background thread.  All the handshaking going on here between the UI and
             // background thread with using goAsync, mHandler, and CursorLoader is confusing.
             val result: PendingResult = goAsync()
-            executor.submit(object : Runnable() {
+            executor.submit(object : Runnable {
                 @Override
-                fun run() {
+                override fun run() {
                     // We always complete queryForSelection() even if the load task ends up being
                     // canceled because of a more recent one.  Optimizing this to allow
                     // canceling would require keeping track of all the PendingResults
@@ -547,9 +586,9 @@ class CalendarAppWidgetService : RemoteViewsService() {
                     val selection = queryForSelection()
                     if (mLoader == null) {
                         mAppWidgetId = -1
-                        mHandler.post(object : Runnable() {
+                        mHandler.post(object : Runnable {
                             @Override
-                            fun run() {
+                            override fun run() {
                                 initLoader(selection)
                                 result.finish()
                             }
@@ -566,7 +605,7 @@ class CalendarAppWidgetService : RemoteViewsService() {
             })
         }
 
-        companion object {
+        internal companion object {
             private const val LOGD = false
 
             // Suppress unnecessary logging about update time. Need to be static as this object is
@@ -582,15 +621,17 @@ class CalendarAppWidgetService : RemoteViewsService() {
             private val currentVersion: AtomicInteger = AtomicInteger(0)
 
             /* @VisibleForTesting */
-            protected fun buildAppWidgetModel(
-                context: Context?, cursor: Cursor?, timeZone: String?
+            @JvmStatic protected fun buildAppWidgetModel(
+                context: Context?,
+                cursor: Cursor?,
+                timeZone: String?
             ): CalendarAppWidgetModel {
-                val model = CalendarAppWidgetModel(context, timeZone)
-                model.buildFromCursor(cursor, timeZone)
+                val model = CalendarAppWidgetModel(context as Context, timeZone)
+                model.buildFromCursor(cursor as Cursor, timeZone)
                 return model
             }
 
-            private fun getNextMidnightTimeMillis(timezone: String): Long {
+            @JvmStatic private fun getNextMidnightTimeMillis(timezone: String): Long {
                 val time = Time()
                 time.setToNow()
                 time.monthDay++
@@ -608,7 +649,12 @@ class CalendarAppWidgetService : RemoteViewsService() {
                 return Math.min(midnightDeviceTz, midnightHomeTz)
             }
 
-            fun updateTextView(views: RemoteViews, id: Int, visibility: Int, string: String?) {
+            @JvmStatic fun updateTextView(
+                views: RemoteViews,
+                id: Int,
+                visibility: Int,
+                string: String?
+            ) {
                 views.setViewVisibility(id, visibility)
                 if (visibility == View.VISIBLE) {
                     views.setTextViewText(id, string)
