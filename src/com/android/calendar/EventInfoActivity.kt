@@ -76,8 +76,8 @@ class EventInfoActivity : Activity() {
             mStartMillis = intent.getLongExtra(EXTRA_EVENT_BEGIN_TIME, 0)
             mEndMillis = intent.getLongExtra(EXTRA_EVENT_END_TIME, 0)
             attendeeResponse = intent.getIntExtra(
-                ATTENDEE_STATUS,
-                Attendees.ATTENDEE_STATUS_NONE
+                    ATTENDEE_STATUS,
+                    Attendees.ATTENDEE_STATUS_NONE
             )
             val data: Uri? = intent.getData()
             if (data != null) {
@@ -117,10 +117,10 @@ class EventInfoActivity : Activity() {
         // close the activity and show the event in AllInOne.
         val res: Resources = getResources()
         if (!res.getBoolean(R.bool.agenda_show_event_info_full_screen) &&
-            !res.getBoolean(R.bool.show_event_info_full_screen)
+                !res.getBoolean(R.bool.show_event_info_full_screen)
         ) {
             CalendarController.getInstance(this)
-                .launchViewEvent(mEventId, mStartMillis, mEndMillis, attendeeResponse)
+                    ?.launchViewEvent(mEventId, mStartMillis, mEndMillis, attendeeResponse)
             finish()
             return
         }
@@ -140,13 +140,13 @@ class EventInfoActivity : Activity() {
             val fragmentManager: FragmentManager = getFragmentManager()
             val ft: FragmentTransaction = fragmentManager.beginTransaction()
             mInfoFragment = EventInfoFragment(
-                this,
-                mEventId,
-                mStartMillis,
-                mEndMillis,
-                attendeeResponse,
-                isDialog,
-                if (isDialog) EventInfoFragment.DIALOG_WINDOW_STYLE
+                    this,
+                    mEventId,
+                    mStartMillis,
+                    mEndMillis,
+                    attendeeResponse,
+                    isDialog,
+                    if (isDialog) EventInfoFragment.DIALOG_WINDOW_STYLE
                     else EventInfoFragment.FULL_WINDOW_STYLE
             )
             ft.replace(R.id.main_frame, mInfoFragment)
@@ -174,8 +174,8 @@ class EventInfoActivity : Activity() {
     protected override fun onResume() {
         super.onResume()
         getContentResolver().registerContentObserver(
-            CalendarContract.Events.CONTENT_URI,
-            true, mObserver
+                CalendarContract.Events.CONTENT_URI,
+                true, mObserver
         )
     }
 
