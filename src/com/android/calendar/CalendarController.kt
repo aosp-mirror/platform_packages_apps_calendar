@@ -33,17 +33,17 @@ import java.util.LinkedHashMap
 import java.util.LinkedList
 import java.util.WeakHashMap
 
-class CalendarController private constructor(context: Context) {
+class CalendarController private constructor(context: Context?) {
     private var mContext: Context? = null
 
     // This uses a LinkedHashMap so that we can replace fragments based on the
     // view id they are being expanded into since we can't guarantee a reference
     // to the handler will be findable
     private val eventHandlers: LinkedHashMap<Integer, EventHandler> =
-        LinkedHashMap<Integer, EventHandler>(5)
+            LinkedHashMap<Integer, EventHandler>(5)
     private val mToBeRemovedEventHandlers: LinkedList<Integer> = LinkedList<Integer>()
     private val mToBeAddedEventHandlers: LinkedHashMap<Integer, EventHandler> =
-        LinkedHashMap<Integer, EventHandler>()
+            LinkedHashMap<Integer, EventHandler>()
     private var mFirstEventHandler: Pair<Integer, EventHandler>? = null
     private var mToBeAddedFirstEventHandler: Pair<Integer, EventHandler>? = null
 
@@ -185,17 +185,17 @@ class CalendarController private constructor(context: Context) {
                 var extra = if (allDay) ALL_DAY_MASK else 0
                 extra = when (response) {
                     Attendees.ATTENDEE_STATUS_NONE -> extra or
-                        ATTENDEE_STATUS_NONE_MASK.toLong()
+                            ATTENDEE_STATUS_NONE_MASK.toLong()
                     Attendees.ATTENDEE_STATUS_ACCEPTED -> extra or
-                        ATTENDEE_STATUS_ACCEPTED_MASK.toLong()
+                            ATTENDEE_STATUS_ACCEPTED_MASK.toLong()
                     Attendees.ATTENDEE_STATUS_DECLINED -> extra or
-                        ATTENDEE_STATUS_DECLINED_MASK.toLong()
+                            ATTENDEE_STATUS_DECLINED_MASK.toLong()
                     Attendees.ATTENDEE_STATUS_TENTATIVE -> extra or
-                        ATTENDEE_STATUS_TENTATIVE_MASK.toLong()
+                            ATTENDEE_STATUS_TENTATIVE_MASK.toLong()
                     else -> {
                         Log.wtf(
-                            TAG,
-                            "Unknown attendee response $response"
+                                TAG,
+                                "Unknown attendee response $response"
                         )
                         extra or ATTENDEE_STATUS_NONE_MASK.toLong()
                     }
@@ -217,23 +217,23 @@ class CalendarController private constructor(context: Context) {
     }
 
     fun sendEventRelatedEvent(
-        sender: Object?,
-        eventType: Long,
-        eventId: Long,
-        startMillis: Long,
-        endMillis: Long,
-        x: Int,
-        y: Int,
-        selectedMillis: Long
+            sender: Object?,
+            eventType: Long,
+            eventId: Long,
+            startMillis: Long,
+            endMillis: Long,
+            x: Int,
+            y: Int,
+            selectedMillis: Long
     ) {
         // TODO: pass the real allDay status or at least a status that says we don't know the
         // status and have the receiver query the data.
         // The current use of this method for VIEW_EVENT is by the day view to show an EventInfo
         // so currently the missing allDay status has no effect.
         sendEventRelatedEventWithExtra(
-            sender, eventType, eventId, startMillis, endMillis, x, y,
-            EventInfo.buildViewExtraLong(Attendees.ATTENDEE_STATUS_NONE, false),
-            selectedMillis
+                sender, eventType, eventId, startMillis, endMillis, x, y,
+                EventInfo.buildViewExtraLong(Attendees.ATTENDEE_STATUS_NONE, false),
+                selectedMillis
         )
     }
 
@@ -252,19 +252,19 @@ class CalendarController private constructor(context: Context) {
      * @param selectedMillis The time to specify as selected
      */
     fun sendEventRelatedEventWithExtra(
-        sender: Object?,
-        eventType: Long,
-        eventId: Long,
-        startMillis: Long,
-        endMillis: Long,
-        x: Int,
-        y: Int,
-        extraLong: Long,
-        selectedMillis: Long
+            sender: Object?,
+            eventType: Long,
+            eventId: Long,
+            startMillis: Long,
+            endMillis: Long,
+            x: Int,
+            y: Int,
+            extraLong: Long,
+            selectedMillis: Long
     ) {
         sendEventRelatedEventWithExtraWithTitleWithCalendarId(
-            sender, eventType, eventId,
-            startMillis, endMillis, x, y, extraLong, selectedMillis, null, -1
+                sender, eventType, eventId,
+                startMillis, endMillis, x, y, extraLong, selectedMillis, null, -1
         )
     }
 
@@ -285,17 +285,17 @@ class CalendarController private constructor(context: Context) {
      * @param calendarId The id of the calendar which the event belongs to
      */
     fun sendEventRelatedEventWithExtraWithTitleWithCalendarId(
-        sender: Object?,
-        eventType: Long,
-        eventId: Long,
-        startMillis: Long,
-        endMillis: Long,
-        x: Int,
-        y: Int,
-        extraLong: Long,
-        selectedMillis: Long,
-        title: String?,
-        calendarId: Long
+            sender: Object?,
+            eventType: Long,
+            eventId: Long,
+            startMillis: Long,
+            endMillis: Long,
+            x: Int,
+            y: Int,
+            extraLong: Long,
+            selectedMillis: Long,
+            title: String?,
+            calendarId: Long
     ) {
         val info = EventInfo()
         info.eventType = eventType
@@ -332,16 +332,16 @@ class CalendarController private constructor(context: Context) {
      * @param viewType [ViewType]
      */
     fun sendEvent(
-        sender: Object?,
-        eventType: Long,
-        start: Time?,
-        end: Time?,
-        eventId: Long,
-        viewType: Int
+            sender: Object?,
+            eventType: Long,
+            start: Time?,
+            end: Time?,
+            eventId: Long,
+            viewType: Int
     ) {
         sendEvent(
-            sender, eventType, start, end, start, eventId, viewType, EXTRA_GOTO_TIME, null,
-            null
+                sender, eventType, start, end, start, eventId, viewType, EXTRA_GOTO_TIME, null,
+                null
         )
     }
 
@@ -349,33 +349,33 @@ class CalendarController private constructor(context: Context) {
      * sendEvent() variant with extraLong, search query, and search component name.
      */
     fun sendEvent(
-        sender: Object?,
-        eventType: Long,
-        start: Time?,
-        end: Time?,
-        eventId: Long,
-        viewType: Int,
-        extraLong: Long,
-        query: String?,
-        componentName: ComponentName?
+            sender: Object?,
+            eventType: Long,
+            start: Time?,
+            end: Time?,
+            eventId: Long,
+            viewType: Int,
+            extraLong: Long,
+            query: String?,
+            componentName: ComponentName?
     ) {
         sendEvent(
-            sender, eventType, start, end, start, eventId, viewType, extraLong, query,
-            componentName
+                sender, eventType, start, end, start, eventId, viewType, extraLong, query,
+                componentName
         )
     }
 
     fun sendEvent(
-        sender: Object?,
-        eventType: Long,
-        start: Time?,
-        end: Time?,
-        selected: Time?,
-        eventId: Long,
-        viewType: Int,
-        extraLong: Long,
-        query: String?,
-        componentName: ComponentName?
+            sender: Object?,
+            eventType: Long,
+            start: Time?,
+            end: Time?,
+            selected: Time?,
+            eventId: Long,
+            viewType: Int,
+            extraLong: Long,
+            query: String?,
+            componentName: ComponentName?
     ) {
         val info = EventInfo()
         info.eventType = eventType
@@ -414,21 +414,21 @@ class CalendarController private constructor(context: Context) {
         } else if (event.viewType != ViewType.EDIT) {
             viewType = event.viewType
             if (event.viewType == ViewType.AGENDA || event.viewType == ViewType.DAY ||
-                Utils.getAllowWeekForDetailView() && event.viewType == ViewType.WEEK) {
+                    Utils.getAllowWeekForDetailView() && event.viewType == ViewType.WEEK) {
                 mDetailViewType = viewType
             }
         }
         if (DEBUG) {
             Log.d(TAG, "vvvvvvvvvvvvvvv")
             Log.d(
-                TAG,
-                "Start  " + if (event.startTime == null) "null" else event.startTime.toString()
+                    TAG,
+                    "Start  " + if (event.startTime == null) "null" else event.startTime.toString()
             )
             Log.d(TAG, "End    " + if (event.endTime == null) "null" else event.endTime.toString())
             Log.d(
-                TAG,
-                "Select " + if (event.selectedTime == null) "null"
-                else event.selectedTime.toString()
+                    TAG,
+                    "Select " + if (event.selectedTime == null) "null"
+                    else event.selectedTime.toString()
             )
             Log.d(TAG, "mTime  " + if (mTime == null) "null" else mTime.toString())
         }
@@ -449,7 +449,7 @@ class CalendarController private constructor(context: Context) {
                 val mtimeMillis: Long = mTime?.toMillis(false) as Long
                 val temp2 = event.endTime
                 if (mtimeMillis < startMillis ||
-                    temp2 != null && mtimeMillis > temp2.toMillis(false)) {
+                        temp2 != null && mtimeMillis > temp2.toMillis(false)) {
                     mTime?.set(event.startTime)
                 }
             }
@@ -466,16 +466,16 @@ class CalendarController private constructor(context: Context) {
         }
         if (DEBUG) {
             Log.d(
-                TAG,
-                "Start  " + if (event.startTime == null) "null" else
-                    event.startTime.toString()
+                    TAG,
+                    "Start  " + if (event.startTime == null) "null" else
+                        event.startTime.toString()
             )
             Log.d(TAG, "End    " + if (event.endTime == null) "null" else
                 event.endTime.toString())
             Log.d(
-                TAG,
-                "Select " + if (event.selectedTime == null) "null" else
-                    event.selectedTime.toString()
+                    TAG,
+                    "Select " + if (event.selectedTime == null) "null" else
+                        event.selectedTime.toString()
             )
             Log.d(TAG, "mTime  " + if (mTime == null) "null" else mTime.toString())
             Log.d(TAG, "^^^^^^^^^^^^^^^")
@@ -494,8 +494,8 @@ class CalendarController private constructor(context: Context) {
             mDispatchInProgressCounter++
             if (DEBUG) {
                 Log.d(
-                    TAG,
-                    "sendEvent: Dispatching to " + eventHandlers.size.toString() + " handlers"
+                        TAG,
+                        "sendEvent: Dispatching to " + eventHandlers.size.toString() + " handlers"
                 )
             }
             // Dispatch to event handler(s)
@@ -504,16 +504,16 @@ class CalendarController private constructor(context: Context) {
                 // Handle the 'first' one before handling the others
                 val handler: EventHandler? = mFirstEventHandler?.second
                 if (handler != null && handler.supportedEventTypes and event.eventType != 0L &&
-                    !mToBeRemovedEventHandlers.contains(mFirstEventHandler?.first)) {
+                        !mToBeRemovedEventHandlers.contains(mFirstEventHandler?.first)) {
                     handler.handleEvent(event)
                     handled = true
                 }
             }
             val handlers: MutableIterator<MutableMap.MutableEntry<Integer,
-                CalendarController.EventHandler>> = eventHandlers.entries.iterator()
+                    CalendarController.EventHandler>> = eventHandlers.entries.iterator()
             while (handlers.hasNext()) {
                 val entry: MutableMap.MutableEntry<Integer,
-                    CalendarController.EventHandler> = handlers.next()
+                        CalendarController.EventHandler> = handlers.next()
                 val key: Int = entry.key.toInt()
                 val temp4 = mFirstEventHandler
                 if (temp4 != null && key.toInt() == temp4.first.toInt()) {
@@ -522,7 +522,7 @@ class CalendarController private constructor(context: Context) {
                 }
                 val eventHandler: EventHandler = entry.value
                 if (eventHandler != null &&
-                    eventHandler.supportedEventTypes and event.eventType != 0L) {
+                        eventHandler.supportedEventTypes and event.eventType != 0L) {
                     if (mToBeRemovedEventHandlers.contains(key as Integer)) {
                         continue
                     }
@@ -569,7 +569,7 @@ class CalendarController private constructor(context: Context) {
         synchronized(this) {
             if (mDispatchInProgressCounter > 0) {
                 mToBeAddedEventHandlers.put(key,
-                                            eventHandler as CalendarController.EventHandler)
+                        eventHandler as CalendarController.EventHandler)
             } else {
                 eventHandlers.put(key, eventHandler as CalendarController.EventHandler)
             }
@@ -687,7 +687,7 @@ class CalendarController private constructor(context: Context) {
         const val MIN_CALENDAR_WEEK = 0
         const val MAX_CALENDAR_WEEK = 3497 // weeks between 1/1/1970 and 1/1/2037
         private val instances: WeakHashMap<Context, WeakReference<CalendarController>> =
-            WeakHashMap<Context, WeakReference<CalendarController>>()
+                WeakHashMap<Context, WeakReference<CalendarController>>()
 
         /**
          * Pass to the ExtraLong parameter for EventType.GO_TO to signal the time
@@ -704,7 +704,7 @@ class CalendarController private constructor(context: Context) {
          *
          * @param context The activity if at all possible.
          */
-        @JvmStatic fun getInstance(context: Context): CalendarController {
+        @JvmStatic fun getInstance(context: Context?): CalendarController? {
             synchronized(instances) {
                 var controller: CalendarController? = null
                 val weakController: WeakReference<CalendarController>? = instances.get(context)
@@ -735,9 +735,9 @@ class CalendarController private constructor(context: Context) {
         mUpdateTimezone.run()
         mTime?.setToNow()
         mDetailViewType = Utils.getSharedPreference(
-            mContext,
-            GeneralPreferences.KEY_DETAILED_VIEW,
-            GeneralPreferences.DEFAULT_DETAILED_VIEW
+                mContext,
+                GeneralPreferences.KEY_DETAILED_VIEW,
+                GeneralPreferences.DEFAULT_DETAILED_VIEW
         )
     }
 }
