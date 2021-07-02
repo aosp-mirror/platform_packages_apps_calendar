@@ -39,13 +39,13 @@ class CalendarController private constructor(context: Context?) {
     // This uses a LinkedHashMap so that we can replace fragments based on the
     // view id they are being expanded into since we can't guarantee a reference
     // to the handler will be findable
-    private val eventHandlers: LinkedHashMap<Integer, EventHandler> =
-            LinkedHashMap<Integer, EventHandler>(5)
-    private val mToBeRemovedEventHandlers: LinkedList<Integer> = LinkedList<Integer>()
-    private val mToBeAddedEventHandlers: LinkedHashMap<Integer, EventHandler> =
-            LinkedHashMap<Integer, EventHandler>()
-    private var mFirstEventHandler: Pair<Integer, EventHandler>? = null
-    private var mToBeAddedFirstEventHandler: Pair<Integer, EventHandler>? = null
+    private val eventHandlers: LinkedHashMap<Int, EventHandler> =
+        LinkedHashMap<Int, EventHandler>(5)
+    private val mToBeRemovedEventHandlers: LinkedList<Int> = LinkedList<Int>()
+    private val mToBeAddedEventHandlers: LinkedHashMap<Int, EventHandler> =
+        LinkedHashMap<Int, EventHandler>()
+    private var mFirstEventHandler: Pair<Int, EventHandler>? = null
+    private var mToBeAddedFirstEventHandler: Pair<Int, EventHandler>? = null
 
     @Volatile
     private var mDispatchInProgressCounter = 0
@@ -217,14 +217,14 @@ class CalendarController private constructor(context: Context?) {
     }
 
     fun sendEventRelatedEvent(
-            sender: Object?,
-            eventType: Long,
-            eventId: Long,
-            startMillis: Long,
-            endMillis: Long,
-            x: Int,
-            y: Int,
-            selectedMillis: Long
+        sender: Object?,
+        eventType: Long,
+        eventId: Long,
+        startMillis: Long,
+        endMillis: Long,
+        x: Int,
+        y: Int,
+        selectedMillis: Long
     ) {
         // TODO: pass the real allDay status or at least a status that says we don't know the
         // status and have the receiver query the data.
@@ -252,15 +252,15 @@ class CalendarController private constructor(context: Context?) {
      * @param selectedMillis The time to specify as selected
      */
     fun sendEventRelatedEventWithExtra(
-            sender: Object?,
-            eventType: Long,
-            eventId: Long,
-            startMillis: Long,
-            endMillis: Long,
-            x: Int,
-            y: Int,
-            extraLong: Long,
-            selectedMillis: Long
+        sender: Object?,
+        eventType: Long,
+        eventId: Long,
+        startMillis: Long,
+        endMillis: Long,
+        x: Int,
+        y: Int,
+        extraLong: Long,
+        selectedMillis: Long
     ) {
         sendEventRelatedEventWithExtraWithTitleWithCalendarId(
                 sender, eventType, eventId,
@@ -285,17 +285,17 @@ class CalendarController private constructor(context: Context?) {
      * @param calendarId The id of the calendar which the event belongs to
      */
     fun sendEventRelatedEventWithExtraWithTitleWithCalendarId(
-            sender: Object?,
-            eventType: Long,
-            eventId: Long,
-            startMillis: Long,
-            endMillis: Long,
-            x: Int,
-            y: Int,
-            extraLong: Long,
-            selectedMillis: Long,
-            title: String?,
-            calendarId: Long
+        sender: Object?,
+        eventType: Long,
+        eventId: Long,
+        startMillis: Long,
+        endMillis: Long,
+        x: Int,
+        y: Int,
+        extraLong: Long,
+        selectedMillis: Long,
+        title: String?,
+        calendarId: Long
     ) {
         val info = EventInfo()
         info.eventType = eventType
@@ -332,12 +332,12 @@ class CalendarController private constructor(context: Context?) {
      * @param viewType [ViewType]
      */
     fun sendEvent(
-            sender: Object?,
-            eventType: Long,
-            start: Time?,
-            end: Time?,
-            eventId: Long,
-            viewType: Int
+        sender: Object?,
+        eventType: Long,
+        start: Time?,
+        end: Time?,
+        eventId: Long,
+        viewType: Int
     ) {
         sendEvent(
                 sender, eventType, start, end, start, eventId, viewType, EXTRA_GOTO_TIME, null,
@@ -349,15 +349,15 @@ class CalendarController private constructor(context: Context?) {
      * sendEvent() variant with extraLong, search query, and search component name.
      */
     fun sendEvent(
-            sender: Object?,
-            eventType: Long,
-            start: Time?,
-            end: Time?,
-            eventId: Long,
-            viewType: Int,
-            extraLong: Long,
-            query: String?,
-            componentName: ComponentName?
+        sender: Object?,
+        eventType: Long,
+        start: Time?,
+        end: Time?,
+        eventId: Long,
+        viewType: Int,
+        extraLong: Long,
+        query: String?,
+        componentName: ComponentName?
     ) {
         sendEvent(
                 sender, eventType, start, end, start, eventId, viewType, extraLong, query,
@@ -366,16 +366,16 @@ class CalendarController private constructor(context: Context?) {
     }
 
     fun sendEvent(
-            sender: Object?,
-            eventType: Long,
-            start: Time?,
-            end: Time?,
-            selected: Time?,
-            eventId: Long,
-            viewType: Int,
-            extraLong: Long,
-            query: String?,
-            componentName: ComponentName?
+        sender: Object?,
+        eventType: Long,
+        start: Time?,
+        end: Time?,
+        selected: Time?,
+        eventId: Long,
+        viewType: Int,
+        extraLong: Long,
+        query: String?,
+        componentName: ComponentName?
     ) {
         val info = EventInfo()
         info.eventType = eventType
@@ -509,11 +509,11 @@ class CalendarController private constructor(context: Context?) {
                     handled = true
                 }
             }
-            val handlers: MutableIterator<MutableMap.MutableEntry<Integer,
-                    CalendarController.EventHandler>> = eventHandlers.entries.iterator()
+            val handlers: MutableIterator<MutableMap.MutableEntry<Int,
+                CalendarController.EventHandler>> = eventHandlers.entries.iterator()
             while (handlers.hasNext()) {
-                val entry: MutableMap.MutableEntry<Integer,
-                        CalendarController.EventHandler> = handlers.next()
+                val entry: MutableMap.MutableEntry<Int,
+                    CalendarController.EventHandler> = handlers.next()
                 val key: Int = entry.key.toInt()
                 val temp4 = mFirstEventHandler
                 if (temp4 != null && key.toInt() == temp4.first.toInt()) {
@@ -522,8 +522,8 @@ class CalendarController private constructor(context: Context?) {
                 }
                 val eventHandler: EventHandler = entry.value
                 if (eventHandler != null &&
-                        eventHandler.supportedEventTypes and event.eventType != 0L) {
-                    if (mToBeRemovedEventHandlers.contains(key as Integer)) {
+                    eventHandler.supportedEventTypes and event.eventType != 0L) {
+                    if (mToBeRemovedEventHandlers.contains(key)) {
                         continue
                     }
                     eventHandler.handleEvent(event)
@@ -565,7 +565,7 @@ class CalendarController private constructor(context: Context?) {
      * @param key The view id or placeholder for this handler
      * @param eventHandler Typically a fragment or activity in the calendar app
      */
-    fun registerEventHandler(key: Integer, eventHandler: EventHandler?) {
+    fun registerEventHandler(key: Int, eventHandler: EventHandler?) {
         synchronized(this) {
             if (mDispatchInProgressCounter > 0) {
                 mToBeAddedEventHandlers.put(key,
@@ -576,18 +576,18 @@ class CalendarController private constructor(context: Context?) {
         }
     }
 
-    fun registerFirstEventHandler(key: Integer, eventHandler: EventHandler?) {
+    fun registerFirstEventHandler(key: Int, eventHandler: EventHandler?) {
         synchronized(this) {
             registerEventHandler(key, eventHandler)
             if (mDispatchInProgressCounter > 0) {
-                mToBeAddedFirstEventHandler = Pair<Integer, EventHandler>(key, eventHandler)
+                mToBeAddedFirstEventHandler = Pair<Int, EventHandler>(key, eventHandler)
             } else {
-                mFirstEventHandler = Pair<Integer, EventHandler>(key, eventHandler)
+                mFirstEventHandler = Pair<Int, EventHandler>(key, eventHandler)
             }
         }
     }
 
-    fun deregisterEventHandler(key: Integer) {
+    fun deregisterEventHandler(key: Int) {
         synchronized(this) {
             if (mDispatchInProgressCounter > 0) {
                 // To avoid ConcurrencyException, stash away the event handler for now.
