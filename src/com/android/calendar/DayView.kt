@@ -16,13 +16,74 @@
 package com.android.calendar
 
 import android.animation.Animator
+import android.animation.AnimatorListenerAdapter
+import android.animation.ObjectAnimator
+import android.animation.ValueAnimator
+import android.app.Service
+import android.content.Context
+import android.content.res.Resources
+import android.content.res.TypedArray
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.Paint.Align
+import android.graphics.Paint.Style
+import android.graphics.Rect
+import android.graphics.Typeface
+import android.graphics.drawable.Drawable
+import android.os.Handler
+import android.provider.CalendarContract.Attendees
+import android.provider.CalendarContract.Calendars
+import android.text.Layout.Alignment
+import android.text.SpannableStringBuilder
+import android.text.StaticLayout
+import android.text.TextPaint
+import android.text.format.DateFormat
+import android.text.format.DateUtils
+import android.text.format.Time
+import android.text.style.StyleSpan
+import android.util.Log
+import android.view.ContextMenu
+import android.view.ContextMenu.ContextMenuInfo
+import android.view.GestureDetector
+import android.view.KeyEvent
+import android.view.LayoutInflater
+import android.view.MenuItem
+import android.view.MotionEvent
+import android.view.ScaleGestureDetector
+import android.view.View
+import android.view.ViewConfiguration
+import android.view.ViewGroup
+import android.view.ViewGroup.LayoutParams
+import android.view.WindowManager
+import android.view.accessibility.AccessibilityEvent
+import android.view.accessibility.AccessibilityManager
+import android.view.animation.AccelerateDecelerateInterpolator
+import android.view.animation.Animation
+import android.view.animation.Interpolator
+import android.view.animation.TranslateAnimation
+import android.widget.EdgeEffect
+import android.widget.OverScroller
+import android.widget.PopupWindow
+import android.widget.ViewSwitcher
+import com.android.calendar.CalendarController.EventType
+import com.android.calendar.CalendarController.ViewType
+import java.util.ArrayList
+import java.util.Arrays
+import java.util.Calendar
+import java.util.Formatter
+import java.util.Locale
+import java.util.regex.Matcher
+import java.util.regex.Pattern
 
 /**
  * View for multi-day view. So far only 1 and 7 day have been tested.
  */
 class DayView(
-    context: Context, controller: CalendarController,
-    viewSwitcher: ViewSwitcher, eventLoader: EventLoader, numDays: Int
+    context: Context?,
+    controller: CalendarController?,
+    viewSwitcher: ViewSwitcher?,
+    eventLoader: EventLoader?,
+    numDays: Int
 ) : View(context), View.OnCreateContextMenuListener, ScaleGestureDetector.OnScaleGestureListener,
     View.OnClickListener, View.OnLongClickListener {
     private var mOnFlingCalled = false
@@ -39,7 +100,7 @@ class DayView(
      * explicitly scrolls to an empty time slot, changes views, or deletes the event.
      */
     private var mLastPopupEventID: Long
-    protected var mContext: Context
+    protected var mContext: Context? = null
     private val mContinueScroll: ContinueScroll = ContinueScroll()
 
     // Make this visible within the package for more informative debugging
@@ -54,33 +115,30 @@ class DayView(
     private var mMonthLength = 0
     private var mFirstVisibleDate = 0
     private var mFirstVisibleDayOfWeek = 0
-    private var mEarliestStartHour // indexed by the week day offset
-      : IntArray
-    private var mHasAllDayEvent // indexed by the week day offset
-      : BooleanArray
+    private var mEarliestStartHour: IntArray? = null // indexed by the week day offset
+    private var mHasAllDayEvent: BooleanArray? = null // indexed by the week day offset
     private var mEventCountTemplate: String? = null
-    private var mClickedEvent // The event the user clicked on
-      : Event? = null
+    private var mClickedEvent: Event? = null // The event the user clicked on
     private var mSavedClickedEvent: Event? = null
     private var mClickedYLocation = 0
     private var mDownTouchTime: Long = 0
     private var mEventsAlpha = 255
     private var mEventsCrossFadeAnimation: ObjectAnimator? = null
-    private val mTZUpdater: Runnable = object : Runnable() {
+    private val mTZUpdater: Runnable = object : Runnable {
         @Override
-        fun run() {
-            val tz: String = Utils.getTimeZone(mContext, this)
-            mBaseDate.timezone = tz
-            mBaseDate.normalize(true)
-            mCurrentTime.switchTimezone(tz)
+        override fun run() {
+            val tz: String? = Utils.getTimeZone(mContext, this)
+            mBaseDate!!.timezone = tz
+            mBaseDate?.normalize(true)
+            mCurrentTime?.switchTimezone(tz)
             invalidate()
         }
     }
 
     // Sets the "clicked" color from the clicked event
-    private val mSetClick: Runnable = object : Runnable() {
+    private val mSetClick: Runnable = object : Runnable {
         @Override
-        fun run() {
+        override fun run() {
             mClickedEvent = mSavedClickedEvent
             mSavedClickedEvent = null
             this@DayView.invalidate()
@@ -88,13 +146,13 @@ class DayView(
     }
 
     // Clears the "clicked" color from the clicked event and launch the event
-    private val mClearClick: Runnable = object : Runnable() {
+    private val mClearClick: Runnable = object : Runnable {
         @Override
-        fun run() {
+        override fun run() {
             if (mClickedEvent != null) {
-                mController.sendEventRelatedEvent(
-                    this, EventType.VIEW_EVENT, mClickedEvent.id,
-                    mClickedEvent.startMillis, mClickedEvent.endMillis,
+                mController?.sendEventRelatedEvent(
+                    this as Object?, EventType.VIEW_EVENT, mClickedEvent!!.id,
+                    mClickedEvent!!.startMillis, mClickedEvent!!.endMillis,
                     this@DayView.getWidth() / 2, mClickedYLocation,
                     selectedTimeInMillis
                 )
@@ -112,7 +170,7 @@ class DayView(
         @Volatile
         private var mFadingIn = false
         @Override
-        fun onAnimationEnd(animation: Animator) {
+        override fun onAnimationEnd(animation: Animator) {
             synchronized(this) {
                 if (mAnimator !== animation) {
                     animation.removeAllListeners()
@@ -121,20 +179,20 @@ class DayView(
                 }
                 if (mFadingIn) {
                     if (mTodayAnimator != null) {
-                        mTodayAnimator.removeAllListeners()
-                        mTodayAnimator.cancel()
+                        mTodayAnimator?.removeAllListeners()
+                        mTodayAnimator?.cancel()
                     }
                     mTodayAnimator = ObjectAnimator
                         .ofInt(this@DayView, "animateTodayAlpha", 255, 0)
                     mAnimator = mTodayAnimator
                     mFadingIn = false
-                    mTodayAnimator.addListener(this)
-                    mTodayAnimator.setDuration(600)
-                    mTodayAnimator.start()
+                    mTodayAnimator?.addListener(this)
+                    mTodayAnimator?.setDuration(600)
+                    mTodayAnimator?.start()
                 } else {
                     mAnimateToday = false
                     mAnimateTodayAlpha = 0
-                    mAnimator.removeAllListeners()
+                    mAnimator?.removeAllListeners()
                     mAnimator = null
                     mTodayAnimator = null
                     invalidate()
@@ -153,17 +211,17 @@ class DayView(
 
     var mAnimatorListener: AnimatorListenerAdapter = object : AnimatorListenerAdapter() {
         @Override
-        fun onAnimationStart(animation: Animator?) {
+        override fun onAnimationStart(animation: Animator?) {
             mScrolling = true
         }
 
         @Override
-        fun onAnimationCancel(animation: Animator?) {
+        override fun onAnimationCancel(animation: Animator?) {
             mScrolling = false
         }
 
         @Override
-        fun onAnimationEnd(animation: Animator?) {
+        override fun onAnimationEnd(animation: Animator?) {
             mScrolling = false
             resetSelectedHour()
             invalidate()
@@ -182,14 +240,12 @@ class DayView(
     private var mAllDayEvents: ArrayList<Event>? = ArrayList<Event>()
     private var mLayouts: Array<StaticLayout?>? = null
     private var mAllDayLayouts: Array<StaticLayout?>? = null
-    private var mSelectionDay // Julian day
-      = 0
+    private var mSelectionDay = 0 // Julian day
     private var mSelectionHour = 0
     var mSelectionAllday = false
 
     // Current selection info for accessibility
-    private var mSelectionDayForAccessibility // Julian day
-      = 0
+    private var mSelectionDayForAccessibility = 0 // Julian day
     private var mSelectionHourForAccessibility = 0
     private var mSelectedEventForAccessibility: Event? = null
 
@@ -213,9 +269,8 @@ class DayView(
     private val mPaint: Paint = Paint()
     private val mEventTextPaint: Paint = Paint()
     private val mSelectionPaint: Paint = Paint()
-    private var mLines: FloatArray
-    private var mFirstDayOfWeek // First day of the week
-      = 0
+    private var mLines: FloatArray = emptyArray<Float>().toFloatArray()
+    private var mFirstDayOfWeek = 0 // First day of the week
     private var mPopup: PopupWindow? = null
     private var mPopupView: View? = null
     private val mDismissPopup: DismissPopup = DismissPopup()
@@ -276,7 +331,7 @@ class DayView(
     /**
      * A count of the number of allday events that were not drawn for each day
      */
-    private var mSkippedAlldayEvents: IntArray?
+    private var mSkippedAlldayEvents: IntArray? = null
 
     /**
      * The number of allDay events at which point we start hiding allDay events.
@@ -297,9 +352,9 @@ class DayView(
 
     /** Distance between the mFirstCell and the top of first fully visible hour.  */
     private var mFirstHourOffset = 0
-    private var mHourStrs: Array<String>
-    private var mDayStrs: Array<String?>
-    private var mDayStrs2Letter: Array<String?>
+    private var mHourStrs: Array<String>? = null
+    private var mDayStrs: Array<String?>? = null
+    private var mDayStrs2Letter: Array<String?>? = null
     private var mIs24HourFormat = false
     private val mSelectedEvents: ArrayList<Event> = ArrayList<Event>()
     private var mComputeSelectedEvents = false
@@ -359,10 +414,10 @@ class DayView(
     private var mTouchExplorationEnabled = false
     private val mNewEventHintString: String
     @Override
-    protected fun onAttachedToWindow() {
+    protected override fun onAttachedToWindow() {
         if (mHandler == null) {
             mHandler = getHandler()
-            mHandler.post(mUpdateCurrentTime)
+            mHandler?.post(mUpdateCurrentTime)
         }
     }
 
@@ -377,8 +432,8 @@ class DayView(
         mFirstDayOfWeek = Utils.getFirstDayOfWeek(context)
         mCurrentTime = Time(Utils.getTimeZone(context, mTZUpdater))
         val currentTime: Long = System.currentTimeMillis()
-        mCurrentTime.set(currentTime)
-        mTodayJulianDay = Time.getJulianDay(currentTime, mCurrentTime.gmtoff)
+        mCurrentTime?.set(currentTime)
+        mTodayJulianDay = Time.getJulianDay(currentTime, mCurrentTime!!.gmtoff)
         mWeek_saturdayColor = mResources.getColor(R.color.week_saturday)
         mWeek_sundayColor = mResources.getColor(R.color.week_sunday)
         mCalendarDateBannerTextColor = mResources.getColor(R.color.calendar_date_banner_text_color)
@@ -413,18 +468,19 @@ class DayView(
         for (i in Calendar.SUNDAY..Calendar.SATURDAY) {
             val index: Int = i - Calendar.SUNDAY
             // e.g. Tue for Tuesday
-            mDayStrs[index] = DateUtils.getDayOfWeekString(i, DateUtils.LENGTH_MEDIUM)
+            mDayStrs!![index] = DateUtils.getDayOfWeekString(i, DateUtils.LENGTH_MEDIUM)
                 .toUpperCase()
-            mDayStrs[index + 7] = mDayStrs[index]
+            mDayStrs!![index + 7] = mDayStrs!![index]
             // e.g. Tu for Tuesday
-            mDayStrs2Letter[index] = DateUtils.getDayOfWeekString(i, DateUtils.LENGTH_SHORT)
+            mDayStrs2Letter!![index] = DateUtils.getDayOfWeekString(i, DateUtils.LENGTH_SHORT)
                 .toUpperCase()
 
             // If we don't have 2-letter day strings, fall back to 1-letter.
-            if (mDayStrs2Letter[index]!!.equals(mDayStrs[index])) {
-                mDayStrs2Letter[index] = DateUtils.getDayOfWeekString(i, DateUtils.LENGTH_SHORTEST)
+            if (mDayStrs2Letter!![index]!!.equals(mDayStrs!![index])) {
+                mDayStrs2Letter!![index] = DateUtils.getDayOfWeekString(i,
+                DateUtils.LENGTH_SHORTEST)
             }
-            mDayStrs2Letter[index + 7] = mDayStrs2Letter[index]
+            mDayStrs2Letter!![index + 7] = mDayStrs2Letter!![index]
         }
 
         // Figure out how much space we need for the 3-letter abbrev names
@@ -434,7 +490,7 @@ class DayView(
         val dateStrs = arrayOf<String?>(" 28", " 30")
         mDateStrWidth = computeMaxStringWidth(0, dateStrs, p)
         p.setTextSize(DAY_HEADER_FONT_SIZE)
-        mDateStrWidth += computeMaxStringWidth(0, mDayStrs, p)
+        mDateStrWidth += computeMaxStringWidth(0, mDayStrs as Array<String?>, p)
         p.setTextSize(HOURS_TEXT_SIZE)
         p.setTypeface(null)
         handleOnResume()
@@ -443,21 +499,21 @@ class DayView(
         val ampm = arrayOf(mAmString, mPmString)
         p.setTextSize(AMPM_TEXT_SIZE)
         mHoursWidth = Math.max(
-            HOURS_MARGIN, computeMaxStringWidth(mHoursWidth, ampm, p)
-              + HOURS_RIGHT_MARGIN
+            HOURS_MARGIN, computeMaxStringWidth(mHoursWidth, ampm, p) +
+                HOURS_RIGHT_MARGIN
         )
         mHoursWidth = Math.max(MIN_HOURS_WIDTH, mHoursWidth)
         val inflater: LayoutInflater
         inflater = context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
         mPopupView = inflater.inflate(R.layout.bubble_event, null)
-        mPopupView.setLayoutParams(
+        mPopupView?.setLayoutParams(
             LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
             )
         )
         mPopup = PopupWindow(context)
-        mPopup.setContentView(mPopupView)
+        mPopup?.setContentView(mPopupView)
         val dialogTheme: Resources.Theme = getResources().newTheme()
         dialogTheme.applyStyle(android.R.style.Theme_Dialog, true)
         val ta: TypedArray = dialogTheme.obtainStyledAttributes(
@@ -465,16 +521,16 @@ class DayView(
                 android.R.attr.windowBackground
             )
         )
-        mPopup.setBackgroundDrawable(ta.getDrawable(0))
+        mPopup?.setBackgroundDrawable(ta.getDrawable(0))
         ta.recycle()
 
         // Enable touching the popup window
-        mPopupView.setOnClickListener(this)
+        mPopupView?.setOnClickListener(this)
         // Catch long clicks for creating a new event
         setOnLongClickListener(this)
         mBaseDate = Time(Utils.getTimeZone(context, mTZUpdater))
         val millis: Long = System.currentTimeMillis()
-        mBaseDate.set(millis)
+        mBaseDate?.set(millis)
         mEarliestStartHour = IntArray(mNumDays)
         mHasAllDayEvent = BooleanArray(mNumDays)
 
@@ -482,15 +538,15 @@ class DayView(
         // drawGridBackground() and drawAllDayEvents().  Its size depends
         // on the max number of lines that can ever be drawn by any single
         // drawLines() call in either of those methods.
-        val maxGridLines = (24 + 1 // max horizontal lines we might draw
-          + (mNumDays + 1)) // max vertical lines we might draw
+        val maxGridLines = (24 + 1 + // max horizontal lines we might draw
+            (mNumDays + 1)) // max vertical lines we might draw
         mLines = FloatArray(maxGridLines * 4)
     }
 
     /**
      * This is called when the popup window is pressed.
      */
-    fun onClick(v: View) {
+    override fun onClick(v: View) {
         if (v === mPopupView) {
             // Pretend it was a trackball click because that will always
             // jump to the "View event" screen.
@@ -516,10 +572,10 @@ class DayView(
 
     private fun initAccessibilityVariables() {
         mAccessibilityMgr = mContext
-            .getSystemService(Service.ACCESSIBILITY_SERVICE) as AccessibilityManager
-        mIsAccessibilityEnabled = mAccessibilityMgr != null && mAccessibilityMgr.isEnabled()
+            ?.getSystemService(Service.ACCESSIBILITY_SERVICE) as AccessibilityManager
+        mIsAccessibilityEnabled = mAccessibilityMgr != null && mAccessibilityMgr!!.isEnabled()
         mTouchExplorationEnabled = isTouchExplorationEnabled
-    }/* ignore isDst */// We ignore the "isDst" field because we want normalize() to figure
+    } /* ignore isDst */ // We ignore the "isDst" field because we want normalize() to figure
     // out the correct DST value and not adjust the selected time based
     // on the current setting of DST.
     /**
@@ -537,7 +593,7 @@ class DayView(
             // out the correct DST value and not adjust the selected time based
             // on the current setting of DST.
             return time.normalize(true /* ignore isDst */)
-        }/* ignore isDst */
+        } /* ignore isDst */
 
     // We ignore the "isDst" field because we want normalize() to figure
     // out the correct DST value and not adjust the selected time based
@@ -553,7 +609,7 @@ class DayView(
             // on the current setting of DST.
             time.normalize(true /* ignore isDst */)
             return time
-        }/* ignore isDst */
+        } /* ignore isDst */
 
     // We ignore the "isDst" field because we want normalize() to figure
     // out the correct DST value and not adjust the selected time based
@@ -586,38 +642,38 @@ class DayView(
         }
 
     fun setSelected(time: Time?, ignoreTime: Boolean, animateToday: Boolean) {
-        mBaseDate.set(time)
-        setSelectedHour(mBaseDate.hour)
+        mBaseDate?.set(time)
+        setSelectedHour(mBaseDate!!.hour)
         setSelectedEvent(null)
         mPrevSelectedEvent = null
-        val millis: Long = mBaseDate.toMillis(false /* use isDst */)
-        selectedDay = Time.getJulianDay(millis, mBaseDate.gmtoff)
+        val millis: Long = mBaseDate!!.toMillis(false /* use isDst */)
+        setSelectedDay(Time.getJulianDay(millis, mBaseDate!!.gmtoff))
         mSelectedEvents.clear()
         mComputeSelectedEvents = true
         var gotoY: Int = Integer.MIN_VALUE
         if (!ignoreTime && mGridAreaHeight != -1) {
             var lastHour = 0
-            if (mBaseDate.hour < mFirstHour) {
+            if (mBaseDate!!.hour < mFirstHour) {
                 // Above visible region
-                gotoY = mBaseDate.hour * (mCellHeight + HOUR_GAP)
+                gotoY = mBaseDate!!.hour * (mCellHeight + HOUR_GAP)
             } else {
-                lastHour = ((mGridAreaHeight - mFirstHourOffset) / (mCellHeight + HOUR_GAP)
-                  + mFirstHour)
-                if (mBaseDate.hour >= lastHour) {
+                lastHour = ((mGridAreaHeight - mFirstHourOffset) / (mCellHeight + HOUR_GAP) +
+                    mFirstHour)
+                if (mBaseDate!!.hour >= lastHour) {
                     // Below visible region
 
                     // target hour + 1 (to give it room to see the event) -
                     // grid height (to get the y of the top of the visible
                     // region)
-                    gotoY = ((mBaseDate.hour + 1 + mBaseDate.minute / 60.0f)
-                      * (mCellHeight + HOUR_GAP) - mGridAreaHeight)
+                    gotoY = ((mBaseDate!!.hour + 1 + mBaseDate!!.minute / 60.0f) *
+                        (mCellHeight + HOUR_GAP) - mGridAreaHeight).toInt()
                 }
             }
             if (DEBUG) {
                 Log.e(
-                    TAG, "Go " + gotoY + " 1st " + mFirstHour + ":" + mFirstHourOffset + "CH "
-                      + (mCellHeight + HOUR_GAP) + " lh " + lastHour + " gh " + mGridAreaHeight
-                      + " ymax " + mMaxViewStartY
+                    TAG, "Go " + gotoY + " 1st " + mFirstHour + ":" + mFirstHourOffset + "CH " +
+                        (mCellHeight + HOUR_GAP) + " lh " + lastHour + " gh " + mGridAreaHeight +
+                        " ymax " + mMaxViewStartY
                 )
             }
             if (gotoY > mMaxViewStartY) {
@@ -633,7 +689,7 @@ class DayView(
         if (gotoY != Integer.MIN_VALUE) {
             val scrollAnim: ValueAnimator =
                 ObjectAnimator.ofInt(this, "viewStartY", mViewStartY, gotoY)
-            scrollAnim.setDuration(GOTO_SCROLL_DURATION)
+            scrollAnim.setDuration(GOTO_SCROLL_DURATION.toLong())
             scrollAnim.setInterpolator(AccelerateDecelerateInterpolator())
             scrollAnim.addListener(mAnimatorListener)
             scrollAnim.start()
@@ -642,8 +698,8 @@ class DayView(
         if (animateToday) {
             synchronized(mTodayAnimatorListener) {
                 if (mTodayAnimator != null) {
-                    mTodayAnimator.removeAllListeners()
-                    mTodayAnimator.cancel()
+                    mTodayAnimator?.removeAllListeners()
+                    mTodayAnimator?.cancel()
                 }
                 mTodayAnimator = ObjectAnimator.ofInt(
                     this, "animateTodayAlpha",
@@ -652,12 +708,12 @@ class DayView(
                 mAnimateToday = true
                 mTodayAnimatorListener.setFadingIn(true)
                 mTodayAnimatorListener.setAnimator(mTodayAnimator)
-                mTodayAnimator.addListener(mTodayAnimatorListener)
-                mTodayAnimator.setDuration(150)
+                mTodayAnimator?.addListener(mTodayAnimatorListener)
+                mTodayAnimator?.setDuration(150)
                 if (delayAnimateToday) {
-                    mTodayAnimator.setStartDelay(GOTO_SCROLL_DURATION)
+                    mTodayAnimator?.setStartDelay(GOTO_SCROLL_DURATION.toLong())
                 }
-                mTodayAnimator.start()
+                mTodayAnimator?.start()
             }
         }
         sendAccessibilityEventAsNeeded(false)
@@ -677,27 +733,19 @@ class DayView(
     fun setAnimateTodayAlpha(todayAlpha: Int) {
         mAnimateTodayAlpha = todayAlpha
         invalidate()
-    }/* ignore isDst */
+    } /* ignore isDst */
 
-    // We ignore the "isDst" field because we want normalize() to figure
-    // out the correct DST value and not adjust the selected time based
-    // on the current setting of DST.
-    var selectedDay: Time
-        get() {
-            val time = Time(mBaseDate)
-            time.setJulianDay(mSelectionDay)
-            time.hour = mSelectionHour
+    fun getSelectedDay(): Time {
+        val time = Time(mBaseDate)
+        time.setJulianDay(mSelectionDay)
+        time.hour = mSelectionHour
 
-            // We ignore the "isDst" field because we want normalize() to figure
-            // out the correct DST value and not adjust the selected time based
-            // on the current setting of DST.
-            time.normalize(true /* ignore isDst */)
-            return time
-        }
-        private set(d) {
-            mSelectionDay = d
-            mSelectionDayForAccessibility = d
-        }
+        // We ignore the "isDst" field because we want normalize() to figure
+        // out the correct DST value and not adjust the selected time based
+        // on the current setting of DST.
+        time.normalize(true /* ignore isDst */)
+        return time
+    }
 
     fun updateTitle() {
         val start = Time(mBaseDate)
@@ -707,18 +755,19 @@ class DayView(
         // Move it forward one minute so the formatter doesn't lose a day
         end.minute += 1
         end.normalize(true)
-        var formatFlags: Long = DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_SHOW_YEAR
+        var formatFlags: Long = DateUtils.FORMAT_SHOW_DATE.toLong() or
+            DateUtils.FORMAT_SHOW_YEAR.toLong()
         if (mNumDays != 1) {
             // Don't show day of the month if for multi-day view
-            formatFlags = formatFlags or DateUtils.FORMAT_NO_MONTH_DAY
+            formatFlags = formatFlags or DateUtils.FORMAT_NO_MONTH_DAY.toLong()
 
             // Abbreviate the month if showing multiple months
             if (start.month !== end.month) {
-                formatFlags = formatFlags or DateUtils.FORMAT_ABBREV_MONTH
+                formatFlags = formatFlags or DateUtils.FORMAT_ABBREV_MONTH.toLong()
             }
         }
         mController.sendEvent(
-            this, EventType.UPDATE_TITLE, start, end, null, -1, ViewType.CURRENT,
+            this as Object?, EventType.UPDATE_TITLE, start, end, null, -1, ViewType.CURRENT,
             formatFlags, null, null
         )
     }
@@ -729,12 +778,12 @@ class DayView(
      * if it is in the visible time range.
      */
     fun compareToVisibleTimeRange(time: Time): Int {
-        val savedHour: Int = mBaseDate.hour
-        val savedMinute: Int = mBaseDate.minute
-        val savedSec: Int = mBaseDate.second
-        mBaseDate.hour = 0
-        mBaseDate.minute = 0
-        mBaseDate.second = 0
+        val savedHour: Int = mBaseDate!!.hour
+        val savedMinute: Int = mBaseDate!!.minute
+        val savedSec: Int = mBaseDate!!.second
+        mBaseDate!!.hour = 0
+        mBaseDate!!.minute = 0
+        mBaseDate!!.second = 0
         if (DEBUG) {
             Log.d(TAG, "Begin " + mBaseDate.toString())
             Log.d(TAG, "Diff  " + time.toString())
@@ -744,12 +793,12 @@ class DayView(
         var diff: Int = Time.compare(time, mBaseDate)
         if (diff > 0) {
             // Compare end of range
-            mBaseDate.monthDay += mNumDays
-            mBaseDate.normalize(true)
+            mBaseDate!!.monthDay += mNumDays
+            mBaseDate?.normalize(true)
             diff = Time.compare(time, mBaseDate)
             if (DEBUG) Log.d(TAG, "End   " + mBaseDate.toString())
-            mBaseDate.monthDay -= mNumDays
-            mBaseDate.normalize(true)
+            mBaseDate!!.monthDay -= mNumDays
+            mBaseDate?.normalize(true)
             if (diff < 0) {
                 // in visible time
                 diff = 0
@@ -759,9 +808,9 @@ class DayView(
             }
         }
         if (DEBUG) Log.d(TAG, "Diff: $diff")
-        mBaseDate.hour = savedHour
-        mBaseDate.minute = savedMinute
-        mBaseDate.second = savedSec
+        mBaseDate!!.hour = savedHour
+        mBaseDate!!.minute = savedMinute
+        mBaseDate!!.second = savedSec
         return diff
     }
 
@@ -771,28 +820,28 @@ class DayView(
         if (mNumDays == 7) {
             adjustToBeginningOfWeek(mBaseDate)
         }
-        val start: Long = mBaseDate.toMillis(false /* use isDst */)
-        mFirstJulianDay = Time.getJulianDay(start, mBaseDate.gmtoff)
+        val start: Long = mBaseDate!!.toMillis(false /* use isDst */)
+        mFirstJulianDay = Time.getJulianDay(start, mBaseDate!!.gmtoff)
         mLastJulianDay = mFirstJulianDay + mNumDays - 1
-        mMonthLength = mBaseDate.getActualMaximum(Time.MONTH_DAY)
-        mFirstVisibleDate = mBaseDate.monthDay
-        mFirstVisibleDayOfWeek = mBaseDate.weekDay
+        mMonthLength = mBaseDate!!.getActualMaximum(Time.MONTH_DAY)
+        mFirstVisibleDate = mBaseDate!!.monthDay
+        mFirstVisibleDayOfWeek = mBaseDate!!.weekDay
     }
 
     private fun adjustToBeginningOfWeek(time: Time?) {
-        val dayOfWeek: Int = time.weekDay
+        val dayOfWeek: Int = time!!.weekDay
         var diff = dayOfWeek - mFirstDayOfWeek
         if (diff != 0) {
             if (diff < 0) {
                 diff += 7
             }
-            time.monthDay -= diff
-            time.normalize(true /* ignore isDst */)
+            time!!.monthDay -= diff
+            time?.normalize(true /* ignore isDst */)
         }
     }
 
     @Override
-    protected fun onSizeChanged(width: Int, height: Int, oldw: Int, oldh: Int) {
+    protected override fun onSizeChanged(width: Int, height: Int, oldw: Int, oldh: Int) {
         mViewWidth = width
         mViewHeight = height
         mEdgeEffectTop.setSize(mViewWidth, mViewHeight)
@@ -804,7 +853,7 @@ class DayView(
         mHorizontalSnapBackThreshold = width / 7
         val p = Paint()
         p.setTextSize(HOURS_TEXT_SIZE)
-        mHoursTextHeight = Math.abs(p.ascent())
+        mHoursTextHeight = Math.abs(p.ascent()).toInt()
         remeasure(width, height)
     }
 
@@ -826,8 +875,8 @@ class DayView(
         // First, clear the array of earliest start times, and the array
         // indicating presence of an all-day event.
         for (day in 0 until mNumDays) {
-            mEarliestStartHour[day] = 25 // some big number
-            mHasAllDayEvent[day] = false
+            mEarliestStartHour!![day] = 25 // some big number
+            mHasAllDayEvent!![day] = false
         }
         val maxAllDayEvents = mMaxAlldayEvents
 
@@ -867,7 +916,7 @@ class DayView(
                     // But clip the area depending on which mode we're in
                     if (!mShowAllAllDayEvents && allDayHeight > MAX_UNEXPANDED_ALLDAY_HEIGHT) {
                         allDayHeight = (mMaxUnexpandedAlldayEventCount *
-                          MIN_UNEXPANDED_ALLDAY_EVENT_HEIGHT).toInt()
+                            MIN_UNEXPANDED_ALLDAY_EVENT_HEIGHT).toInt()
                     } else if (allDayHeight > maxAllAllDayHeight) {
                         allDayHeight = maxAllAllDayHeight
                     }
@@ -887,16 +936,16 @@ class DayView(
             EVENT_ALL_DAY_TEXT_LEFT_MARGIN
         )
         mExpandAllDayRect.right = Math.min(
-            mExpandAllDayRect.left + allDayIconWidth, mHoursWidth
-              - EVENT_ALL_DAY_TEXT_RIGHT_MARGIN
+            mExpandAllDayRect.left + allDayIconWidth, mHoursWidth -
+                EVENT_ALL_DAY_TEXT_RIGHT_MARGIN
         )
         mExpandAllDayRect.bottom = mFirstCell - EXPAND_ALL_DAY_BOTTOM_MARGIN
-        mExpandAllDayRect.top = (mExpandAllDayRect.bottom
-          - mExpandAlldayDrawable.getIntrinsicHeight())
+        mExpandAllDayRect.top = (mExpandAllDayRect.bottom -
+            mExpandAlldayDrawable.getIntrinsicHeight())
         mNumHours = mGridAreaHeight / (mCellHeight + HOUR_GAP)
-        mEventGeometry.setHourHeight(mCellHeight)
+        mEventGeometry.setHourHeight(mCellHeight.toFloat())
         val minimumDurationMillis =
-            (MIN_EVENT_HEIGHT * DateUtils.MINUTE_IN_MILLIS / (mCellHeight / 60.0f)) as Long
+            (MIN_EVENT_HEIGHT * DateUtils.MINUTE_IN_MILLIS / (mCellHeight / 60.0f)).toLong()
         Event.computePositions(mEvents, minimumDurationMillis)
 
         // Compute the top of our reachable view
@@ -923,12 +972,12 @@ class DayView(
         }
         mViewStartY = mFirstHour * (mCellHeight + HOUR_GAP) - mFirstHourOffset
         val eventAreaWidth = mNumDays * (mCellWidth + DAY_GAP)
-        //When we get new events we don't want to dismiss the popup unless the event changes
-        if (mSelectedEvent != null && mLastPopupEventID != mSelectedEvent.id) {
-            mPopup.dismiss()
+        // When we get new events we don't want to dismiss the popup unless the event changes
+        if (mSelectedEvent != null && mLastPopupEventID != mSelectedEvent!!.id) {
+            mPopup?.dismiss()
         }
-        mPopup.setWidth(eventAreaWidth - 20)
-        mPopup.setHeight(WindowManager.LayoutParams.WRAP_CONTENT)
+        mPopup?.setWidth(eventAreaWidth - 20)
+        mPopup?.setHeight(WindowManager.LayoutParams.WRAP_CONTENT)
     }
 
     /**
@@ -950,7 +999,7 @@ class DayView(
         view.setSelectedEvent(null)
         view.mPrevSelectedEvent = null
         view.mFirstDayOfWeek = mFirstDayOfWeek
-        if (view.mEvents.size() > 0) {
+        if (view.mEvents.size > 0) {
             view.mSelectionAllday = mSelectionAllday
         } else {
             view.mSelectionAllday = false
@@ -971,7 +1020,7 @@ class DayView(
      */
     private fun switchViews(trackBallSelection: Boolean) {
         val selectedEvent: Event? = mSelectedEvent
-        mPopup.dismiss()
+        mPopup?.dismiss()
         mLastPopupEventID = INVALID_EVENT_ID
         if (mNumDays > 1) {
             // This is the Week view.
@@ -981,7 +1030,7 @@ class DayView(
             if (trackBallSelection) {
                 if (selectedEvent != null) {
                     if (mIsAccessibilityEnabled) {
-                        mAccessibilityMgr.interrupt()
+                        mAccessibilityMgr?.interrupt()
                     }
                 }
             }
@@ -989,23 +1038,23 @@ class DayView(
     }
 
     @Override
-    fun onKeyUp(keyCode: Int, event: KeyEvent?): Boolean {
+    override fun onKeyUp(keyCode: Int, event: KeyEvent?): Boolean {
         mScrolling = false
         return super.onKeyUp(keyCode, event)
     }
 
     @Override
-    fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
         return super.onKeyDown(keyCode, event)
     }
 
     @Override
-    fun onHoverEvent(event: MotionEvent?): Boolean {
+    override fun onHoverEvent(event: MotionEvent?): Boolean {
         return true
     }
 
     private val isTouchExplorationEnabled: Boolean
-        private get() = mIsAccessibilityEnabled && mAccessibilityMgr.isTouchExplorationEnabled()
+        private get() = mIsAccessibilityEnabled && mAccessibilityMgr!!.isTouchExplorationEnabled()
 
     private fun sendAccessibilityEventAsNeeded(speakEvents: Boolean) {
         if (!mIsAccessibilityEnabled) {
@@ -1013,7 +1062,8 @@ class DayView(
         }
         val dayChanged = mLastSelectionDayForAccessibility != mSelectionDayForAccessibility
         val hourChanged = mLastSelectionHourForAccessibility != mSelectionHourForAccessibility
-        if (dayChanged || hourChanged || mLastSelectedEventForAccessibility !== mSelectedEventForAccessibility) {
+        if (dayChanged || hourChanged || mLastSelectedEventForAccessibility !==
+            mSelectedEventForAccessibility) {
             mLastSelectionDayForAccessibility = mSelectionDayForAccessibility
             mLastSelectionHourForAccessibility = mSelectionHourForAccessibility
             mLastSelectedEventForAccessibility = mSelectedEventForAccessibility
@@ -1031,11 +1081,11 @@ class DayView(
             }
             if (speakEvents) {
                 if (mEventCountTemplate == null) {
-                    mEventCountTemplate = mContext.getString(R.string.template_announce_item_index)
+                    mEventCountTemplate = mContext?.getString(R.string.template_announce_item_index)
                 }
 
                 // Read out the relevant event(s)
-                val numEvents: Int = mSelectedEvents.size()
+                val numEvents: Int = mSelectedEvents.size
                 if (numEvents > 0) {
                     if (mSelectedEventForAccessibility == null) {
                         // Read out all the events
@@ -1070,7 +1120,7 @@ class DayView(
                     .obtain(AccessibilityEvent.TYPE_VIEW_FOCUSED)
                 val msg: CharSequence = b.toString()
                 event.getText().add(msg)
-                event.setAddedCount(msg.length())
+                event.setAddedCount(msg.length)
                 sendAccessibilityEventUnchecked(event)
             }
         }
@@ -1081,11 +1131,11 @@ class DayView(
      * @param calEvent
      */
     private fun appendEventAccessibilityString(b: StringBuilder, calEvent: Event?) {
-        b.append(calEvent.getTitleAndLocation())
+        b.append(calEvent!!.titleAndLocation)
         b.append(PERIOD_SPACE)
-        val `when`: String
+        val `when`: String?
         var flags: Int = DateUtils.FORMAT_SHOW_DATE
-        if (calEvent.allDay) {
+        if (calEvent!!.allDay) {
             flags = flags or (DateUtils.FORMAT_UTC or DateUtils.FORMAT_SHOW_WEEKDAY)
         } else {
             flags = flags or DateUtils.FORMAT_SHOW_TIME
@@ -1093,7 +1143,8 @@ class DayView(
                 flags = flags or DateUtils.FORMAT_24HOUR
             }
         }
-        `when` = Utils.formatDateRange(mContext, calEvent.startMillis, calEvent.endMillis, flags)
+        `when` = Utils.formatDateRange(mContext, calEvent!!.startMillis, calEvent!!.endMillis,
+            flags)
         b.append(`when`)
         b.append(PERIOD_SPACE)
     }
@@ -1103,25 +1154,25 @@ class DayView(
         private val mStart: Time
         private val mEnd: Time
         @Override
-        fun onAnimationEnd(animation: Animation?) {
+        override fun onAnimationEnd(animation: Animation?) {
             var view = mViewSwitcher.getCurrentView() as DayView
             view.mViewStartX = 0
-            view = mViewSwitcher.getNextView()
+            view = mViewSwitcher.getNextView() as DayView
             view.mViewStartX = 0
             if (mCounter == sCounter) {
                 mController.sendEvent(
-                    this, EventType.GO_TO, mStart, mEnd, null, -1,
+                    this as Object?, EventType.GO_TO, mStart, mEnd, null, -1,
                     ViewType.CURRENT, CalendarController.EXTRA_GOTO_DATE, null, null
                 )
             }
         }
 
         @Override
-        fun onAnimationRepeat(animation: Animation?) {
+        override fun onAnimationRepeat(animation: Animation?) {
         }
 
         @Override
-        fun onAnimationStart(animation: Animation?) {
+        override fun onAnimationStart(animation: Animation?) {
         }
 
         init {
@@ -1155,14 +1206,14 @@ class DayView(
             outFromXValue = progress
             outToXValue = 1.0f
         }
-        val start = Time(mBaseDate.timezone)
-        start.set(mController.getTime())
+        val start = Time(mBaseDate!!.timezone)
+        start.set(mController.time as Long)
         if (forward) {
             start.monthDay += mNumDays
         } else {
             start.monthDay -= mNumDays
         }
-        mController.setTime(start.normalize(true))
+        mController.time = start.normalize(true)
         var newSelected: Time? = start
         if (mNumDays == 7) {
             newSelected = Time(start)
@@ -1196,7 +1247,7 @@ class DayView(
         var view = mViewSwitcher.getCurrentView() as DayView
         view.cleanup()
         mViewSwitcher.showNext()
-        view = mViewSwitcher.getCurrentView()
+        view = mViewSwitcher.getCurrentView() as DayView
         view.setSelected(newSelected, true, false)
         view.requestFocus()
         view.reloadEvents()
@@ -1263,7 +1314,9 @@ class DayView(
             // Exception 2: if 12am is on screen, then allow the user to select
             // 12am before going up to the all-day event area.
             val daynum = mSelectionDay - mFirstJulianDay
-            if (daynum < mEarliestStartHour.size && daynum >= 0 && mMaxAlldayEvents > 0 && mEarliestStartHour[daynum] > mSelectionHour && mFirstHour > 0 && mFirstHour < 8) {
+            if (daynum < mEarliestStartHour!!.size && daynum >= 0 && mMaxAlldayEvents > 0 &&
+                mEarliestStartHour!![daynum] > mSelectionHour &&
+                mFirstHour > 0 && mFirstHour < 8) {
                 mPrevSelectedEvent = null
                 mSelectionAllday = true
                 setSelectedHour(mFirstHour + 1)
@@ -1296,8 +1349,8 @@ class DayView(
         mLastReloadMillis = 0
     }
 
-    private val mCancelCallback: Runnable = object : Runnable() {
-        fun run() {
+    private val mCancelCallback: Runnable = object : Runnable {
+        override fun run() {
             clearCachedEvents()
         }
     }
@@ -1331,34 +1384,35 @@ class DayView(
         mLastReloadMillis = millis
 
         // load events in the background
-//        mContext.startProgressSpinner();
+        // mContext.startProgressSpinner();
         val events: ArrayList<Event> = ArrayList<Event>()
-        mEventLoader.loadEventsInBackground(mNumDays, events, mFirstJulianDay, object : Runnable() {
-            fun run() {
+        mEventLoader.loadEventsInBackground(mNumDays, events as ArrayList<Event?>, mFirstJulianDay,
+            object : Runnable {
+            override fun run() {
                 val fadeinEvents = mFirstJulianDay != mLoadedFirstJulianDay
                 mEvents = events
                 mLoadedFirstJulianDay = mFirstJulianDay
                 if (mAllDayEvents == null) {
                     mAllDayEvents = ArrayList<Event>()
                 } else {
-                    mAllDayEvents.clear()
+                    mAllDayEvents?.clear()
                 }
 
                 // Create a shorter array for all day events
                 for (e in events) {
                     if (e.drawAsAllday()) {
-                        mAllDayEvents.add(e)
+                        mAllDayEvents?.add(e)
                     }
                 }
 
                 // New events, new layouts
-                if (mLayouts == null || mLayouts!!.size < events.size()) {
-                    mLayouts = arrayOfNulls<StaticLayout>(events.size())
+                if (mLayouts == null || mLayouts!!.size < events.size) {
+                    mLayouts = arrayOfNulls<StaticLayout>(events.size)
                 } else {
                     Arrays.fill(mLayouts, null)
                 }
-                if (mAllDayLayouts == null || mAllDayLayouts!!.size < mAllDayEvents.size()) {
-                    mAllDayLayouts = arrayOfNulls<StaticLayout>(events.size())
+                if (mAllDayLayouts == null || mAllDayLayouts!!.size < mAllDayEvents!!.size) {
+                    mAllDayLayouts = arrayOfNulls<StaticLayout>(events.size)
                 } else {
                     Arrays.fill(mAllDayLayouts, null)
                 }
@@ -1372,9 +1426,9 @@ class DayView(
                     if (mEventsCrossFadeAnimation == null) {
                         mEventsCrossFadeAnimation =
                             ObjectAnimator.ofInt(this@DayView, "EventsAlpha", 0, 255)
-                        mEventsCrossFadeAnimation.setDuration(EVENTS_CROSS_FADE_DURATION)
+                        mEventsCrossFadeAnimation?.setDuration(EVENTS_CROSS_FADE_DURATION.toLong())
                     }
-                    mEventsCrossFadeAnimation.start()
+                    mEventsCrossFadeAnimation?.start()
                 } else {
                     invalidate()
                 }
@@ -1391,7 +1445,7 @@ class DayView(
 
     fun stopEventsAnimation() {
         if (mEventsCrossFadeAnimation != null) {
-            mEventsCrossFadeAnimation.cancel()
+            mEventsCrossFadeAnimation?.cancel()
         }
         mEventsAlpha = 255
     }
@@ -1411,7 +1465,7 @@ class DayView(
         // the earliest event in each day.
         var maxAllDayEvents = 0
         val events: ArrayList<Event> = mEvents
-        val len: Int = events.size()
+        val len: Int = events.size
         // Num of all-day-events on each day.
         val eventsCount = IntArray(mLastJulianDay - mFirstJulianDay + 1)
         Arrays.fill(eventsCount, 0)
@@ -1441,23 +1495,23 @@ class DayView(
                 }
                 var day = daynum
                 while (durationDays > 0) {
-                    mHasAllDayEvent[day] = true
+                    mHasAllDayEvent!![day] = true
                     day++
                     durationDays--
                 }
             } else {
                 var daynum: Int = event.startDay - mFirstJulianDay
                 var hour: Int = event.startTime / 60
-                if (daynum >= 0 && hour < mEarliestStartHour[daynum]) {
-                    mEarliestStartHour[daynum] = hour
+                if (daynum >= 0 && hour < mEarliestStartHour!![daynum]) {
+                    mEarliestStartHour!![daynum] = hour
                 }
 
                 // Also check the end hour in case the event spans more than
                 // one day.
                 daynum = event.endDay - mFirstJulianDay
                 hour = event.endTime / 60
-                if (daynum < mNumDays && hour < mEarliestStartHour[daynum]) {
-                    mEarliestStartHour[daynum] = hour
+                if (daynum < mNumDays && hour < mEarliestStartHour!![daynum]) {
+                    mEarliestStartHour!![daynum] = hour
                 }
             }
         }
@@ -1466,7 +1520,7 @@ class DayView(
     }
 
     @Override
-    protected fun onDraw(canvas: Canvas) {
+    protected override fun onDraw(canvas: Canvas) {
         if (mRemeasure) {
             remeasure(getWidth(), getHeight())
             mRemeasure = false
@@ -1474,7 +1528,7 @@ class DayView(
         canvas.save()
         val yTranslate = (-mViewStartY + DAY_HEADER_HEIGHT + mAlldayHeight).toFloat()
         // offset canvas by the current drag and header position
-        canvas.translate(-mViewStartX, yTranslate)
+        canvas.translate(-mViewStartX.toFloat(), yTranslate)
         // clip to everything below the allDay area
         val dest: Rect = mDestRect
         dest.top = (mFirstCell - yTranslate).toInt()
@@ -1504,12 +1558,12 @@ class DayView(
             nextView.mTouchMode = TOUCH_MODE_INITIAL_STATE
             nextView.onDraw(canvas)
             // Move it back for this view
-            canvas.translate(-xTranslate, 0)
+            canvas.translate(-xTranslate, 0f)
         } else {
             // If we drew another view we already translated it back
             // If we didn't draw another view we should be at the edge of the
             // screen
-            canvas.translate(mViewStartX, -yTranslate)
+            canvas.translate(mViewStartX.toFloat(), -yTranslate)
         }
 
         // Draw the fixed areas (that don't scroll) directly to the canvas.
@@ -1522,17 +1576,17 @@ class DayView(
         // Draw overscroll glow
         if (!mEdgeEffectTop.isFinished()) {
             if (DAY_HEADER_HEIGHT != 0) {
-                canvas.translate(0, DAY_HEADER_HEIGHT)
+                canvas.translate(0f, DAY_HEADER_HEIGHT.toFloat())
             }
             if (mEdgeEffectTop.draw(canvas)) {
                 invalidate()
             }
             if (DAY_HEADER_HEIGHT != 0) {
-                canvas.translate(0, -DAY_HEADER_HEIGHT)
+                canvas.translate(0f, -DAY_HEADER_HEIGHT.toFloat())
             }
         }
         if (!mEdgeEffectBottom.isFinished()) {
-            canvas.rotate(180, mViewWidth / 2, mViewHeight / 2)
+            canvas.rotate(180f, mViewWidth.toFloat() / 2f, mViewHeight.toFloat() / 2f)
             if (mEdgeEffectBottom.draw(canvas)) {
                 invalidate()
             }
@@ -1581,7 +1635,7 @@ class DayView(
         p.setStyle(Style.FILL)
         p.setColor(mCalendarGridLineInnerHorizontalColor)
         p.setStrokeWidth(GRID_LINE_INNER_WIDTH)
-        canvas.drawLine(GRID_LINE_LEFT_MARGIN, y, right, y, p)
+        canvas.drawLine(GRID_LINE_LEFT_MARGIN, y.toFloat(), right.toFloat(), y.toFloat(), p)
         p.setAntiAlias(true)
     }
 
@@ -1649,7 +1703,7 @@ class DayView(
         p.setTypeface(mBold)
         p.setTextAlign(Paint.Align.RIGHT)
         var cell = mFirstJulianDay
-        val dayNames: Array<String?>
+        val dayNames: Array<String?>?
         dayNames = if (mDateStrWidth < mCellWidth) {
             mDayStrs
         } else {
@@ -1678,7 +1732,7 @@ class DayView(
                 }
             }
             p.setColor(color)
-            drawDayHeader(dayNames[dayOfWeek], day, cell, canvas, p)
+            drawDayHeader(dayNames!![dayOfWeek], day, cell, canvas, p)
             day++
             cell++
         }
@@ -1696,18 +1750,22 @@ class DayView(
             text = mPmString
         }
         var y = mFirstCell + mFirstHourOffset + 2 * mHoursTextHeight + HOUR_GAP
-        canvas.drawText(text, HOURS_LEFT_MARGIN, y, p)
+        canvas.drawText(text as String, HOURS_LEFT_MARGIN.toFloat(), y.toFloat(), p)
         if (mFirstHour < 12 && mFirstHour + mNumHours > 12) {
             // Also draw the "PM"
             text = mPmString
             y =
-                mFirstCell + mFirstHourOffset + (12 - mFirstHour) * (mCellHeight + HOUR_GAP) + 2 * mHoursTextHeight + HOUR_GAP
-            canvas.drawText(text, HOURS_LEFT_MARGIN, y, p)
+                mFirstCell + mFirstHourOffset + (12 - mFirstHour) * (mCellHeight + HOUR_GAP) +
+                    2 * mHoursTextHeight + HOUR_GAP
+            canvas.drawText(text as String, HOURS_LEFT_MARGIN.toFloat(), y.toFloat(), p)
         }
     }
 
     private fun drawCurrentTimeLine(
-        r: Rect, day: Int, top: Int, canvas: Canvas,
+        r: Rect,
+        day: Int,
+        top: Int,
+        canvas: Canvas,
         p: Paint
     ) {
         r.left = computeDayLeftPosition(day) - CURRENT_TIME_LINE_SIDE_BUFFER + 1
@@ -1746,7 +1804,8 @@ class DayView(
             // If this is today
             if (cell == mTodayJulianDay) {
                 val lineY: Int =
-                    mCurrentTime.hour * (mCellHeight + HOUR_GAP) + mCurrentTime.minute * mCellHeight / 60 + 1
+                    mCurrentTime!!.hour * (mCellHeight + HOUR_GAP) + mCurrentTime!!.minute *
+                        mCellHeight / 60 + 1
 
                 // And the current time shows up somewhere on the screen
                 if (lineY >= mViewStartY && lineY < mViewStartY + mViewHeight - 2) {
@@ -1764,8 +1823,8 @@ class DayView(
         setupHourTextPaint(p)
         var y = HOUR_GAP + mHoursTextHeight + HOURS_TOP_MARGIN
         for (i in 0..23) {
-            val time = mHourStrs[i]
-            canvas.drawText(time, HOURS_LEFT_MARGIN, y, p)
+            val time = mHourStrs!![i]
+            canvas.drawText(time, HOURS_LEFT_MARGIN.toFloat(), y.toFloat(), p)
             y += mCellHeight + HOUR_GAP
         }
     }
@@ -1780,14 +1839,14 @@ class DayView(
 
     private fun drawDayHeader(dayStr: String?, day: Int, cell: Int, canvas: Canvas, p: Paint) {
         var dateNum = mFirstVisibleDate + day
-        val x: Int
+        var x: Int
         if (dateNum > mMonthLength) {
             dateNum -= mMonthLength
         }
         p.setAntiAlias(true)
         val todayIndex = mTodayJulianDay - mFirstJulianDay
         // Draw day of the month
-        val dateNumStr: String = String.valueOf(dateNum)
+        val dateNumStr: String = dateNum.toString()
         if (mNumDays > 1) {
             val y = (DAY_HEADER_HEIGHT - DAY_HEADER_BOTTOM_MARGIN).toFloat()
 
@@ -1796,29 +1855,28 @@ class DayView(
             p.setTextAlign(Align.RIGHT)
             p.setTextSize(DATE_HEADER_FONT_SIZE)
             p.setTypeface(if (todayIndex == day) mBold else Typeface.DEFAULT)
-            canvas.drawText(dateNumStr, x, y, p)
+            canvas.drawText(dateNumStr as String, x.toFloat(), y, p)
 
             // Draw day of the week
-            x -= p.measureText(" $dateNumStr")
+            x -= (p.measureText(" $dateNumStr")).toInt()
             p.setTextSize(DAY_HEADER_FONT_SIZE)
             p.setTypeface(Typeface.DEFAULT)
-            canvas.drawText(dayStr, x, y, p)
+            canvas.drawText(dayStr as String, x.toFloat(), y, p)
         } else {
             val y = (ONE_DAY_HEADER_HEIGHT - DAY_HEADER_ONE_DAY_BOTTOM_MARGIN).toFloat()
             p.setTextAlign(Align.LEFT)
-
 
             // Draw day of the week
             x = computeDayLeftPosition(day) + DAY_HEADER_ONE_DAY_LEFT_MARGIN
             p.setTextSize(DAY_HEADER_FONT_SIZE)
             p.setTypeface(Typeface.DEFAULT)
-            canvas.drawText(dayStr, x, y, p)
+            canvas.drawText(dayStr as String, x.toFloat(), y, p)
 
             // Draw day of the month
-            x += p.measureText(dayStr) + DAY_HEADER_ONE_DAY_RIGHT_MARGIN
+            x += (p.measureText(dayStr) + DAY_HEADER_ONE_DAY_RIGHT_MARGIN).toInt()
             p.setTextSize(DATE_HEADER_FONT_SIZE)
             p.setTypeface(if (todayIndex == day) mBold else Typeface.DEFAULT)
-            canvas.drawText(dateNumStr, x, y, p)
+            canvas.drawText(dateNumStr, x.toFloat(), y, p)
         }
     }
 
@@ -1887,7 +1945,8 @@ class DayView(
         if (mNumDays == 1 && todayIndex == 0) {
             // Draw a white background for the time later than current time
             var lineY: Int =
-                mCurrentTime.hour * (mCellHeight + HOUR_GAP) + mCurrentTime.minute * mCellHeight / 60 + 1
+                mCurrentTime!!.hour * (mCellHeight + HOUR_GAP) + mCurrentTime!!.minute *
+                    mCellHeight / 60 + 1
             if (lineY < mViewStartY + mViewHeight) {
                 lineY = Math.max(lineY, mViewStartY)
                 r.left = mHoursWidth
@@ -1900,7 +1959,8 @@ class DayView(
         } else if (todayIndex >= 0 && todayIndex < mNumDays) {
             // Draw today with a white background for the time later than current time
             var lineY: Int =
-                mCurrentTime.hour * (mCellHeight + HOUR_GAP) + mCurrentTime.minute * mCellHeight / 60 + 1
+                mCurrentTime!!.hour * (mCellHeight + HOUR_GAP) + mCurrentTime!!.minute *
+                    mCellHeight / 60 + 1
             if (lineY < mViewStartY + mViewHeight) {
                 lineY = Math.max(lineY, mViewStartY)
                 r.left = computeDayLeftPosition(todayIndex) + 1
@@ -1989,7 +2049,10 @@ class DayView(
      * Return the layout for a numbered event. Create it if not already existing
      */
     private fun getEventLayout(
-        layouts: Array<StaticLayout?>?, i: Int, event: Event, paint: Paint,
+        layouts: Array<StaticLayout?>?,
+        i: Int,
+        event: Event,
+        paint: Paint,
         r: Rect
     ): StaticLayout? {
         if (i < 0 || i >= layouts!!.size) {
@@ -2003,15 +2066,16 @@ class DayView(
             val bob = SpannableStringBuilder()
             if (event.title != null) {
                 // MAX - 1 since we add a space
-                bob.append(drawTextSanitizer(event.title.toString(), MAX_EVENT_TEXT_LEN - 1))
-                bob.setSpan(StyleSpan(android.graphics.Typeface.BOLD), 0, bob.length(), 0)
+                bob.append(drawTextSanitizer(event.title.toString(),
+                    MAX_EVENT_TEXT_LEN - 1))
+                bob.setSpan(StyleSpan(android.graphics.Typeface.BOLD), 0, bob.length, 0)
                 bob.append(' ')
             }
             if (event.location != null) {
                 bob.append(
                     drawTextSanitizer(
                         event.location.toString(),
-                        MAX_EVENT_TEXT_LEN - bob.length()
+                        MAX_EVENT_TEXT_LEN - bob.length
                     )
                 )
             }
@@ -2021,7 +2085,8 @@ class DayView(
                     paint.setColor(mEventTextColor)
                     paint.setAlpha(Utils.DECLINED_EVENT_TEXT_ALPHA)
                 }
-                Attendees.ATTENDEE_STATUS_NONE, Attendees.ATTENDEE_STATUS_ACCEPTED, Attendees.ATTENDEE_STATUS_TENTATIVE -> paint.setColor(
+                Attendees.ATTENDEE_STATUS_NONE, Attendees.ATTENDEE_STATUS_ACCEPTED,
+                    Attendees.ATTENDEE_STATUS_TENTATIVE -> paint.setColor(
                     mEventTextColor
                 )
                 else -> paint.setColor(mEventTextColor)
@@ -2029,7 +2094,7 @@ class DayView(
 
             // Leave a one pixel boundary on the left and right of the rectangle for the event
             layout = StaticLayout(
-                bob, 0, bob.length(), TextPaint(paint), r.width(),
+                bob, 0, bob.length, TextPaint(paint), r.width(),
                 Alignment.ALIGN_NORMAL, 1.0f, 0.0f, true, null, r.width()
             )
             layouts[i] = layout
@@ -2052,16 +2117,16 @@ class DayView(
         x = mHoursWidth.toFloat()
         p.setStrokeWidth(GRID_LINE_INNER_WIDTH)
         // Line bounding the top of the all day area
-        mLines[linesIndex++] = GRID_LINE_LEFT_MARGIN
-        mLines[linesIndex++] = startY
-        mLines[linesIndex++] = computeDayLeftPosition(mNumDays).toFloat()
-        mLines[linesIndex++] = startY
+        mLines!![linesIndex++] = GRID_LINE_LEFT_MARGIN
+        mLines!![linesIndex++] = startY
+        mLines!![linesIndex++] = computeDayLeftPosition(mNumDays).toFloat()
+        mLines!![linesIndex++] = startY
         for (day in 0..mNumDays) {
             x = computeDayLeftPosition(day).toFloat()
-            mLines[linesIndex++] = x
-            mLines[linesIndex++] = startY
-            mLines[linesIndex++] = x
-            mLines[linesIndex++] = stopY
+            mLines!![linesIndex++] = x
+            mLines!![linesIndex++] = startY
+            mLines!![linesIndex++] = x
+            mLines!![linesIndex++] = stopY
         }
         p.setAntiAlias(false)
         canvas.drawLines(mLines, 0, linesIndex, p)
@@ -2069,7 +2134,7 @@ class DayView(
         val y = DAY_HEADER_HEIGHT + ALLDAY_TOP_MARGIN
         val lastDay = firstDay + numDays - 1
         val events: ArrayList<Event>? = mAllDayEvents
-        val numEvents: Int = events.size()
+        val numEvents: Int = events!!.size
         // Whether or not we should draw the more events text
         var hasMoreEvents = false
         // size of the allDay area
@@ -2080,7 +2145,8 @@ class DayView(
         var allDayEventClip = DAY_HEADER_HEIGHT + mAlldayHeight + ALLDAY_TOP_MARGIN
         // The number of events that weren't drawn in each day
         mSkippedAlldayEvents = IntArray(numDays)
-        if (mMaxAlldayEvents > mMaxUnexpandedAlldayEventCount && !mShowAllAllDayEvents && mAnimateDayHeight == 0) {
+        if (mMaxAlldayEvents > mMaxUnexpandedAlldayEventCount &&
+            !mShowAllAllDayEvents && mAnimateDayHeight == 0) {
             // We draw one fewer event than will fit so that more events text
             // can be drawn
             numRectangles = (mMaxUnexpandedAlldayEventCount - 1).toFloat()
@@ -2094,7 +2160,7 @@ class DayView(
         var alpha: Int = eventTextPaint.getAlpha()
         eventTextPaint.setAlpha(mEventsAlpha)
         for (i in 0 until numEvents) {
-            val event: Event = events.get(i)
+            val event: Event = events!!.get(i)
             var startDay: Int = event.startDay
             var endDay: Int = event.endDay
             if (startDay > lastDay || endDay < firstDay) {
@@ -2109,7 +2175,8 @@ class DayView(
             val startIndex = startDay - firstDay
             val endIndex = endDay - firstDay
             var height =
-                if (mMaxAlldayEvents > mMaxUnexpandedAlldayEventCount) mAnimateDayEventHeight.toFloat() else drawHeight / numRectangles
+                if (mMaxAlldayEvents > mMaxUnexpandedAlldayEventCount)
+                    mAnimateDayEventHeight.toFloat() else drawHeight / numRectangles
 
             // Prevent a single event from getting too big
             if (height > MAX_HEIGHT_OF_ONE_ALLDAY_EVENT) {
@@ -2118,8 +2185,8 @@ class DayView(
 
             // Leave a one-pixel space between the vertical day lines and the
             // event rectangle.
-            event.left = computeDayLeftPosition(startIndex)
-            event.right = computeDayLeftPosition(endIndex + 1) - DAY_GAP
+            event.left = computeDayLeftPosition(startIndex).toFloat()
+            event.right = computeDayLeftPosition(endIndex + 1).toFloat() - DAY_GAP
             event.top = y + height * event.getColumn()
             event.bottom = event.top + height - ALL_DAY_EVENT_RECT_BOTTOM_MARGIN
             if (mMaxAlldayEvents > mMaxUnexpandedAlldayEventCount) {
@@ -2134,12 +2201,12 @@ class DayView(
                         incrementSkipCount(mSkippedAlldayEvents, startIndex, endIndex)
                         continue
                     }
-                    event.bottom = allDayEventClip
+                    event.bottom = allDayEventClip.toFloat()
                 }
             }
             val r: Rect = drawEventRect(
-                event, canvas, p, eventTextPaint, event.top as Int,
-                event.bottom as Int
+                event, canvas, p, eventTextPaint, event.top.toInt(),
+                event.bottom.toInt()
             )
             setupAllDayTextRect(r)
             val layout: StaticLayout? = getEventLayout(mAllDayLayouts, i, event, eventTextPaint, r)
@@ -2158,7 +2225,7 @@ class DayView(
             alpha = p.getAlpha()
             p.setAlpha(mEventsAlpha)
             p.setColor(mMoreAlldayEventsTextAlpha shl 24 and mMoreEventsTextColor)
-            for (i in mSkippedAlldayEvents.indices) {
+            for (i in mSkippedAlldayEvents!!.indices) {
                 if (mSkippedAlldayEvents!![i] > 0) {
                     drawMoreAlldayEvents(canvas, mSkippedAlldayEvents!![i], i, p)
                 }
@@ -2189,15 +2256,15 @@ class DayView(
     // Draws the "box +n" text for hidden allday events
     protected fun drawMoreAlldayEvents(canvas: Canvas, remainingEvents: Int, day: Int, p: Paint) {
         var x = computeDayLeftPosition(day) + EVENT_ALL_DAY_TEXT_LEFT_MARGIN
-        var y = (mAlldayHeight - .5f * MIN_UNEXPANDED_ALLDAY_EVENT_HEIGHT - (.5f
-          * EVENT_SQUARE_WIDTH) + DAY_HEADER_HEIGHT + ALLDAY_TOP_MARGIN).toInt()
+        var y = (mAlldayHeight - .5f * MIN_UNEXPANDED_ALLDAY_EVENT_HEIGHT - (.5f *
+            EVENT_SQUARE_WIDTH) + DAY_HEADER_HEIGHT + ALLDAY_TOP_MARGIN).toInt()
         val r: Rect = mRect
         r.top = y
         r.left = x
         r.bottom = y + EVENT_SQUARE_WIDTH
         r.right = x + EVENT_SQUARE_WIDTH
         p.setColor(mMoreEventsTextColor)
-        p.setStrokeWidth(EVENT_RECT_STROKE_WIDTH)
+        p.setStrokeWidth(EVENT_RECT_STROKE_WIDTH.toFloat())
         p.setStyle(Style.STROKE)
         p.setAntiAlias(false)
         canvas.drawRect(r, p)
@@ -2208,11 +2275,11 @@ class DayView(
             mResources.getQuantityString(R.plurals.month_more_events, remainingEvents)
         y += EVENT_SQUARE_WIDTH
         x += EVENT_SQUARE_WIDTH + EVENT_LINE_PADDING
-        canvas.drawText(String.format(text, remainingEvents), x, y, p)
+        canvas.drawText(String.format(text, remainingEvents), x.toFloat(), y.toFloat(), p)
     }
 
     private fun computeAllDayNeighbors() {
-        val len: Int = mSelectedEvents.size()
+        val len: Int = mSelectedEvents.size
         if (len == 0 || mSelectedEvent != null) {
             return
         }
@@ -2234,8 +2301,8 @@ class DayView(
         // Find the event in the same row as the previously selected all-day
         // event, if any.
         var startPosition = -1
-        if (mPrevSelectedEvent != null && mPrevSelectedEvent.drawAsAllday()) {
-            startPosition = mPrevSelectedEvent.getColumn()
+        if (mPrevSelectedEvent != null && mPrevSelectedEvent!!.drawAsAllday()) {
+            startPosition = mPrevSelectedEvent?.getColumn() as Int
         }
         var maxPosition = -1
         var startEvent: Event? = null
@@ -2282,7 +2349,7 @@ class DayView(
         selectionArea.left = left
         selectionArea.right = selectionArea.left + cellWidth
         val events: ArrayList<Event> = mEvents
-        val numEvents: Int = events.size()
+        val numEvents: Int = events.size
         val geometry: EventGeometry = mEventGeometry
         val viewEndY = mViewStartY + mViewHeight - DAY_HEADER_HEIGHT - mAlldayHeight
         val alpha: Int = eventTextPaint.getAlpha()
@@ -2297,8 +2364,8 @@ class DayView(
             if (event.bottom < mViewStartY || event.top > viewEndY) {
                 continue
             }
-            if (date == mSelectionDay && !mSelectionAllday && mComputeSelectedEvents
-                && geometry.eventIntersectsSelection(event, selectionArea)
+            if (date == mSelectionDay && !mSelectionAllday && mComputeSelectedEvents &&
+                geometry.eventIntersectsSelection(event, selectionArea)
             ) {
                 mSelectedEvents.add(event)
             }
@@ -2324,15 +2391,19 @@ class DayView(
     }
 
     private fun drawEventRect(
-        event: Event, canvas: Canvas, p: Paint, eventTextPaint: Paint,
-        visibleTop: Int, visibleBot: Int
+        event: Event,
+        canvas: Canvas,
+        p: Paint,
+        eventTextPaint: Paint,
+        visibleTop: Int,
+        visibleBot: Int
     ): Rect {
         // Draw the Event Rect
         val r: Rect = mRect
-        r.top = Math.max(event.top as Int + EVENT_RECT_TOP_MARGIN, visibleTop)
-        r.bottom = Math.min(event.bottom as Int - EVENT_RECT_BOTTOM_MARGIN, visibleBot)
-        r.left = event.left as Int + EVENT_RECT_LEFT_MARGIN
-        r.right = event.right
+        r.top = Math.max(event.top.toInt() + EVENT_RECT_TOP_MARGIN, visibleTop)
+        r.bottom = Math.min(event.bottom.toInt() - EVENT_RECT_BOTTOM_MARGIN, visibleBot)
+        r.left = event.left.toInt() + EVENT_RECT_LEFT_MARGIN
+        r.right = event.right.toInt()
         var color: Int = event.color
         when (event.selfAttendeeStatus) {
             Attendees.ATTENDEE_STATUS_INVITED -> if (event !== mClickedEvent) {
@@ -2344,22 +2415,23 @@ class DayView(
                 }
                 p.setStyle(Style.FILL_AND_STROKE)
             }
-            Attendees.ATTENDEE_STATUS_NONE, Attendees.ATTENDEE_STATUS_ACCEPTED, Attendees.ATTENDEE_STATUS_TENTATIVE -> p.setStyle(
+            Attendees.ATTENDEE_STATUS_NONE, Attendees.ATTENDEE_STATUS_ACCEPTED,
+                Attendees.ATTENDEE_STATUS_TENTATIVE -> p.setStyle(
                 Style.FILL_AND_STROKE
             )
             else -> p.setStyle(Style.FILL_AND_STROKE)
         }
         p.setAntiAlias(false)
-        val floorHalfStroke = Math.floor(EVENT_RECT_STROKE_WIDTH / 2.0f) as Int
-        val ceilHalfStroke = Math.ceil(EVENT_RECT_STROKE_WIDTH / 2.0f) as Int
-        r.top = Math.max(event.top as Int + EVENT_RECT_TOP_MARGIN + floorHalfStroke, visibleTop)
+        val floorHalfStroke = Math.floor(EVENT_RECT_STROKE_WIDTH.toDouble() / 2.0).toInt()
+        val ceilHalfStroke = Math.ceil(EVENT_RECT_STROKE_WIDTH.toDouble() / 2.0).toInt()
+        r.top = Math.max(event.top.toInt() + EVENT_RECT_TOP_MARGIN + floorHalfStroke, visibleTop)
         r.bottom = Math.min(
-            event.bottom as Int - EVENT_RECT_BOTTOM_MARGIN - ceilHalfStroke,
+            event.bottom.toInt() - EVENT_RECT_BOTTOM_MARGIN - ceilHalfStroke,
             visibleBot
         )
         r.left += floorHalfStroke
         r.right -= ceilHalfStroke
-        p.setStrokeWidth(EVENT_RECT_STROKE_WIDTH)
+        p.setStrokeWidth(EVENT_RECT_STROKE_WIDTH.toFloat())
         p.setColor(color)
         val alpha: Int = p.getAlpha()
         p.setAlpha(mEventsAlpha)
@@ -2368,10 +2440,10 @@ class DayView(
         p.setStyle(Style.FILL)
 
         // Setup rect for drawEventText which follows
-        r.top = event.top as Int + EVENT_RECT_TOP_MARGIN
-        r.bottom = event.bottom as Int - EVENT_RECT_BOTTOM_MARGIN
-        r.left = event.left as Int + EVENT_RECT_LEFT_MARGIN
-        r.right = event.right as Int - EVENT_RECT_RIGHT_MARGIN
+        r.top = event.top.toInt() + EVENT_RECT_TOP_MARGIN
+        r.bottom = event.bottom.toInt() - EVENT_RECT_BOTTOM_MARGIN
+        r.left = event.left.toInt() + EVENT_RECT_LEFT_MARGIN
+        r.right = event.right.toInt() - EVENT_RECT_RIGHT_MARGIN
         return r
     }
 
@@ -2384,7 +2456,7 @@ class DayView(
         var string = string
         val m: Matcher = drawTextSanitizerFilter.matcher(string)
         string = m.replaceAll(",")
-        var len: Int = string.length()
+        var len: Int = string.length
         if (maxEventTextLen <= 0) {
             string = ""
             len = 0
@@ -2396,8 +2468,12 @@ class DayView(
     }
 
     private fun drawEventText(
-        eventLayout: StaticLayout?, rect: Rect, canvas: Canvas, top: Int,
-        bottom: Int, center: Boolean
+        eventLayout: StaticLayout?,
+        rect: Rect,
+        canvas: Canvas,
+        top: Int,
+        bottom: Int,
+        center: Boolean
     ) {
         // drawEmptyRect(canvas, rect, 0xFFFF00FF); // for debugging
         val width: Int = rect.right - rect.left
@@ -2428,7 +2504,7 @@ class DayView(
         canvas.save()
         //  canvas.translate(rect.left, rect.top + (rect.bottom - rect.top / 2));
         val padding = if (center) (rect.bottom - rect.top - totalLineHeight) / 2 else 0
-        canvas.translate(rect.left, rect.top + padding)
+        canvas.translate(rect.left.toFloat(), rect.top.toFloat() + padding)
         rect.left = 0
         rect.right = width
         rect.top = 0
@@ -2449,9 +2525,9 @@ class DayView(
         mTouchMode = TOUCH_MODE_DOWN
         mViewStartX = 0
         mOnFlingCalled = false
-        mHandler.removeCallbacks(mContinueScroll)
-        val x = ev.getX() as Int
-        val y = ev.getY() as Int
+        mHandler?.removeCallbacks(mContinueScroll)
+        val x = ev.getX().toInt()
+        val y = ev.getY().toInt()
 
         // Save selection information: we use setSelectionFromPosition to find the selected event
         // in order to show the "clicked" color. But since it is also setting the selected info
@@ -2463,12 +2539,12 @@ class DayView(
             // If a time was selected (a blue selection box is visible) and the click location
             // is in the selected time, do not show a click on an event to prevent a situation
             // of both a selection and an event are clicked when they overlap.
-            val pressedSelected = (mSelectionMode != SELECTION_HIDDEN
-              && oldSelectionDay == mSelectionDay && oldSelectionHour == mSelectionHour)
+            val pressedSelected = (mSelectionMode != SELECTION_HIDDEN &&
+                oldSelectionDay == mSelectionDay && oldSelectionHour == mSelectionHour)
             if (!pressedSelected && mSelectedEvent != null) {
                 mSavedClickedEvent = mSelectedEvent
                 mDownTouchTime = System.currentTimeMillis()
-                postDelayed(mSetClick, mOnDownDelay)
+                postDelayed(mSetClick, mOnDownDelay.toLong())
             } else {
                 eventClickCleanup()
             }
@@ -2487,18 +2563,19 @@ class DayView(
         // Determine the starting height
         if (mAnimateDayHeight == 0) {
             mAnimateDayHeight =
-                if (mShowAllAllDayEvents) mAlldayHeight - MIN_UNEXPANDED_ALLDAY_EVENT_HEIGHT.toInt() else mAlldayHeight
+                if (mShowAllAllDayEvents) mAlldayHeight - MIN_UNEXPANDED_ALLDAY_EVENT_HEIGHT.toInt()
+                else mAlldayHeight
         }
         // Cancel current animations
         mCancellingAnimations = true
         if (mAlldayAnimator != null) {
-            mAlldayAnimator.cancel()
+            mAlldayAnimator?.cancel()
         }
         if (mAlldayEventAnimator != null) {
-            mAlldayEventAnimator.cancel()
+            mAlldayEventAnimator?.cancel()
         }
         if (mMoreAlldayEventsAnimator != null) {
-            mMoreAlldayEventsAnimator.cancel()
+            mMoreAlldayEventsAnimator?.cancel()
         }
         mCancellingAnimations = false
         // get new animators
@@ -2512,16 +2589,18 @@ class DayView(
         )
 
         // Set up delays and start the animators
-        mAlldayAnimator.setStartDelay(if (mShowAllAllDayEvents) ANIMATION_SECONDARY_DURATION else 0)
-        mAlldayAnimator.start()
-        mMoreAlldayEventsAnimator.setStartDelay(if (mShowAllAllDayEvents) 0 else ANIMATION_DURATION)
-        mMoreAlldayEventsAnimator.setDuration(ANIMATION_SECONDARY_DURATION)
-        mMoreAlldayEventsAnimator.start()
+        mAlldayAnimator?.setStartDelay(if (mShowAllAllDayEvents) ANIMATION_SECONDARY_DURATION
+            else 0)
+        mAlldayAnimator?.start()
+        mMoreAlldayEventsAnimator?.setStartDelay(if (mShowAllAllDayEvents) 0
+            else ANIMATION_DURATION)
+        mMoreAlldayEventsAnimator?.setDuration(ANIMATION_SECONDARY_DURATION)
+        mMoreAlldayEventsAnimator?.start()
         if (mAlldayEventAnimator != null) {
             // This is the only animator that can return null, so check it
             mAlldayEventAnimator
-                .setStartDelay(if (mShowAllAllDayEvents) ANIMATION_SECONDARY_DURATION else 0)
-            mAlldayEventAnimator.start()
+                ?.setStartDelay(if (mShowAllAllDayEvents) ANIMATION_SECONDARY_DURATION else 0)
+            mAlldayEventAnimator?.start()
         }
     }
 
@@ -2543,7 +2622,7 @@ class DayView(
         } else {
             mAnimateDayEventHeight = MIN_UNEXPANDED_ALLDAY_EVENT_HEIGHT.toInt()
         }
-    }// First calculate the absolute max height
+    } // First calculate the absolute max height
     // Now expand to fit but not beyond the absolute max
     // calculate the height of individual events in order to fit
     // if there's nothing to animate just return
@@ -2576,9 +2655,7 @@ class DayView(
             )
             animator.setDuration(ANIMATION_DURATION)
             return animator
-        }// when finished, set this to 0 to signify not animating// Calculate the absolute max height
-    // Find the desired height but don't exceed abs max
-    // calculate the current and desired heights
+        }
 
     // Set up the animator with the calculated values
     // Sets up an animator for changing the height of the allday area
@@ -2594,7 +2671,8 @@ class DayView(
             // calculate the current and desired heights
             val currentHeight = if (mAnimateDayHeight != 0) mAnimateDayHeight else mAlldayHeight
             val desiredHeight =
-                if (mShowAllAllDayEvents) maxADHeight else (MAX_UNEXPANDED_ALLDAY_HEIGHT - MIN_UNEXPANDED_ALLDAY_EVENT_HEIGHT - 1).toInt()
+                if (mShowAllAllDayEvents) maxADHeight else (MAX_UNEXPANDED_ALLDAY_HEIGHT -
+                    MIN_UNEXPANDED_ALLDAY_EVENT_HEIGHT - 1).toInt()
 
             // Set up the animator with the calculated values
             val animator: ObjectAnimator = ObjectAnimator.ofInt(
@@ -2604,7 +2682,7 @@ class DayView(
             animator.setDuration(ANIMATION_DURATION)
             animator.addListener(object : AnimatorListenerAdapter() {
                 @Override
-                fun onAnimationEnd(animation: Animator?) {
+                override fun onAnimationEnd(animation: Animator?) {
                     if (!mCancellingAnimations) {
                         // when finished, set this to 0 to signify not animating
                         mAnimateDayHeight = 0
@@ -2641,15 +2719,16 @@ class DayView(
         if (!mHandleActionUp || mScrolling) {
             return
         }
-        val x = ev.getX() as Int
-        val y = ev.getY() as Int
+        val x = ev.getX().toInt()
+        val y = ev.getY().toInt()
         val selectedDay = mSelectionDay
         val selectedHour = mSelectionHour
         if (mMaxAlldayEvents > mMaxUnexpandedAlldayEventCount) {
             // check if the tap was in the allday expansion area
             val bottom = mFirstCell
-            if (x < mHoursWidth && y > DAY_HEADER_HEIGHT && y < DAY_HEADER_HEIGHT + mAlldayHeight
-                || !mShowAllAllDayEvents && mAnimateDayHeight == 0 && y < bottom && y >= bottom - MIN_UNEXPANDED_ALLDAY_EVENT_HEIGHT
+            if (x < mHoursWidth && y > DAY_HEADER_HEIGHT && y < DAY_HEADER_HEIGHT + mAlldayHeight ||
+                !mShowAllAllDayEvents && mAnimateDayHeight == 0 && y < bottom && y >= bottom -
+                MIN_UNEXPANDED_ALLDAY_EVENT_HEIGHT
             ) {
                 doExpandAllDayClick()
                 return
@@ -2663,30 +2742,30 @@ class DayView(
                 selectedTime.hour = mSelectionHour
                 selectedTime.normalize(true /* ignore isDst */)
                 mController.sendEvent(
-                    this, EventType.GO_TO, null, null, selectedTime, -1,
+                    this as? Object, EventType.GO_TO, null, null, selectedTime, -1,
                     ViewType.DAY, CalendarController.EXTRA_GOTO_DATE, null, null
                 )
             }
             return
         }
         val hasSelection = mSelectionMode != SELECTION_HIDDEN
-        val pressedSelected = ((hasSelection || mTouchExplorationEnabled)
-          && selectedDay == mSelectionDay && selectedHour == mSelectionHour)
+        val pressedSelected = ((hasSelection || mTouchExplorationEnabled) &&
+            selectedDay == mSelectionDay && selectedHour == mSelectionHour)
         if (mSelectedEvent != null) {
             // If the tap is on an event, launch the "View event" view
             if (mIsAccessibilityEnabled) {
-                mAccessibilityMgr.interrupt()
+                mAccessibilityMgr?.interrupt()
             }
             mSelectionMode = SELECTION_HIDDEN
-            var yLocation = ((mSelectedEvent.top + mSelectedEvent.bottom) / 2) as Int
+            var yLocation = ((mSelectedEvent!!.top + mSelectedEvent!!.bottom) / 2) as Int
             // Y location is affected by the position of the event in the scrolling
             // view (mViewStartY) and the presence of all day events (mFirstCell)
-            if (!mSelectedEvent.allDay) {
+            if (!mSelectedEvent!!.allDay) {
                 yLocation += mFirstCell - mViewStartY
             }
             mClickedYLocation = yLocation
             val clearDelay: Long = CLICK_DISPLAY_DURATION + mOnDownDelay -
-              (System.currentTimeMillis() - mDownTouchTime)
+                (System.currentTimeMillis() - mDownTouchTime)
             if (clearDelay > 0) {
                 this.postDelayed(mClearClick, clearDelay)
             } else {
@@ -2706,8 +2785,8 @@ class DayView(
         if (mStartingSpanY != 0f) {
             return
         }
-        val x = ev.getX() as Int
-        val y = ev.getY() as Int
+        val x = ev.getX().toInt()
+        val y = ev.getY().toInt()
         val validPosition = setSelectionFromPosition(x, y, false)
         if (!validPosition) {
             // return if the touch wasn't on an area of concern
@@ -2731,8 +2810,8 @@ class DayView(
         val focusY = getAverageY(e2)
         if (mRecalCenterHour) {
             // Calculate the hour that correspond to the average of the Y touch points
-            mGestureCenterHour = ((mViewStartY + focusY - DAY_HEADER_HEIGHT - mAlldayHeight)
-              / (mCellHeight + DAY_GAP))
+            mGestureCenterHour = ((mViewStartY + focusY - DAY_HEADER_HEIGHT - mAlldayHeight) /
+                (mCellHeight + DAY_GAP))
             mRecalCenterHour = false
         }
 
@@ -2771,8 +2850,8 @@ class DayView(
         if (mTouchMode and TOUCH_MODE_VSCROLL != 0) {
             // Calculate the top of the visible region in the calendar grid.
             // Increasing/decrease this will scroll the calendar grid up/down.
-            mViewStartY = ((mGestureCenterHour * (mCellHeight + DAY_GAP)
-              - focusY) + DAY_HEADER_HEIGHT + mAlldayHeight).toInt()
+            mViewStartY = ((mGestureCenterHour * (mCellHeight + DAY_GAP) -
+                focusY) + DAY_HEADER_HEIGHT + mAlldayHeight).toInt()
 
             // If dragging while already at the end, do a glow
             val pulledToY = (mScrollStartY + deltaY).toInt()
@@ -2796,8 +2875,8 @@ class DayView(
             }
             if (mRecalCenterHour) {
                 // Calculate the hour that correspond to the average of the Y touch points
-                mGestureCenterHour = ((mViewStartY + focusY - DAY_HEADER_HEIGHT - mAlldayHeight)
-                  / (mCellHeight + DAY_GAP))
+                mGestureCenterHour = ((mViewStartY + focusY - DAY_HEADER_HEIGHT - mAlldayHeight) /
+                    (mCellHeight + DAY_GAP))
                 mRecalCenterHour = false
             }
             computeFirstHour()
@@ -2818,15 +2897,15 @@ class DayView(
     }
 
     private fun cancelAnimation() {
-        val `in`: Animation = mViewSwitcher.getInAnimation()
+        val `in`: Animation? = mViewSwitcher?.getInAnimation()
         if (`in` != null) {
             // cancel() doesn't terminate cleanly.
-            `in`.scaleCurrentDuration(0)
+            `in`?.scaleCurrentDuration(0f)
         }
-        val out: Animation = mViewSwitcher.getOutAnimation()
+        val out: Animation? = mViewSwitcher?.getOutAnimation()
         if (out != null) {
             // cancel() doesn't terminate cleanly.
-            out.scaleCurrentDuration(0)
+            out?.scaleCurrentDuration(0f)
         }
     }
 
@@ -2840,7 +2919,7 @@ class DayView(
             // initNextView(deltaX);
             mTouchMode = TOUCH_MODE_INITIAL_STATE
             if (DEBUG) Log.d(TAG, "doFling: velocityX $velocityX")
-            val deltaX = e2.getX() as Int - e1.getX() as Int
+            val deltaX = e2.getX().toInt() - e1.getX().toInt()
             switchViews(deltaX < 0, mViewStartX.toFloat(), mViewWidth.toFloat(), velocityX)
             mViewStartX = 0
             return
@@ -2872,25 +2951,25 @@ class DayView(
         } else if (velocityY < 0 && mViewStartY != mMaxViewStartY) {
             mCallEdgeEffectOnAbsorb = true
         }
-        mHandler.post(mContinueScroll)
+        mHandler?.post(mContinueScroll)
     }
 
     private fun initNextView(deltaX: Int): Boolean {
         // Change the view to the previous day or week
         val view = mViewSwitcher.getNextView() as DayView
         val date: Time? = view.mBaseDate
-        date.set(mBaseDate)
+        date?.set(mBaseDate)
         val switchForward: Boolean
         if (deltaX > 0) {
-            date.monthDay -= mNumDays
-            view.selectedDay = mSelectionDay - mNumDays
+            date!!.monthDay -= mNumDays
+            view.setSelectedDay(mSelectionDay - mNumDays)
             switchForward = false
         } else {
-            date.monthDay += mNumDays
-            view.selectedDay = mSelectionDay + mNumDays
+            date!!.monthDay += mNumDays
+            view.setSelectedDay(mSelectionDay + mNumDays)
             switchForward = true
         }
-        date.normalize(true /* ignore isDst */)
+        date?.normalize(true /* ignore isDst */)
         initView(view)
         view.layout(getLeft(), getTop(), getRight(), getBottom())
         view.reloadEvents()
@@ -2898,26 +2977,28 @@ class DayView(
     }
 
     // ScaleGestureDetector.OnScaleGestureListener
-    fun onScaleBegin(detector: ScaleGestureDetector): Boolean {
+    override fun onScaleBegin(detector: ScaleGestureDetector): Boolean {
         mHandleActionUp = false
         val gestureCenterInPixels: Float = detector.getFocusY() - DAY_HEADER_HEIGHT - mAlldayHeight
         mGestureCenterHour = (mViewStartY + gestureCenterInPixels) / (mCellHeight + DAY_GAP)
-        mStartingSpanY = Math.max(MIN_Y_SPAN, Math.abs(detector.getCurrentSpanY()))
+        mStartingSpanY = Math.max(MIN_Y_SPAN.toFloat(),
+            Math.abs(detector.getCurrentSpanY().toFloat()))
         mCellHeightBeforeScaleGesture = mCellHeight
         if (DEBUG_SCALING) {
             val ViewStartHour = mViewStartY / (mCellHeight + DAY_GAP).toFloat()
             Log.d(
-                TAG, "onScaleBegin: mGestureCenterHour:" + mGestureCenterHour
-                  + "\tViewStartHour: " + ViewStartHour + "\tmViewStartY:" + mViewStartY
-                  + "\tmCellHeight:" + mCellHeight + " SpanY:" + detector.getCurrentSpanY()
+                TAG, "onScaleBegin: mGestureCenterHour:" + mGestureCenterHour +
+                    "\tViewStartHour: " + ViewStartHour + "\tmViewStartY:" + mViewStartY +
+                    "\tmCellHeight:" + mCellHeight + " SpanY:" + detector.getCurrentSpanY()
             )
         }
         return true
     }
 
     // ScaleGestureDetector.OnScaleGestureListener
-    fun onScale(detector: ScaleGestureDetector): Boolean {
-        val spanY: Float = Math.max(MIN_Y_SPAN, Math.abs(detector.getCurrentSpanY()))
+    override fun onScale(detector: ScaleGestureDetector): Boolean {
+        val spanY: Float = Math.max(MIN_Y_SPAN.toFloat(),
+            Math.abs(detector.getCurrentSpanY().toFloat()))
         mCellHeight = (mCellHeightBeforeScaleGesture * spanY / mStartingSpanY).toInt()
         if (mCellHeight < mMinCellHeight) {
             // If mStartingSpanY is too small, even a small increase in the
@@ -2930,25 +3011,25 @@ class DayView(
             mCellHeight = MAX_CELL_HEIGHT
             mCellHeightBeforeScaleGesture = MAX_CELL_HEIGHT
         }
-        val gestureCenterInPixels = detector.getFocusY() as Int - DAY_HEADER_HEIGHT - mAlldayHeight
+        val gestureCenterInPixels = detector.getFocusY().toInt() - DAY_HEADER_HEIGHT - mAlldayHeight
         mViewStartY = (mGestureCenterHour * (mCellHeight + DAY_GAP)).toInt() - gestureCenterInPixels
         mMaxViewStartY = HOUR_GAP + 24 * (mCellHeight + HOUR_GAP) - mGridAreaHeight
         if (DEBUG_SCALING) {
             val ViewStartHour = mViewStartY / (mCellHeight + DAY_GAP).toFloat()
             Log.d(
-                TAG, "onScale: mGestureCenterHour:" + mGestureCenterHour + "\tViewStartHour: "
-                  + ViewStartHour + "\tmViewStartY:" + mViewStartY + "\tmCellHeight:"
-                  + mCellHeight + " SpanY:" + detector.getCurrentSpanY()
+                TAG, "onScale: mGestureCenterHour:" + mGestureCenterHour + "\tViewStartHour: " +
+                    ViewStartHour + "\tmViewStartY:" + mViewStartY + "\tmCellHeight:" +
+                    mCellHeight + " SpanY:" + detector.getCurrentSpanY()
             )
         }
         if (mViewStartY < 0) {
             mViewStartY = 0
-            mGestureCenterHour = ((mViewStartY + gestureCenterInPixels)
-              / (mCellHeight + DAY_GAP).toFloat())
+            mGestureCenterHour = ((mViewStartY + gestureCenterInPixels) /
+                (mCellHeight + DAY_GAP).toFloat())
         } else if (mViewStartY > mMaxViewStartY) {
             mViewStartY = mMaxViewStartY
-            mGestureCenterHour = ((mViewStartY + gestureCenterInPixels)
-              / (mCellHeight + DAY_GAP).toFloat())
+            mGestureCenterHour = ((mViewStartY + gestureCenterInPixels) /
+                (mCellHeight + DAY_GAP).toFloat())
         }
         computeFirstHour()
         mRemeasure = true
@@ -2957,7 +3038,7 @@ class DayView(
     }
 
     // ScaleGestureDetector.OnScaleGestureListener
-    fun onScaleEnd(detector: ScaleGestureDetector?) {
+    override fun onScaleEnd(detector: ScaleGestureDetector?) {
         mScrollStartY = mViewStartY
         mInitialScrollY = 0f
         mInitialScrollX = 0f
@@ -2965,7 +3046,7 @@ class DayView(
     }
 
     @Override
-    fun onTouchEvent(ev: MotionEvent): Boolean {
+    override fun onTouchEvent(ev: MotionEvent): Boolean {
         val action: Int = ev.getAction()
         if (DEBUG) Log.e(TAG, "" + action + " ev.getPointerCount() = " + ev.getPointerCount())
         if (ev.getActionMasked() === MotionEvent.ACTION_DOWN ||
@@ -2984,8 +3065,8 @@ class DayView(
                 if (DEBUG) {
                     Log.e(
                         TAG,
-                        "ACTION_DOWN ev.getDownTime = " + ev.getDownTime().toString() + " Cnt="
-                          + ev.getPointerCount()
+                        "ACTION_DOWN ev.getDownTime = " + ev.getDownTime().toString() + " Cnt=" +
+                            ev.getPointerCount()
                     )
                 }
                 val bottom =
@@ -3086,7 +3167,7 @@ class DayView(
         }
     }
 
-    fun onCreateContextMenu(menu: ContextMenu, view: View?, menuInfo: ContextMenuInfo?) {
+    override fun onCreateContextMenu(menu: ContextMenu, view: View?, menuInfo: ContextMenuInfo?) {
         var item: MenuItem
 
         // If the trackball is held down, then the context menu pops up and
@@ -3097,11 +3178,11 @@ class DayView(
         }
         val startMillis = selectedTimeInMillis
         val flags: Int = (DateUtils.FORMAT_SHOW_TIME
-          or DateUtils.FORMAT_CAP_NOON_MIDNIGHT
-          or DateUtils.FORMAT_SHOW_WEEKDAY)
-        val title: String = Utils.formatDateRange(mContext, startMillis, startMillis, flags)
+            or DateUtils.FORMAT_CAP_NOON_MIDNIGHT
+            or DateUtils.FORMAT_SHOW_WEEKDAY)
+        val title: String? = Utils.formatDateRange(mContext, startMillis, startMillis, flags)
         menu.setHeaderTitle(title)
-        mPopup.dismiss()
+        mPopup?.dismiss()
     }
 
     /**
@@ -3137,7 +3218,7 @@ class DayView(
             day = mNumDays - 1
         }
         day += mFirstJulianDay
-        selectedDay = day
+        setSelectedDay(day)
         if (y < DAY_HEADER_HEIGHT) {
             sendAccessibilityEventAsNeeded(false)
             return false
@@ -3153,7 +3234,7 @@ class DayView(
             } else {
                 setSelectedHour(
                     mSelectionHour +
-                      (adjustedY - mFirstHourOffset) / (mCellHeight + HOUR_GAP)
+                        (adjustedY - mFirstHourOffset) / (mCellHeight + HOUR_GAP)
                 )
             }
             false
@@ -3176,7 +3257,7 @@ class DayView(
         val date = mSelectionDay
         val cellWidth = mCellWidth
         var events: ArrayList<Event>? = mEvents
-        var numEvents: Int = events.size()
+        var numEvents: Int = events!!.size
         val left = computeDayLeftPosition(mSelectionDay - mFirstJulianDay)
         val top = 0
         setSelectedEvent(null)
@@ -3193,23 +3274,24 @@ class DayView(
                 maxUnexpandedColumn--
             }
             events = mAllDayEvents
-            numEvents = events.size()
+            numEvents = events!!.size
             for (i in 0 until numEvents) {
-                val event: Event = events.get(i)
-                if (!event.drawAsAllday() ||
-                    !mShowAllAllDayEvents && event.getColumn() >= maxUnexpandedColumn
+                val event: Event? = events?.get(i)
+                if (!event!!.drawAsAllday() ||
+                    !mShowAllAllDayEvents && event!!.getColumn() >= maxUnexpandedColumn
                 ) {
                     // Don't check non-allday events or events that aren't shown
                     continue
                 }
-                if (event.startDay <= mSelectionDay && event.endDay >= mSelectionDay) {
+                if (event!!.startDay <= mSelectionDay && event!!.endDay >= mSelectionDay) {
                     val numRectangles =
-                        if (mShowAllAllDayEvents) mMaxAlldayEvents.toFloat() else mMaxUnexpandedAlldayEventCount.toFloat()
+                        if (mShowAllAllDayEvents) mMaxAlldayEvents.toFloat()
+                        else mMaxUnexpandedAlldayEventCount.toFloat()
                     var height = drawHeight / numRectangles
                     if (height > MAX_HEIGHT_OF_ONE_ALLDAY_EVENT) {
                         height = MAX_HEIGHT_OF_ONE_ALLDAY_EVENT.toFloat()
                     }
-                    val eventTop: Float = yOffset + height * event.getColumn()
+                    val eventTop: Float = yOffset + height * event?.getColumn()
                     val eventBottom = eventTop + height
                     if (eventTop < y && eventBottom > y) {
                         // If the touch is inside the event rectangle, then
@@ -3246,28 +3328,28 @@ class DayView(
         region.bottom = y + 10
         val geometry: EventGeometry = mEventGeometry
         for (i in 0 until numEvents) {
-            val event: Event = events.get(i)
+            val event: Event? = events?.get(i)
             // Compute the event rectangle.
-            if (!geometry.computeEventRect(date, left, top, cellWidth, event)) {
+            if (!geometry.computeEventRect(date, left, top, cellWidth, event as Event)) {
                 continue
             }
 
             // If the event intersects the selection region, then add it to
             // mSelectedEvents.
-            if (geometry.eventIntersectsSelection(event, region)) {
-                mSelectedEvents.add(event)
+            if (geometry.eventIntersectsSelection(event as Event, region)) {
+                mSelectedEvents.add(event as Event)
             }
         }
 
         // If there are any events in the selected region, then assign the
         // closest one to mSelectedEvent.
-        if (mSelectedEvents.size() > 0) {
-            val len: Int = mSelectedEvents.size()
+        if (mSelectedEvents.size > 0) {
+            val len: Int = mSelectedEvents.size
             var closestEvent: Event? = null
             var minDist = (mViewWidth + mViewHeight).toFloat() // some large distance
             for (index in 0 until len) {
-                val ev: Event = mSelectedEvents.get(index)
-                val dist: Float = geometry.pointToEvent(x, y, ev)
+                val ev: Event? = mSelectedEvents?.get(index)
+                val dist: Float = geometry.pointToEvent(x.toFloat(), y.toFloat(), ev as Event)
                 if (dist < minDist) {
                     minDist = dist
                     closestEvent = ev
@@ -3279,19 +3361,19 @@ class DayView(
             // event. They could be different if we touched on an empty hour
             // slot very close to an event in the previous hour slot. In
             // that case we will select the nearby event.
-            val startDay: Int = mSelectedEvent.startDay
-            val endDay: Int = mSelectedEvent.endDay
+            val startDay: Int = mSelectedEvent!!.startDay
+            val endDay: Int = mSelectedEvent!!.endDay
             if (mSelectionDay < startDay) {
-                selectedDay = startDay
+                setSelectedDay(startDay)
             } else if (mSelectionDay > endDay) {
-                selectedDay = endDay
+                setSelectedDay(endDay)
             }
-            val startHour: Int = mSelectedEvent.startTime / 60
+            val startHour: Int = mSelectedEvent!!.startTime / 60
             val endHour: Int
-            endHour = if (mSelectedEvent.startTime < mSelectedEvent.endTime) {
-                (mSelectedEvent.endTime - 1) / 60
+            endHour = if (mSelectedEvent!!.startTime < mSelectedEvent!!.endTime) {
+                (mSelectedEvent!!.endTime - 1) / 60
             } else {
-                mSelectedEvent.endTime / 60
+                mSelectedEvent!!.endTime / 60
             }
             if (mSelectionHour < startHour && mSelectionDay == startDay) {
                 setSelectedHour(startHour)
@@ -3305,7 +3387,7 @@ class DayView(
     // finger is lifted. Instead of stopping the scroll immediately,
     // the scroll continues to "free spin" and gradually slows down.
     private inner class ContinueScroll : Runnable {
-        fun run() {
+        override fun run() {
             mScrolling = mScrolling && mScroller.computeScrollOffset()
             if (!mScrolling || mPaused) {
                 resetSelectedHour()
@@ -3333,7 +3415,7 @@ class DayView(
                 }
             }
             computeFirstHour()
-            mHandler.post(this)
+            mHandler?.post(this)
             invalidate()
         }
     }
@@ -3344,13 +3426,13 @@ class DayView(
     fun cleanup() {
         // Protect against null-pointer exceptions
         if (mPopup != null) {
-            mPopup.dismiss()
+            mPopup?.dismiss()
         }
         mPaused = true
         mLastPopupEventID = INVALID_EVENT_ID
         if (mHandler != null) {
-            mHandler.removeCallbacks(mDismissPopup)
-            mHandler.removeCallbacks(mUpdateCurrentTime)
+            mHandler?.removeCallbacks(mDismissPopup)
+            mHandler?.removeCallbacks(mUpdateCurrentTime)
         }
         Utils.setSharedPreference(
             mContext, GeneralPreferences.KEY_DEFAULT_CELL_HEIGHT,
@@ -3381,64 +3463,69 @@ class DayView(
         mSelectionHourForAccessibility = h
     }
 
+    private fun setSelectedDay(d: Int) {
+        mSelectionDay = d
+        mSelectionDayForAccessibility = d
+    }
+
     /**
      * Restart the update timer
      */
     fun restartCurrentTimeUpdates() {
         mPaused = false
         if (mHandler != null) {
-            mHandler.removeCallbacks(mUpdateCurrentTime)
-            mHandler.post(mUpdateCurrentTime)
+            mHandler?.removeCallbacks(mUpdateCurrentTime)
+            mHandler?.post(mUpdateCurrentTime)
         }
     }
 
     @Override
-    protected fun onDetachedFromWindow() {
+    protected override fun onDetachedFromWindow() {
         cleanup()
         super.onDetachedFromWindow()
     }
 
     internal inner class DismissPopup : Runnable {
-        fun run() {
+        override fun run() {
             // Protect against null-pointer exceptions
             if (mPopup != null) {
-                mPopup.dismiss()
+                mPopup?.dismiss()
             }
         }
     }
 
     internal inner class UpdateCurrentTime : Runnable {
-        fun run() {
+        override fun run() {
             val currentTime: Long = System.currentTimeMillis()
-            mCurrentTime.set(currentTime)
-            //% causes update to occur on 5 minute marks (11:10, 11:15, 11:20, etc.)
+            mCurrentTime?.set(currentTime)
+            // % causes update to occur on 5 minute marks (11:10, 11:15, 11:20, etc.)
             if (!mPaused) {
-                mHandler.postDelayed(
-                    mUpdateCurrentTime, UPDATE_CURRENT_TIME_DELAY
-                      - currentTime % UPDATE_CURRENT_TIME_DELAY
+                mHandler?.postDelayed(
+                    mUpdateCurrentTime, UPDATE_CURRENT_TIME_DELAY -
+                        currentTime % UPDATE_CURRENT_TIME_DELAY
                 )
             }
-            mTodayJulianDay = Time.getJulianDay(currentTime, mCurrentTime.gmtoff)
+            mTodayJulianDay = Time.getJulianDay(currentTime, mCurrentTime!!.gmtoff)
             invalidate()
         }
     }
 
     internal inner class CalendarGestureListener : GestureDetector.SimpleOnGestureListener() {
         @Override
-        fun onSingleTapUp(ev: MotionEvent): Boolean {
+        override fun onSingleTapUp(ev: MotionEvent): Boolean {
             if (DEBUG) Log.e(TAG, "GestureDetector.onSingleTapUp")
             doSingleTapUp(ev)
             return true
         }
 
         @Override
-        fun onLongPress(ev: MotionEvent) {
+        override fun onLongPress(ev: MotionEvent) {
             if (DEBUG) Log.e(TAG, "GestureDetector.onLongPress")
             doLongPress(ev)
         }
 
         @Override
-        fun onScroll(
+        override fun onScroll(
             e1: MotionEvent,
             e2: MotionEvent,
             distanceX: Float,
@@ -3462,7 +3549,12 @@ class DayView(
         }
 
         @Override
-        fun onFling(e1: MotionEvent, e2: MotionEvent, velocityX: Float, velocityY: Float): Boolean {
+        override fun onFling(
+            e1: MotionEvent,
+            e2: MotionEvent,
+            velocityX: Float,
+            velocityY: Float
+        ): Boolean {
             var velocityY = velocityY
             if (DEBUG) Log.e(TAG, "GestureDetector.onFling")
             if (mTouchStartedInAlldayArea) {
@@ -3477,7 +3569,7 @@ class DayView(
         }
 
         @Override
-        fun onDown(ev: MotionEvent): Boolean {
+        override fun onDown(ev: MotionEvent): Boolean {
             if (DEBUG) Log.e(TAG, "GestureDetector.onDown")
             doDown(ev)
             return true
@@ -3485,12 +3577,12 @@ class DayView(
     }
 
     @Override
-    fun onLongClick(v: View?): Boolean {
+    override fun onLongClick(v: View?): Boolean {
         return true
     }
 
     private inner class ScrollInterpolator : Interpolator {
-        fun getInterpolation(t: Float): Float {
+        override fun getInterpolation(t: Float): Float {
             var t = t
             t -= 1.0f
             t = t * t * t * t * t + 1
@@ -3515,7 +3607,7 @@ class DayView(
         val distanceInfluenceForSnapDuration = distanceInfluenceForSnapDuration(distanceRatio)
         val distance = halfScreenSize + halfScreenSize * distanceInfluenceForSnapDuration
         velocity = Math.abs(velocity)
-        velocity = Math.max(MINIMUM_SNAP_VELOCITY, velocity)
+        velocity = Math.max(MINIMUM_SNAP_VELOCITY.toFloat(), velocity)
 
         /*
          * we want the page's snap velocity to approximately match the velocity
@@ -3523,13 +3615,13 @@ class DayView(
          * the derivative of the scroll interpolator at zero, ie. 5. We use 6 to
          * make it a little slower.
          */
-        val duration: Long = 6 * Math.round(1000 * Math.abs(distance / velocity))
+        val duration: Long = 6L * Math.round(1000 * Math.abs(distance / velocity))
         if (DEBUG) {
             Log.e(
-                TAG, "halfScreenSize:" + halfScreenSize + " delta:" + delta + " distanceRatio:"
-                  + distanceRatio + " distance:" + distance + " velocity:" + velocity
-                  + " duration:" + duration + " distanceInfluenceForSnapDuration:"
-                  + distanceInfluenceForSnapDuration
+                TAG, "halfScreenSize:" + halfScreenSize + " delta:" + delta + " distanceRatio:" +
+                    distanceRatio + " distance:" + distance + " velocity:" + velocity +
+                    " duration:" + duration + " distanceInfluenceForSnapDuration:" +
+                    distanceInfluenceForSnapDuration
             )
         }
         return duration
@@ -3545,8 +3637,8 @@ class DayView(
     private fun distanceInfluenceForSnapDuration(f: Float): Float {
         var f = f
         f -= 0.5f // center the values about 0.
-        f *= 0.3f * Math.PI / 2.0f
-        return Math.sin(f)
+        f *= (0.3f * Math.PI / 2.0f).toFloat()
+        return Math.sin(f.toDouble()).toFloat()
     }
 
     companion object {
@@ -3555,7 +3647,7 @@ class DayView(
         private const val DEBUG_SCALING = false
         private const val PERIOD_SPACE = ". "
         private var mScale = 0f // Used for supporting different screen densities
-        private const val INVALID_EVENT_ID: Long = -1 //This is used for remembering a null event
+        private const val INVALID_EVENT_ID: Long = -1 // This is used for remembering a null event
 
         // Duration of the allday expansion
         private const val ANIMATION_DURATION: Long = 400
@@ -3580,8 +3672,8 @@ class DayView(
         private var MAX_CELL_HEIGHT = 150
         private var MIN_Y_SPAN = 100
         private val CALENDARS_PROJECTION = arrayOf<String>(
-            Calendars._ID,  // 0
-            Calendars.CALENDAR_ACCESS_LEVEL,  // 1
+            Calendars._ID, // 0
+            Calendars.CALENDAR_ACCESS_LEVEL, // 1
             Calendars.OWNER_ACCOUNT
         )
         private const val CALENDARS_INDEX_ACCESS_LEVEL = 1
@@ -3597,9 +3689,9 @@ class DayView(
         private const val ACCESS_LEVEL_EDIT = 2
         private var mHorizontalSnapBackThreshold = 128
 
-        //Update the current time line every five minutes if the window is left open that long
+        // Update the current time line every five minutes if the window is left open that long
         private const val UPDATE_CURRENT_TIME_DELAY = 300000
-        private var mOnDownDelay: Int
+        private var mOnDownDelay = 0
         protected var mStringBuilder: StringBuilder = StringBuilder(50)
 
         // TODO recreate formatter when locale changes
@@ -3717,7 +3809,7 @@ class DayView(
         private var mFutureBgColor = 0
         private var mFutureBgColorRes = 0
         private var mBgColor = 0
-        private var mNewEventHintColor: Int
+        private var mNewEventHintColor = 0
         private var mCalendarHourLabelColor = 0
         private var mMoreAlldayEventsTextAlpha = MORE_EVENTS_MAX_ALPHA
         private var mCellHeight = 0 // shared among all DayViews
@@ -3786,37 +3878,39 @@ class DayView(
     init {
         mContext = context
         initAccessibilityVariables()
-        mResources = context.getResources()
+        mResources = context!!.getResources()
         mNewEventHintString = mResources.getString(R.string.day_view_new_event_hint)
         mNumDays = numDays
         DATE_HEADER_FONT_SIZE =
-            mResources.getDimension(R.dimen.date_header_text_size) as Int.toFloat()
-        DAY_HEADER_FONT_SIZE = mResources.getDimension(R.dimen.day_label_text_size) as Int.toFloat()
-        ONE_DAY_HEADER_HEIGHT = mResources.getDimension(R.dimen.one_day_header_height)
-        DAY_HEADER_BOTTOM_MARGIN = mResources.getDimension(R.dimen.day_header_bottom_margin)
-        EXPAND_ALL_DAY_BOTTOM_MARGIN = mResources.getDimension(R.dimen.all_day_bottom_margin)
-        HOURS_TEXT_SIZE = mResources.getDimension(R.dimen.hours_text_size) as Int.toFloat()
-        AMPM_TEXT_SIZE = mResources.getDimension(R.dimen.ampm_text_size) as Int.toFloat()
-        MIN_HOURS_WIDTH = mResources.getDimension(R.dimen.min_hours_width)
-        HOURS_LEFT_MARGIN = mResources.getDimension(R.dimen.hours_left_margin)
-        HOURS_RIGHT_MARGIN = mResources.getDimension(R.dimen.hours_right_margin)
-        MULTI_DAY_HEADER_HEIGHT = mResources.getDimension(R.dimen.day_header_height)
+            mResources.getDimension(R.dimen.date_header_text_size).toInt().toFloat()
+        DAY_HEADER_FONT_SIZE =
+            mResources.getDimension(R.dimen.day_label_text_size).toInt().toFloat()
+        ONE_DAY_HEADER_HEIGHT = mResources.getDimension(R.dimen.one_day_header_height).toInt()
+        DAY_HEADER_BOTTOM_MARGIN = mResources.getDimension(R.dimen.day_header_bottom_margin).toInt()
+        EXPAND_ALL_DAY_BOTTOM_MARGIN =
+            mResources.getDimension(R.dimen.all_day_bottom_margin).toInt()
+        HOURS_TEXT_SIZE = mResources.getDimension(R.dimen.hours_text_size).toInt().toFloat()
+        AMPM_TEXT_SIZE = mResources.getDimension(R.dimen.ampm_text_size).toInt().toFloat()
+        MIN_HOURS_WIDTH = mResources.getDimension(R.dimen.min_hours_width).toInt()
+        HOURS_LEFT_MARGIN = mResources.getDimension(R.dimen.hours_left_margin).toInt()
+        HOURS_RIGHT_MARGIN = mResources.getDimension(R.dimen.hours_right_margin).toInt()
+        MULTI_DAY_HEADER_HEIGHT = mResources.getDimension(R.dimen.day_header_height).toInt()
         val eventTextSizeId: Int
         eventTextSizeId = if (mNumDays == 1) {
             R.dimen.day_view_event_text_size
         } else {
             R.dimen.week_view_event_text_size
         }
-        EVENT_TEXT_FONT_SIZE = mResources.getDimension(eventTextSizeId) as Int.toFloat()
-        NEW_EVENT_HINT_FONT_SIZE = mResources.getDimension(R.dimen.new_event_hint_text_size)
+        EVENT_TEXT_FONT_SIZE = mResources.getDimension(eventTextSizeId).toFloat()
+        NEW_EVENT_HINT_FONT_SIZE = mResources.getDimension(R.dimen.new_event_hint_text_size).toInt()
         MIN_EVENT_HEIGHT = mResources.getDimension(R.dimen.event_min_height)
         MIN_UNEXPANDED_ALLDAY_EVENT_HEIGHT = MIN_EVENT_HEIGHT
-        EVENT_TEXT_TOP_MARGIN = mResources.getDimension(R.dimen.event_text_vertical_margin)
+        EVENT_TEXT_TOP_MARGIN = mResources.getDimension(R.dimen.event_text_vertical_margin).toInt()
         EVENT_TEXT_BOTTOM_MARGIN = EVENT_TEXT_TOP_MARGIN
         EVENT_ALL_DAY_TEXT_TOP_MARGIN = EVENT_TEXT_TOP_MARGIN
         EVENT_ALL_DAY_TEXT_BOTTOM_MARGIN = EVENT_TEXT_TOP_MARGIN
         EVENT_TEXT_LEFT_MARGIN = mResources
-            .getDimension(R.dimen.event_text_horizontal_margin)
+            .getDimension(R.dimen.event_text_horizontal_margin).toInt()
         EVENT_TEXT_RIGHT_MARGIN = EVENT_TEXT_LEFT_MARGIN
         EVENT_ALL_DAY_TEXT_LEFT_MARGIN = EVENT_TEXT_LEFT_MARGIN
         EVENT_ALL_DAY_TEXT_RIGHT_MARGIN = EVENT_TEXT_LEFT_MARGIN
@@ -3867,14 +3961,14 @@ class DayView(
         mNewEventHintColor = mResources.getColor(R.color.new_event_hint_text_color)
         mAcceptedOrTentativeEventBoxDrawable = mResources
             .getDrawable(R.drawable.panel_month_event_holo_light)
-        mEventLoader = eventLoader
+        mEventLoader = eventLoader as EventLoader
         mEventGeometry = EventGeometry()
         mEventGeometry.setMinEventHeight(MIN_EVENT_HEIGHT)
-        mEventGeometry.setHourGap(HOUR_GAP)
+        mEventGeometry.setHourGap(HOUR_GAP.toFloat())
         mEventGeometry.setCellMargin(DAY_GAP)
         mLastPopupEventID = INVALID_EVENT_ID
-        mController = controller
-        mViewSwitcher = viewSwitcher
+        mController = controller as CalendarController
+        mViewSwitcher = viewSwitcher as ViewSwitcher
         mGestureDetector = GestureDetector(context, CalendarGestureListener())
         mScaleGestureDetector = ScaleGestureDetector(getContext(), this)
         if (mCellHeight == 0) {
@@ -3891,6 +3985,6 @@ class DayView(
         mScaledPagingTouchSlop = vc.getScaledPagingTouchSlop()
         mOnDownDelay = ViewConfiguration.getTapTimeout()
         OVERFLING_DISTANCE = vc.getScaledOverflingDistance()
-        init(context)
+        init(context as Context)
     }
 }
