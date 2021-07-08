@@ -15,54 +15,28 @@
  */
 package com.android.calendar
 
-import android.provider.CalendarContract.EXTRA_EVENT_ALL_DAY
-import android.provider.CalendarContract.EXTRA_EVENT_BEGIN_TIME
-import android.provider.CalendarContract.EXTRA_EVENT_END_TIME
-import com.android.calendar.CalendarController.EVENT_EDIT_ON_LAUNCH
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.animation.ObjectAnimator
 import android.app.Activity
 import android.app.Dialog
 import android.app.DialogFragment
-import android.app.FragmentManager
 import android.app.Service
-import android.content.ActivityNotFoundException
 import android.content.ContentProviderOperation
-import android.content.ContentResolver
 import android.content.ContentUris
 import android.content.ContentValues
 import android.content.Context
-import android.content.DialogInterface
-import android.content.Intent
-import android.content.SharedPreferences
-import android.content.pm.ApplicationInfo
-import android.content.pm.PackageManager
-import android.content.pm.PackageManager.NameNotFoundException
 import android.content.res.Resources
 import android.database.Cursor
-import android.graphics.Color
-import android.graphics.Rect
-import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Bundle
-import android.provider.CalendarContract
 import android.provider.CalendarContract.Attendees
 import android.provider.CalendarContract.Calendars
 import android.provider.CalendarContract.Events
-import android.provider.CalendarContract.Reminders
-import android.provider.ContactsContract
-import android.provider.ContactsContract.CommonDataKinds
-import android.provider.ContactsContract.Intents
-import android.provider.ContactsContract.QuickContact
 import android.text.Spannable
 import android.text.SpannableStringBuilder
 import android.text.TextUtils
-import android.text.format.Time
-import android.text.method.LinkMovementMethod
-import android.text.method.MovementMethod
 import android.text.style.ForegroundColorSpan
-import android.text.util.Rfc822Token
 import android.util.Log
 import android.util.SparseIntArray
 import android.view.Gravity
@@ -70,64 +44,52 @@ import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
-import android.view.MotionEvent
 import android.view.View
 import android.view.View.OnClickListener
-import android.view.View.OnTouchListener
 import android.view.ViewGroup
 import android.view.Window
 import android.view.WindowManager
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityManager
 import android.widget.AdapterView
-import android.widget.AdapterView.OnItemSelectedListener
-import android.widget.Button
-import android.widget.LinearLayout
 import android.widget.RadioButton
 import android.widget.RadioGroup
 import android.widget.RadioGroup.OnCheckedChangeListener
 import android.widget.ScrollView
 import android.widget.TextView
-import android.widget.Toast
 import com.android.calendar.CalendarController.EventInfo
 import com.android.calendar.CalendarController.EventType
-import com.android.calendar.alerts.QuickResponseActivity
 import com.android.calendarcommon2.DateException
 import com.android.calendarcommon2.Duration
-import com.android.calendarcommon2.EventRecurrence
-import com.android.colorpicker.HsvColorComparator
 import java.util.ArrayList
-import java.util.Arrays
-import java.util.Collections
-import java.util.List
 
 class EventInfoFragment : DialogFragment, OnCheckedChangeListener, CalendarController.EventHandler,
-                          OnClickListener {
+    OnClickListener {
     private var mWindowStyle = DIALOG_WINDOW_STYLE
     private var mCurrentQuery = 0
 
     companion object {
         const val DEBUG = false
         const val TAG = "EventInfoFragment"
-        protected const val BUNDLE_KEY_EVENT_ID = "key_event_id"
-        protected const val BUNDLE_KEY_START_MILLIS = "key_start_millis"
-        protected const val BUNDLE_KEY_END_MILLIS = "key_end_millis"
-        protected const val BUNDLE_KEY_IS_DIALOG = "key_fragment_is_dialog"
-        protected const val BUNDLE_KEY_DELETE_DIALOG_VISIBLE = "key_delete_dialog_visible"
-        protected const val BUNDLE_KEY_WINDOW_STYLE = "key_window_style"
-        protected const val BUNDLE_KEY_CALENDAR_COLOR = "key_calendar_color"
-        protected const val BUNDLE_KEY_CALENDAR_COLOR_INIT = "key_calendar_color_init"
-        protected const val BUNDLE_KEY_CURRENT_COLOR = "key_current_color"
-        protected const val BUNDLE_KEY_CURRENT_COLOR_KEY = "key_current_color_key"
-        protected const val BUNDLE_KEY_CURRENT_COLOR_INIT = "key_current_color_init"
-        protected const val BUNDLE_KEY_ORIGINAL_COLOR = "key_original_color"
-        protected const val BUNDLE_KEY_ORIGINAL_COLOR_INIT = "key_original_color_init"
-        protected const val BUNDLE_KEY_ATTENDEE_RESPONSE = "key_attendee_response"
-        protected const val BUNDLE_KEY_USER_SET_ATTENDEE_RESPONSE = "key_user_set_attendee_response"
-        protected const val BUNDLE_KEY_TENTATIVE_USER_RESPONSE = "key_tentative_user_response"
-        protected const val BUNDLE_KEY_RESPONSE_WHICH_EVENTS = "key_response_which_events"
-        protected const val BUNDLE_KEY_REMINDER_MINUTES = "key_reminder_minutes"
-        protected const val BUNDLE_KEY_REMINDER_METHODS = "key_reminder_methods"
+        internal const val BUNDLE_KEY_EVENT_ID = "key_event_id"
+        internal const val BUNDLE_KEY_START_MILLIS = "key_start_millis"
+        internal const val BUNDLE_KEY_END_MILLIS = "key_end_millis"
+        internal const val BUNDLE_KEY_IS_DIALOG = "key_fragment_is_dialog"
+        internal const val BUNDLE_KEY_DELETE_DIALOG_VISIBLE = "key_delete_dialog_visible"
+        internal const val BUNDLE_KEY_WINDOW_STYLE = "key_window_style"
+        internal const val BUNDLE_KEY_CALENDAR_COLOR = "key_calendar_color"
+        internal const val BUNDLE_KEY_CALENDAR_COLOR_INIT = "key_calendar_color_init"
+        internal const val BUNDLE_KEY_CURRENT_COLOR = "key_current_color"
+        internal const val BUNDLE_KEY_CURRENT_COLOR_KEY = "key_current_color_key"
+        internal const val BUNDLE_KEY_CURRENT_COLOR_INIT = "key_current_color_init"
+        internal const val BUNDLE_KEY_ORIGINAL_COLOR = "key_original_color"
+        internal const val BUNDLE_KEY_ORIGINAL_COLOR_INIT = "key_original_color_init"
+        internal const val BUNDLE_KEY_ATTENDEE_RESPONSE = "key_attendee_response"
+        internal const val BUNDLE_KEY_USER_SET_ATTENDEE_RESPONSE = "key_user_set_attendee_response"
+        internal const val BUNDLE_KEY_TENTATIVE_USER_RESPONSE = "key_tentative_user_response"
+        internal const val BUNDLE_KEY_RESPONSE_WHICH_EVENTS = "key_response_which_events"
+        internal const val BUNDLE_KEY_REMINDER_MINUTES = "key_reminder_minutes"
+        internal const val BUNDLE_KEY_REMINDER_METHODS = "key_reminder_methods"
         private const val PERIOD_SPACE = ". "
         private const val NO_EVENT_COLOR = ""
 
@@ -151,31 +113,31 @@ class EventInfoFragment : DialogFragment, OnCheckedChangeListener, CalendarContr
         private const val TOKEN_QUERY_VISIBLE_CALENDARS = 1 shl 5
         private const val TOKEN_QUERY_COLORS = 1 shl 6
         private const val TOKEN_QUERY_ALL = (TOKEN_QUERY_DUPLICATE_CALENDARS
-          or TOKEN_QUERY_ATTENDEES or TOKEN_QUERY_CALENDARS or TOKEN_QUERY_EVENT
-          or TOKEN_QUERY_REMINDERS or TOKEN_QUERY_VISIBLE_CALENDARS or TOKEN_QUERY_COLORS)
+            or TOKEN_QUERY_ATTENDEES or TOKEN_QUERY_CALENDARS or TOKEN_QUERY_EVENT
+            or TOKEN_QUERY_REMINDERS or TOKEN_QUERY_VISIBLE_CALENDARS or TOKEN_QUERY_COLORS)
         private val EVENT_PROJECTION = arrayOf<String>(
-            Events._ID,  // 0  do not remove; used in DeleteEventHelper
+            Events._ID, // 0  do not remove; used in DeleteEventHelper
             Events.TITLE,  // 1  do not remove; used in DeleteEventHelper
             Events.RRULE,  // 2  do not remove; used in DeleteEventHelper
-            Events.ALL_DAY,  // 3  do not remove; used in DeleteEventHelper
-            Events.CALENDAR_ID,  // 4  do not remove; used in DeleteEventHelper
-            Events.DTSTART,  // 5  do not remove; used in DeleteEventHelper
-            Events._SYNC_ID,  // 6  do not remove; used in DeleteEventHelper
-            Events.EVENT_TIMEZONE,  // 7  do not remove; used in DeleteEventHelper
-            Events.DESCRIPTION,  // 8
-            Events.EVENT_LOCATION,  // 9
-            Calendars.CALENDAR_ACCESS_LEVEL,  // 10
-            Events.CALENDAR_COLOR,  // 11
-            Events.EVENT_COLOR,  // 12
-            Events.HAS_ATTENDEE_DATA,  // 13
+            Events.ALL_DAY, // 3  do not remove; used in DeleteEventHelper
+            Events.CALENDAR_ID, // 4  do not remove; used in DeleteEventHelper
+            Events.DTSTART, // 5  do not remove; used in DeleteEventHelper
+            Events._SYNC_ID, // 6  do not remove; used in DeleteEventHelper
+            Events.EVENT_TIMEZONE, // 7  do not remove; used in DeleteEventHelper
+            Events.DESCRIPTION, // 8
+            Events.EVENT_LOCATION, // 9
+            Calendars.CALENDAR_ACCESS_LEVEL, // 10
+            Events.CALENDAR_COLOR, // 11
+            Events.EVENT_COLOR, // 12
+            Events.HAS_ATTENDEE_DATA, // 13
             Events.ORGANIZER,  // 14
             Events.HAS_ALARM,  // 15
-            Calendars.MAX_REMINDERS,  // 16
-            Calendars.ALLOWED_REMINDERS,  // 17
-            Events.CUSTOM_APP_PACKAGE,  // 18
-            Events.CUSTOM_APP_URI,  // 19
-            Events.DTEND,  // 20
-            Events.DURATION,  // 21
+            Calendars.MAX_REMINDERS, // 16
+            Calendars.ALLOWED_REMINDERS, // 17
+            Events.CUSTOM_APP_PACKAGE, // 18
+            Events.CUSTOM_APP_URI, // 19
+            Events.DTEND, // 20
+            Events.DURATION, // 21
             Events.ORIGINAL_SYNC_ID // 22 do not remove; used in DeleteEventHelper
         )
         private const val EVENT_INDEX_ID = 0
@@ -201,11 +163,11 @@ class EventInfoFragment : DialogFragment, OnCheckedChangeListener, CalendarContr
         private const val EVENT_INDEX_DTEND = 20
         private const val EVENT_INDEX_DURATION = 21
         val CALENDARS_PROJECTION = arrayOf<String>(
-            Calendars._ID,  // 0
-            Calendars.CALENDAR_DISPLAY_NAME,  // 1
-            Calendars.OWNER_ACCOUNT,  // 2
-            Calendars.CAN_ORGANIZER_RESPOND,  // 3
-            Calendars.ACCOUNT_NAME,  // 4
+            Calendars._ID, // 0
+            Calendars.CALENDAR_DISPLAY_NAME, // 1
+            Calendars.OWNER_ACCOUNT, // 2
+            Calendars.CAN_ORGANIZER_RESPOND, // 3
+            Calendars.ACCOUNT_NAME, // 4
             Calendars.ACCOUNT_TYPE // 5
         )
         const val CALENDARS_INDEX_DISPLAY_NAME = 1
@@ -292,20 +254,20 @@ class EventInfoFragment : DialogFragment, OnCheckedChangeListener, CalendarContr
     private var mResponseRadioGroup: RadioGroup? = null
     var mToEmails: ArrayList<String> = ArrayList<String>()
     var mCcEmails: ArrayList<String> = ArrayList<String>()
-    private val mTZUpdater: Runnable = object : Runnable() {
+    private val mTZUpdater: Runnable = object : Runnable {
         @Override
-        fun run() {
+        override fun run() {
             updateEvent(mView)
         }
     }
-    private val mLoadingMsgAlphaUpdater: Runnable = object : Runnable() {
+    private val mLoadingMsgAlphaUpdater: Runnable = object : Runnable {
         @Override
-        fun run() {
+        override fun run() {
             // Since this is run after a delay, make sure to only show the message
             // if the event's data is not shown yet.
-            if (!mAnimateAlpha.isRunning() && mScrollView.getAlpha() === 0) {
+            if (!mAnimateAlpha!!.isRunning() && mScrollView!!.getAlpha() == 0f) {
                 mLoadingMsgStartTime = System.currentTimeMillis()
-                mLoadingMsgView.setAlpha(1)
+                mLoadingMsgView?.setAlpha(1f)
             }
         }
     }
@@ -314,8 +276,7 @@ class EventInfoFragment : DialogFragment, OnCheckedChangeListener, CalendarContr
     private val mDismissOnResume = false
     private var mX = -1
     private var mY = -1
-    private var mMinTop // Dialog cannot be above this location
-      = 0
+    private var mMinTop = 0 // Dialog cannot be above this location
     private var mIsTabletConfig = false
     private var mActivity: Activity? = null
     private var mContext: Context? = null
@@ -328,8 +289,13 @@ class EventInfoFragment : DialogFragment, OnCheckedChangeListener, CalendarContr
     }
 
     constructor(
-        context: Context, uri: Uri?, startMillis: Long, endMillis: Long,
-        attendeeResponse: Int, isDialog: Boolean, windowStyle: Int
+        context: Context,
+        uri: Uri?,
+        startMillis: Long,
+        endMillis: Long,
+        attendeeResponse: Int,
+        isDialog: Boolean,
+        windowStyle: Int
     ) {
         val r: Resources = context.getResources()
         if (mScale == 0f) {
@@ -356,17 +322,22 @@ class EventInfoFragment : DialogFragment, OnCheckedChangeListener, CalendarContr
     // This is currently required by the fragment manager.
     constructor() {}
     constructor(
-        context: Context?, eventId: Long, startMillis: Long, endMillis: Long,
-        attendeeResponse: Int, isDialog: Boolean, windowStyle: Int
+        context: Context?,
+        eventId: Long,
+        startMillis: Long,
+        endMillis: Long,
+        attendeeResponse: Int,
+        isDialog: Boolean,
+        windowStyle: Int
     ) : this(
-        context, ContentUris.withAppendedId(Events.CONTENT_URI, eventId), startMillis,
+        context as Context, ContentUris.withAppendedId(Events.CONTENT_URI, eventId), startMillis,
         endMillis, attendeeResponse, isDialog, windowStyle
     ) {
         this.eventId = eventId
     }
 
     @Override
-    fun onActivityCreated(savedInstanceState: Bundle?) {
+    override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
         if (mIsDialog) {
             applyDialogParams()
@@ -378,25 +349,24 @@ class EventInfoFragment : DialogFragment, OnCheckedChangeListener, CalendarContr
     private fun applyDialogParams() {
         val dialog: Dialog = getDialog()
         dialog.setCanceledOnTouchOutside(true)
-        val window: Window = dialog.getWindow()
-        window.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
-        val a: WindowManager.LayoutParams = window.getAttributes()
-        a.dimAmount = .4f
-        a.width = mDialogWidth
-        a.height = mDialogHeight
-
+        val window: Window? = dialog.getWindow()
+        window?.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
+        val a: WindowManager.LayoutParams? = window?.getAttributes()
+        a!!.dimAmount = .4f
+        a!!.width = mDialogWidth
+        a!!.height = mDialogHeight
 
         // On tablets , do smart positioning of dialog
         // On phones , use the whole screen
         if (mX != -1 || mY != -1) {
-            a.x = mX - mDialogWidth / 2
-            a.y = mY - mDialogHeight / 2
-            if (a.y < mMinTop) {
-                a.y = mMinTop + DIALOG_TOP_MARGIN
+            a!!.x = mX - mDialogWidth / 2
+            a!!.y = mY - mDialogHeight / 2
+            if (a!!.y < mMinTop) {
+                a!!.y = mMinTop + DIALOG_TOP_MARGIN
             }
-            a.gravity = Gravity.LEFT or Gravity.TOP
+            a!!.gravity = Gravity.LEFT or Gravity.TOP
         }
-        window.setAttributes(a)
+        window?.setAttributes(a)
     }
 
     fun setDialogParams(x: Int, y: Int, minTop: Int) {
@@ -407,32 +377,33 @@ class EventInfoFragment : DialogFragment, OnCheckedChangeListener, CalendarContr
 
     // Implements OnCheckedChangeListener
     @Override
-    fun onCheckedChanged(group: RadioGroup?, checkedId: Int) {
+    override fun onCheckedChanged(group: RadioGroup?, checkedId: Int) {
     }
 
     fun onNothingSelected(parent: AdapterView<*>?) {}
     @Override
-    fun onDetach() {
+    override fun onDetach() {
         super.onDetach()
-        mController.deregisterEventHandler(R.layout.event_info)
+        mController?.deregisterEventHandler(R.layout.event_info)
     }
 
     @Override
-    fun onAttach(activity: Activity?) {
+    override fun onAttach(activity: Activity?) {
         super.onAttach(activity)
         mActivity = activity
         // Ensure that mIsTabletConfig is set before creating the menu.
-        mIsTabletConfig = Utils.getConfigBool(mActivity, R.bool.tablet_config)
+        mIsTabletConfig = Utils.getConfigBool(mActivity as Context, R.bool.tablet_config)
         mController = CalendarController.getInstance(mActivity)
-        mController.registerEventHandler(R.layout.event_info, this)
+        mController?.registerEventHandler(R.layout.event_info, this)
         if (!mIsDialog) {
             setHasOptionsMenu(true)
         }
     }
 
     @Override
-    fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
         mView = if (mWindowStyle == DIALOG_WINDOW_STYLE) {
@@ -440,49 +411,49 @@ class EventInfoFragment : DialogFragment, OnCheckedChangeListener, CalendarContr
         } else {
             inflater.inflate(R.layout.event_info, container, false)
         }
-        mScrollView = mView.findViewById(R.id.event_info_scroll_view) as ScrollView
-        mLoadingMsgView = mView.findViewById(R.id.event_info_loading_msg)
-        mErrorMsgView = mView.findViewById(R.id.event_info_error_msg)
-        mTitle = mView.findViewById(R.id.title) as TextView
-        mWhenDateTime = mView.findViewById(R.id.when_datetime) as TextView
-        mWhere = mView.findViewById(R.id.where) as TextView
-        mHeadlines = mView.findViewById(R.id.event_info_headline)
-        mResponseRadioGroup = mView.findViewById(R.id.response_value) as RadioGroup
-        mAnimateAlpha = ObjectAnimator.ofFloat(mScrollView, "Alpha", 0, 1)
-        mAnimateAlpha.setDuration(FADE_IN_TIME)
-        mAnimateAlpha.addListener(object : AnimatorListenerAdapter() {
+        mScrollView = mView?.findViewById(R.id.event_info_scroll_view) as ScrollView
+        mLoadingMsgView = mView?.findViewById(R.id.event_info_loading_msg)
+        mErrorMsgView = mView?.findViewById(R.id.event_info_error_msg)
+        mTitle = mView?.findViewById(R.id.title) as TextView
+        mWhenDateTime = mView?.findViewById(R.id.when_datetime) as TextView
+        mWhere = mView?.findViewById(R.id.where) as TextView
+        mHeadlines = mView?.findViewById(R.id.event_info_headline)
+        mResponseRadioGroup = mView?.findViewById(R.id.response_value) as RadioGroup
+        mAnimateAlpha = ObjectAnimator.ofFloat(mScrollView, "Alpha", 0f, 1f)
+        mAnimateAlpha?.setDuration(FADE_IN_TIME.toLong())
+        mAnimateAlpha?.addListener(object : AnimatorListenerAdapter() {
             var defLayerType = 0
             @Override
-            fun onAnimationStart(animation: Animator?) {
+            override fun onAnimationStart(animation: Animator?) {
                 // Use hardware layer for better performance during animation
-                defLayerType = mScrollView.getLayerType()
-                mScrollView.setLayerType(View.LAYER_TYPE_HARDWARE, null)
+                defLayerType = mScrollView?.getLayerType() as Int
+                mScrollView?.setLayerType(View.LAYER_TYPE_HARDWARE, null)
                 // Ensure that the loading message is gone before showing the
                 // event info
-                mLoadingMsgView.removeCallbacks(mLoadingMsgAlphaUpdater)
-                mLoadingMsgView.setVisibility(View.GONE)
+                mLoadingMsgView?.removeCallbacks(mLoadingMsgAlphaUpdater)
+                mLoadingMsgView?.setVisibility(View.GONE)
             }
 
             @Override
-            fun onAnimationCancel(animation: Animator?) {
-                mScrollView.setLayerType(defLayerType, null)
+            override fun onAnimationCancel(animation: Animator?) {
+                mScrollView?.setLayerType(defLayerType, null)
             }
 
             @Override
-            fun onAnimationEnd(animation: Animator?) {
-                mScrollView.setLayerType(defLayerType, null)
+            override fun onAnimationEnd(animation: Animator?) {
+                mScrollView?.setLayerType(defLayerType, null)
                 // Do not cross fade after the first time
                 mNoCrossFade = true
             }
         })
-        mLoadingMsgView.setAlpha(0)
-        mScrollView.setAlpha(0)
-        mErrorMsgView.setVisibility(View.INVISIBLE)
-        mLoadingMsgView.postDelayed(mLoadingMsgAlphaUpdater, LOADING_MSG_DELAY)
+        mLoadingMsgView?.setAlpha(0f)
+        mScrollView?.setAlpha(0f)
+        mErrorMsgView?.setVisibility(View.INVISIBLE)
+        mLoadingMsgView?.postDelayed(mLoadingMsgAlphaUpdater, LOADING_MSG_DELAY.toLong())
 
         // Hide Edit/Delete buttons if in full screen mode on a phone
         if (!mIsDialog && !mIsTabletConfig || mWindowStyle == FULL_WINDOW_STYLE) {
-            mView.findViewById(R.id.event_info_buttons_container).setVisibility(View.GONE)
+            mView?.findViewById<View>(R.id.event_info_buttons_container)?.setVisibility(View.GONE)
         }
         return mView
     }
@@ -502,7 +473,7 @@ class EventInfoFragment : DialogFragment, OnCheckedChangeListener, CalendarContr
             return false
         }
         mEventCursor.moveToFirst()
-        eventId = mEventCursor.getInt(EVENT_INDEX_ID)
+        eventId = mEventCursor.getInt(EVENT_INDEX_ID).toLong()
         val rRule: String = mEventCursor.getString(EVENT_INDEX_RRULE)
         // mHasAlarm will be true if it was saved in the event already.
         mHasAlarm = if (mEventCursor.getInt(EVENT_INDEX_HAS_ALARM) === 1) true else false
@@ -510,12 +481,12 @@ class EventInfoFragment : DialogFragment, OnCheckedChangeListener, CalendarContr
     }
 
     @Override
-    fun onSaveInstanceState(outState: Bundle?) {
+    override fun onSaveInstanceState(outState: Bundle?) {
         super.onSaveInstanceState(outState)
     }
 
     @Override
-    fun onCreateOptionsMenu(menu: Menu?, inflater: MenuInflater) {
+    override fun onCreateOptionsMenu(menu: Menu?, inflater: MenuInflater) {
         super.onCreateOptionsMenu(menu, inflater)
         // Show color/edit/delete buttons only in non-dialog configuration
         if (!mIsDialog && !mIsTabletConfig || mWindowStyle == FULL_WINDOW_STYLE) {
@@ -525,7 +496,7 @@ class EventInfoFragment : DialogFragment, OnCheckedChangeListener, CalendarContr
     }
 
     @Override
-    fun onOptionsItemSelected(item: MenuItem): Boolean {
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
 
         // If we're a dialog we don't want to handle menu buttons
         if (mIsDialog) {
@@ -540,22 +511,22 @@ class EventInfoFragment : DialogFragment, OnCheckedChangeListener, CalendarContr
         // the info activity
         val itemId: Int = item.getItemId()
         if (itemId == android.R.id.home) {
-            Utils.returnToCalendarHome(mContext)
-            mActivity.finish()
+            Utils.returnToCalendarHome(mContext as Context)
+            mActivity?.finish()
             return true
         } else if (itemId == R.id.info_action_edit) {
-            mActivity.finish()
+            mActivity?.finish()
         }
         return super.onOptionsItemSelected(item)
     }
 
     @Override
-    fun onStop() {
+    override fun onStop() {
         super.onStop()
     }
 
     @Override
-    fun onDestroy() {
+    override fun onDestroy() {
         if (mEventCursor != null) {
             mEventCursor.close()
         }
@@ -581,15 +552,15 @@ class EventInfoFragment : DialogFragment, OnCheckedChangeListener, CalendarContr
         val ops: ArrayList<ContentProviderOperation> = ArrayList<ContentProviderOperation>()
         val exceptionUri: Uri = Uri.withAppendedPath(
             Events.CONTENT_EXCEPTION_URI,
-            String.valueOf(eventId)
+            eventId.toString()
         )
         ops.add(ContentProviderOperation.newInsert(exceptionUri).withValues(values).build())
     }
 
     private fun displayEventNotFound() {
-        mErrorMsgView.setVisibility(View.VISIBLE)
-        mScrollView.setVisibility(View.GONE)
-        mLoadingMsgView.setVisibility(View.GONE)
+        mErrorMsgView?.setVisibility(View.VISIBLE)
+        mScrollView?.setVisibility(View.GONE)
+        mLoadingMsgView?.setVisibility(View.GONE)
     }
 
     private fun updateEvent(view: View?) {
@@ -598,7 +569,7 @@ class EventInfoFragment : DialogFragment, OnCheckedChangeListener, CalendarContr
         }
         val context: Context = view.getContext() ?: return
         var eventName: String = mEventCursor.getString(EVENT_INDEX_TITLE)
-        if (eventName == null || eventName.length() === 0) {
+        if (eventName == null || eventName.length == 0) {
             eventName = getActivity().getString(R.string.no_title_label)
         }
 
@@ -633,7 +604,7 @@ class EventInfoFragment : DialogFragment, OnCheckedChangeListener, CalendarContr
         val description: String = mEventCursor.getString(EVENT_INDEX_DESCRIPTION)
         val rRule: String = mEventCursor.getString(EVENT_INDEX_RRULE)
         val eventTimezone: String = mEventCursor.getString(EVENT_INDEX_EVENT_TIMEZONE)
-        mHeadlines.setBackgroundColor(mCurrentColor)
+        mHeadlines?.setBackgroundColor(mCurrentColor)
 
         // What
         if (eventName != null) {
@@ -642,11 +613,11 @@ class EventInfoFragment : DialogFragment, OnCheckedChangeListener, CalendarContr
 
         // When
         // Set the date and repeats (if any)
-        val localTimezone: String = Utils.getTimeZone(mActivity, mTZUpdater)
+        val localTimezone: String? = Utils.getTimeZone(mActivity, mTZUpdater)
         val resources: Resources = context.getResources()
-        var displayedDatetime: String = Utils.getDisplayedDatetime(
+        var displayedDatetime: String? = Utils.getDisplayedDatetime(
             startMillis, endMillis,
-            System.currentTimeMillis(), localTimezone, mAllDay, context
+            System.currentTimeMillis(), localTimezone as String, mAllDay, context
         )
         var displayedTimezone: String? = null
         if (!mAllDay) {
@@ -657,27 +628,26 @@ class EventInfoFragment : DialogFragment, OnCheckedChangeListener, CalendarContr
         }
         // Display the datetime.  Make the timezone (if any) transparent.
         if (displayedTimezone == null) {
-            setTextCommon(view, R.id.when_datetime, displayedDatetime)
+            setTextCommon(view, R.id.when_datetime, displayedDatetime as CharSequence)
         } else {
-            val timezoneIndex: Int = displayedDatetime.length()
+            val timezoneIndex: Int = displayedDatetime!!.length
             displayedDatetime += "  $displayedTimezone"
             val sb = SpannableStringBuilder(displayedDatetime)
             val transparentColorSpan = ForegroundColorSpan(
                 resources.getColor(R.color.event_info_headline_transparent_color)
             )
             sb.setSpan(
-                transparentColorSpan, timezoneIndex, displayedDatetime.length(),
+                transparentColorSpan, timezoneIndex, displayedDatetime!!.length,
                 Spannable.SPAN_INCLUSIVE_INCLUSIVE
             )
             setTextCommon(view, R.id.when_datetime, sb)
         }
-        view.findViewById(R.id.when_repeat).setVisibility(View.GONE)
+        view.findViewById<View>(R.id.when_repeat).setVisibility(View.GONE)
 
         // Organizer view is setup in the updateCalendar method
 
-
         // Where
-        if (location == null || location.trim().length() === 0) {
+        if (location == null || location.trim().length == 0) {
             setVisibilityCommon(view, R.id.where, View.GONE)
         } else {
             val textView: TextView? = mWhere
@@ -707,21 +677,21 @@ class EventInfoFragment : DialogFragment, OnCheckedChangeListener, CalendarContr
             AccessibilityEvent.obtain(AccessibilityEvent.TYPE_VIEW_FOCUSED)
         event.setClassName(EventInfoFragment::class.java.getName())
         event.setPackageName(getActivity().getPackageName())
-        val text: List<CharSequence> = event.getText()
-        if (mResponseRadioGroup.getVisibility() === View.VISIBLE) {
-            val id: Int = mResponseRadioGroup.getCheckedRadioButtonId()
+        var text = event.getText()
+        if (mResponseRadioGroup?.getVisibility() == View.VISIBLE) {
+            val id: Int = mResponseRadioGroup!!.getCheckedRadioButtonId()
             if (id != View.NO_ID) {
-                text.add((getView().findViewById(R.id.response_label) as TextView).getText())
+                text.add((getView()?.findViewById(R.id.response_label) as TextView)?.getText())
                 text.add(
-                    (mResponseRadioGroup.findViewById(id) as RadioButton)
-                        .getText() + PERIOD_SPACE
+                    (mResponseRadioGroup?.findViewById(id) as RadioButton)
+                        .getText().toString() + PERIOD_SPACE
                 )
             }
         }
         am.sendAccessibilityEvent(event)
     }
 
-    private fun updateCalendar(view: View) {
+    private fun updateCalendar(view: View?) {
         mCalendarOwnerAccount = ""
         if (mCalendarsCursor != null && mEventCursor != null) {
             mCalendarsCursor.moveToFirst()
@@ -733,11 +703,11 @@ class EventInfoFragment : DialogFragment, OnCheckedChangeListener, CalendarContr
             mIsBusyFreeCalendar =
                 mEventCursor.getInt(EVENT_INDEX_ACCESS_LEVEL) === Calendars.CAL_ACCESS_FREEBUSY
             if (!mIsBusyFreeCalendar) {
-                val b: View = mView.findViewById(R.id.edit)
-                b.setEnabled(true)
-                b.setOnClickListener(object : OnClickListener() {
+                val b: View? = mView?.findViewById(R.id.edit)
+                b?.setEnabled(true)
+                b?.setOnClickListener(object : OnClickListener {
                     @Override
-                    fun onClick(v: View?) {
+                    override fun onClick(v: View?) {
                         // For dialogs, just close the fragment
                         // For full screen, close activity on phone, leave it for tablet
                         if (mIsDialog) {
@@ -750,9 +720,9 @@ class EventInfoFragment : DialogFragment, OnCheckedChangeListener, CalendarContr
             }
             var button: View
             if ((!mIsDialog && !mIsTabletConfig ||
-                  mWindowStyle == FULL_WINDOW_STYLE) && mMenu != null
+                mWindowStyle == FULL_WINDOW_STYLE) && mMenu != null
             ) {
-                mActivity.invalidateOptionsMenu()
+                mActivity?.invalidateOptionsMenu()
             }
         } else {
             setVisibilityCommon(view, R.id.calendar, View.GONE)
@@ -766,7 +736,7 @@ class EventInfoFragment : DialogFragment, OnCheckedChangeListener, CalendarContr
     }
 
     private fun setVisibilityCommon(view: View?, id: Int, visibility: Int) {
-        val v: View = view.findViewById(id)
+        val v: View? = view?.findViewById(id)
         if (v != null) {
             v.setVisibility(visibility)
         }
@@ -774,13 +744,13 @@ class EventInfoFragment : DialogFragment, OnCheckedChangeListener, CalendarContr
     }
 
     @Override
-    fun onPause() {
+    override fun onPause() {
         mIsPaused = true
         super.onPause()
     }
 
     @Override
-    fun onResume() {
+    override fun onResume() {
         super.onResume()
         if (mIsDialog) {
             setDialogSize(getActivity().getResources())
@@ -789,29 +759,29 @@ class EventInfoFragment : DialogFragment, OnCheckedChangeListener, CalendarContr
         mIsPaused = false
         if (mTentativeUserSetResponse != Attendees.ATTENDEE_STATUS_NONE) {
             val buttonId = findButtonIdForResponse(mTentativeUserSetResponse)
-            mResponseRadioGroup.check(buttonId)
+            mResponseRadioGroup?.check(buttonId)
         }
     }
 
     @Override
-    fun eventsChanged() {
+    override fun eventsChanged() {
     }
 
-    @get:Override val supportedEventTypes: Long
+    @get:Override override val supportedEventTypes: Long
         get() = EventType.EVENTS_CHANGED
 
     @Override
-    fun handleEvent(event: EventInfo?) {
+    override fun handleEvent(event: EventInfo?) {
         reloadEvents()
     }
 
     fun reloadEvents() {}
     @Override
-    fun onClick(view: View?) {
+    override fun onClick(view: View?) {
     }
 
     private fun setDialogSize(r: Resources) {
-        mDialogWidth = r.getDimension(R.dimen.event_info_dialog_width)
-        mDialogHeight = r.getDimension(R.dimen.event_info_dialog_height)
+        mDialogWidth = r.getDimension(R.dimen.event_info_dialog_width).toInt()
+        mDialogHeight = r.getDimension(R.dimen.event_info_dialog_height).toInt()
     }
 }
