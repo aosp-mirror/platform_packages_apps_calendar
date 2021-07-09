@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,8 +42,8 @@ import java.util.Locale
  * weeks at a time. See [SimpleDayPickerFragment] for usage.
  *
  */
-class SimpleWeeksAdapter(context: Context, params: HashMap<String?, Integer?>?) : BaseAdapter(),
-                                                                                  OnTouchListener {
+open class SimpleWeeksAdapter(context: Context, params: HashMap<String?, Int?>?) : BaseAdapter(),
+    OnTouchListener {
     protected var mContext: Context
 
     // The day to highlight as selected
@@ -63,10 +63,10 @@ class SimpleWeeksAdapter(context: Context, params: HashMap<String?, Integer?>?) 
     /**
      * Set up the gesture detector and selected time
      */
-    protected fun init() {
+    protected open fun init() {
         mGestureDetector = GestureDetector(mContext, CalendarGestureListener())
         mSelectedDay = Time()
-        mSelectedDay.setToNow()
+        mSelectedDay?.setToNow()
     }
 
     /**
@@ -75,80 +75,94 @@ class SimpleWeeksAdapter(context: Context, params: HashMap<String?, Integer?>?) 
      *
      * @param params A list of parameters for this adapter
      */
-    fun updateParams(params: HashMap<String?, Integer?>?) {
+    fun updateParams(params: HashMap<String?, Int?>?) {
         if (params == null) {
             Log.e(TAG, "WeekParameters are null! Cannot update adapter.")
             return
         }
         if (params.containsKey(WEEK_PARAMS_FOCUS_MONTH)) {
-            mFocusMonth = params.get(WEEK_PARAMS_FOCUS_MONTH)
+            // Casting from Int? --> Int
+            mFocusMonth = params.get(WEEK_PARAMS_FOCUS_MONTH) as Int
         }
         if (params.containsKey(WEEK_PARAMS_FOCUS_MONTH)) {
-            mNumWeeks = params.get(WEEK_PARAMS_NUM_WEEKS)
+            // Casting from Int? --> Int
+            mNumWeeks = params.get(WEEK_PARAMS_NUM_WEEKS) as Int
         }
         if (params.containsKey(WEEK_PARAMS_SHOW_WEEK)) {
-            mShowWeekNumber = params.get(WEEK_PARAMS_SHOW_WEEK) !== 0
+            // Casting from Int? --> Int
+            mShowWeekNumber = params.get(WEEK_PARAMS_SHOW_WEEK) as Int != 0
         }
         if (params.containsKey(WEEK_PARAMS_WEEK_START)) {
-            mFirstDayOfWeek = params.get(WEEK_PARAMS_WEEK_START)
+            // Casting from Int? --> Int
+            mFirstDayOfWeek = params.get(WEEK_PARAMS_WEEK_START) as Int
         }
         if (params.containsKey(WEEK_PARAMS_JULIAN_DAY)) {
-            val julianDay: Int = params.get(WEEK_PARAMS_JULIAN_DAY)
-            mSelectedDay.setJulianDay(julianDay)
+            // Casting from Int? --> Int
+            val julianDay: Int = params.get(WEEK_PARAMS_JULIAN_DAY) as Int
+            mSelectedDay?.setJulianDay(julianDay)
             mSelectedWeek = Utils.getWeeksSinceEpochFromJulianDay(julianDay, mFirstDayOfWeek)
         }
         if (params.containsKey(WEEK_PARAMS_DAYS_PER_WEEK)) {
-            mDaysPerWeek = params.get(WEEK_PARAMS_DAYS_PER_WEEK)
+            // Casting from Int? --> Int
+            mDaysPerWeek = params.get(WEEK_PARAMS_DAYS_PER_WEEK) as Int
         }
         refresh()
     }
-    /**
-     * Returns the currently highlighted day
-     *
-     * @return
-     */
+
     /**
      * Updates the selected day and related parameters.
      *
      * @param selectedTime The time to highlight
      */
-    var selectedDay: Time?
-        get() = mSelectedDay
-        set(selectedTime) {
-            mSelectedDay.set(selectedTime)
-            val millis: Long = mSelectedDay.normalize(true)
-            mSelectedWeek = Utils.getWeeksSinceEpochFromJulianDay(
-                Time.getJulianDay(millis, mSelectedDay.gmtoff), mFirstDayOfWeek
-            )
-            notifyDataSetChanged()
-        }
+    open fun setSelectedDay(selectedTime: Time?) {
+        mSelectedDay?.set(selectedTime)
+        val millis: Long = mSelectedDay!!.normalize(true)
+        mSelectedWeek = Utils.getWeeksSinceEpochFromJulianDay(
+            Time.getJulianDay(millis, mSelectedDay!!.gmtoff), mFirstDayOfWeek
+        )
+        notifyDataSetChanged()
+    }
+
+    /**
+     * Returns the currently highlighted day
+     *
+     * @return
+     */
+    fun getSelectedDay(): Time? {
+        return mSelectedDay
+    }
 
     /**
      * updates any config options that may have changed and refreshes the view
      */
-    protected fun refresh() {
+    internal open fun refresh() {
         notifyDataSetChanged()
     }
 
     @Override
-    fun getItem(position: Int): Object? {
+    override fun getCount(): Int {
+        return WEEK_COUNT
+    }
+
+    @Override
+    override fun getItem(position: Int): Any? {
         return null
     }
 
     @Override
-    fun getItemId(position: Int): Long {
+    override fun getItemId(position: Int): Long {
         return position.toLong()
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
+    override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
         val v: SimpleWeekView
-        var drawingParams: HashMap<String?, Integer?>? = null
+        var drawingParams: HashMap<String?, Int?>? = null
         if (convertView != null) {
             v = convertView as SimpleWeekView
             // We store the drawing parameters in the view so it can be recycled
-            drawingParams = v.getTag() as HashMap<String?, Integer?>
+            drawingParams = v.getTag() as HashMap<String?, Int?>
         } else {
             v = SimpleWeekView(mContext)
             // Set up the new view
@@ -160,12 +174,12 @@ class SimpleWeeksAdapter(context: Context, params: HashMap<String?, Integer?>?) 
             v.setOnTouchListener(this)
         }
         if (drawingParams == null) {
-            drawingParams = HashMap<String, Integer>()
+            drawingParams = HashMap<String?, Int?>()
         }
         drawingParams.clear()
         var selectedDay = -1
         if (mSelectedWeek == position) {
-            selectedDay = mSelectedDay.weekDay
+            selectedDay = mSelectedDay!!.weekDay
         }
 
         // pass in all the view parameters
@@ -179,7 +193,7 @@ class SimpleWeeksAdapter(context: Context, params: HashMap<String?, Integer?>?) 
         drawingParams.put(SimpleWeekView.VIEW_PARAMS_NUM_DAYS, mDaysPerWeek)
         drawingParams.put(SimpleWeekView.VIEW_PARAMS_WEEK, position)
         drawingParams.put(SimpleWeekView.VIEW_PARAMS_FOCUS_MONTH, mFocusMonth)
-        v.setWeekParams(drawingParams, mSelectedDay.timezone)
+        v.setWeekParams(drawingParams, mSelectedDay!!.timezone)
         v.invalidate()
         return v
     }
@@ -195,12 +209,13 @@ class SimpleWeeksAdapter(context: Context, params: HashMap<String?, Integer?>?) 
     }
 
     @Override
-    fun onTouch(v: View, event: MotionEvent): Boolean {
-        if (mGestureDetector.onTouchEvent(event)) {
+    override fun onTouch(v: View, event: MotionEvent): Boolean {
+        if (mGestureDetector!!.onTouchEvent(event)) {
             val view: SimpleWeekView = v as SimpleWeekView
-            val day: Time = (v as SimpleWeekView).getDayFromLocation(event.getX())
+            val day: Time? = (v as SimpleWeekView).getDayFromLocation(event.getX())
             if (Log.isLoggable(TAG, Log.DEBUG)) {
-                Log.d(TAG, "Touched day at Row=" + view.mWeek.toString() + " day=" + day.toString())
+                Log.d(TAG, "Touched day at Row=" + view.mWeek.toString() + " day=" +
+                    day?.toString())
             }
             if (day != null) {
                 onDayTapped(day)
@@ -215,11 +230,11 @@ class SimpleWeeksAdapter(context: Context, params: HashMap<String?, Integer?>?) 
      *
      * @param day The day that was tapped
      */
-    protected fun onDayTapped(day: Time) {
-        day.hour = mSelectedDay.hour
-        day.minute = mSelectedDay.minute
-        day.second = mSelectedDay.second
-        selectedDay = day
+    protected open fun onDayTapped(day: Time) {
+        day.hour = mSelectedDay!!.hour
+        day.minute = mSelectedDay!!.minute
+        day.second = mSelectedDay!!.second
+        setSelectedDay(day)
     }
 
     /**
@@ -228,7 +243,7 @@ class SimpleWeeksAdapter(context: Context, params: HashMap<String?, Integer?>?) 
      */
     protected inner class CalendarGestureListener : GestureDetector.SimpleOnGestureListener() {
         @Override
-        fun onSingleTapUp(e: MotionEvent?): Boolean {
+        override fun onSingleTapUp(e: MotionEvent?): Boolean {
             return true
         }
     }
@@ -271,9 +286,8 @@ class SimpleWeeksAdapter(context: Context, params: HashMap<String?, Integer?>?) 
          * How many days of the week to display [1-7].
          */
         const val WEEK_PARAMS_DAYS_PER_WEEK = "days_per_week"
-        @get:Override val count: Int = (CalendarController.MAX_CALENDAR_WEEK
-          - CalendarController.MIN_CALENDAR_WEEK)
-            get() = Companion.field
+        protected const val WEEK_COUNT = CalendarController.MAX_CALENDAR_WEEK -
+            CalendarController.MIN_CALENDAR_WEEK
         protected var DEFAULT_NUM_WEEKS = 6
         protected var DEFAULT_MONTH_FOCUS = 0
         protected var DEFAULT_DAYS_PER_WEEK = 7

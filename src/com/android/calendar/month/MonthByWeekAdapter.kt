@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,8 +37,8 @@ import com.android.calendar.Utils
 import java.util.ArrayList
 import java.util.HashMap
 
-class MonthByWeekAdapter(context: Context?, params: HashMap<String?, Integer?>) :
-    SimpleWeeksAdapter(context, params) {
+class MonthByWeekAdapter(context: Context?, params: HashMap<String?, Int?>) :
+    SimpleWeeksAdapter(context as Context, params) {
     protected var mController: CalendarController? = null
     protected var mHomeTimeZone: String? = null
     protected var mTempTime: Time? = null
@@ -56,10 +56,8 @@ class MonthByWeekAdapter(context: Context?, params: HashMap<String?, Integer?>) 
     var mClickedView: MonthWeekEventsView? = null
     var mSingleTapUpView: MonthWeekEventsView? = null
     var mLongClickedView: MonthWeekEventsView? = null
-    var mClickedXLocation // Used to find which day was clicked
-      = 0f
-    var mClickTime // Used to calculate minimum click animation time
-      : Long = 0
+    var mClickedXLocation = 0f // Used to find which day was clicked
+    var mClickTime: Long = 0 // Used to calculate minimum click animation time
 
     fun animateToday() {
         mAnimateToday = true
@@ -67,31 +65,31 @@ class MonthByWeekAdapter(context: Context?, params: HashMap<String?, Integer?>) 
     }
 
     @Override
-    protected fun init() {
+    protected override fun init() {
         super.init()
         mGestureDetector = GestureDetector(mContext, CalendarGestureListener())
         mController = CalendarController.getInstance(mContext)
         mHomeTimeZone = Utils.getTimeZone(mContext, null)
-        mSelectedDay.switchTimezone(mHomeTimeZone)
+        mSelectedDay?.switchTimezone(mHomeTimeZone)
         mToday = Time(mHomeTimeZone)
-        mToday.setToNow()
+        mToday?.setToNow()
         mTempTime = Time(mHomeTimeZone)
     }
 
     private fun updateTimeZones() {
-        mSelectedDay.timezone = mHomeTimeZone
-        mSelectedDay.normalize(true)
-        mToday.timezone = mHomeTimeZone
-        mToday.setToNow()
-        mTempTime.switchTimezone(mHomeTimeZone)
+        mSelectedDay!!.timezone = mHomeTimeZone
+        mSelectedDay?.normalize(true)
+        mToday!!.timezone = mHomeTimeZone
+        mToday?.setToNow()
+        mTempTime?.switchTimezone(mHomeTimeZone)
     }
 
     @Override
-    fun setSelectedDay(selectedTime: Time?) {
-        mSelectedDay.set(selectedTime)
-        val millis: Long = mSelectedDay.normalize(true)
+    override fun setSelectedDay(selectedTime: Time?) {
+        mSelectedDay?.set(selectedTime)
+        val millis: Long = mSelectedDay!!.normalize(true)
         mSelectedWeek = Utils.getWeeksSinceEpochFromJulianDay(
-            Time.getJulianDay(millis, mSelectedDay.gmtoff), mFirstDayOfWeek
+            Time.getJulianDay(millis, mSelectedDay!!.gmtoff), mFirstDayOfWeek
         )
         notifyDataSetChanged()
     }
@@ -100,8 +98,8 @@ class MonthByWeekAdapter(context: Context?, params: HashMap<String?, Integer?>) 
         if (mIsMiniMonth) {
             if (Log.isLoggable(TAG, Log.ERROR)) {
                 Log.e(
-                    TAG, "Attempted to set events for mini view. Events only supported in full"
-                      + " view."
+                    TAG, "Attempted to set events for mini view. Events only supported in full" +
+                        " view."
                 )
             }
             return
@@ -115,7 +113,7 @@ class MonthByWeekAdapter(context: Context?, params: HashMap<String?, Integer?>) 
         for (i in 0 until numDays) {
             eventDayList.add(ArrayList<Event>())
         }
-        if (events == null || events.size() === 0) {
+        if (events == null || events.size == 0) {
             if (Log.isLoggable(TAG, Log.DEBUG)) {
                 Log.d(TAG, "No events. Returning early--go schedule something fun.")
             }
@@ -147,7 +145,7 @@ class MonthByWeekAdapter(context: Context?, params: HashMap<String?, Integer?>) 
             }
         }
         if (Log.isLoggable(TAG, Log.DEBUG)) {
-            Log.d(TAG, "Processed " + events.size().toString() + " events.")
+            Log.d(TAG, "Processed " + events.size.toString() + " events.")
         }
         mEventDayList = eventDayList
         refresh()
@@ -155,7 +153,7 @@ class MonthByWeekAdapter(context: Context?, params: HashMap<String?, Integer?>) 
 
     @SuppressWarnings("unchecked")
     @Override
-    fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
+    override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
         if (mIsMiniMonth) {
             return super.getView(position, convertView, parent)
         }
@@ -163,13 +161,13 @@ class MonthByWeekAdapter(context: Context?, params: HashMap<String?, Integer?>) 
         val params = LayoutParams(
             LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT
         )
-        var drawingParams: HashMap<String?, Integer?>? = null
+        var drawingParams: HashMap<String?, Int?>? = null
         var isAnimatingToday = false
         if (convertView != null) {
             v = convertView as MonthWeekEventsView
             // Checking updateToday uses the current params instead of the new
             // params, so this is assuming the view is relatively stable
-            if (mAnimateToday && v.updateToday(mSelectedDay.timezone)) {
+            if (mAnimateToday && v.updateToday(mSelectedDay!!.timezone)) {
                 val currentTime: Long = System.currentTimeMillis()
                 // If it's been too long since we tried to start the animation
                 // don't show it. This can happen if the user stops a scroll
@@ -184,13 +182,13 @@ class MonthByWeekAdapter(context: Context?, params: HashMap<String?, Integer?>) 
                     v = MonthWeekEventsView(mContext)
                 }
             } else {
-                drawingParams = v.getTag() as HashMap<String?, Integer?>
+                drawingParams = v.getTag() as HashMap<String?, Int?>
             }
         } else {
             v = MonthWeekEventsView(mContext)
         }
         if (drawingParams == null) {
-            drawingParams = HashMap<String, Integer>()
+            drawingParams = HashMap<String?, Int?>()
         }
         drawingParams.clear()
         v.setLayoutParams(params)
@@ -198,7 +196,7 @@ class MonthByWeekAdapter(context: Context?, params: HashMap<String?, Integer?>) 
         v.setOnTouchListener(this)
         var selectedDay = -1
         if (mSelectedWeek === position) {
-            selectedDay = mSelectedDay.weekDay
+            selectedDay = mSelectedDay!!.weekDay
         }
         drawingParams.put(
             SimpleWeekView.VIEW_PARAMS_HEIGHT,
@@ -215,12 +213,12 @@ class MonthByWeekAdapter(context: Context?, params: HashMap<String?, Integer?>) 
             drawingParams.put(MonthWeekEventsView.VIEW_PARAMS_ANIMATE_TODAY, 1)
             mAnimateToday = false
         }
-        v.setWeekParams(drawingParams, mSelectedDay.timezone)
+        v.setWeekParams(drawingParams, mSelectedDay!!.timezone)
         return v
     }
 
     @Override
-    protected fun refresh() {
+    internal override fun refresh() {
         mFirstDayOfWeek = Utils.getFirstDayOfWeek(mContext)
         mShowWeekNumber = Utils.getShowWeekNumber(mContext)
         mHomeTimeZone = Utils.getTimeZone(mContext, null)
@@ -230,21 +228,21 @@ class MonthByWeekAdapter(context: Context?, params: HashMap<String?, Integer?>) 
     }
 
     @Override
-    protected fun onDayTapped(day: Time) {
+    protected override fun onDayTapped(day: Time) {
         setDayParameters(day)
         if (mShowAgendaWithMonth || mIsMiniMonth) {
             // If agenda view is visible with month view , refresh the views
             // with the selected day's info
-            mController.sendEvent(
-                mContext, EventType.GO_TO, day, day, -1,
+            mController?.sendEvent(
+                mContext as Object?, EventType.GO_TO, day, day, -1,
                 ViewType.CURRENT, CalendarController.EXTRA_GOTO_DATE, null, null
             )
         } else {
             // Else , switch to the detailed view
-            mController.sendEvent(
-                mContext, EventType.GO_TO, day, day, -1,
+            mController?.sendEvent(
+                mContext as Object?, EventType.GO_TO, day, day, -1,
                 ViewType.DETAIL, CalendarController.EXTRA_GOTO_DATE
-                  or CalendarController.EXTRA_GOTO_BACK_TO_PREVIOUS, null, null
+                    or CalendarController.EXTRA_GOTO_BACK_TO_PREVIOUS, null, null
             )
         }
     }
@@ -252,7 +250,7 @@ class MonthByWeekAdapter(context: Context?, params: HashMap<String?, Integer?>) 
     private fun setDayParameters(day: Time) {
         day.timezone = mHomeTimeZone
         val currTime = Time(mHomeTimeZone)
-        currTime.set(mController.getTime())
+        currTime.set(mController!!.time as Long)
         day.hour = currTime.hour
         day.minute = currTime.minute
         day.allDay = false
@@ -260,19 +258,19 @@ class MonthByWeekAdapter(context: Context?, params: HashMap<String?, Integer?>) 
     }
 
     @Override
-    fun onTouch(v: View?, event: MotionEvent): Boolean {
+    override fun onTouch(v: View, event: MotionEvent): Boolean {
         if (v !is MonthWeekEventsView) {
             return super.onTouch(v, event)
         }
-        val action: Int = event.getAction()
+        val action: Int = event!!.getAction()
 
         // Event was tapped - switch to the detailed view making sure the click animation
         // is done first.
-        if (mGestureDetector.onTouchEvent(event)) {
+        if (mGestureDetector!!.onTouchEvent(event)) {
             mSingleTapUpView = v as MonthWeekEventsView?
             val delay: Long = System.currentTimeMillis() - mClickTime
             // Make sure the animation is visible for at least mOnTapDelay - mOnDownDelay ms
-            mListView.postDelayed(
+            mListView?.postDelayed(
                 mDoSingleTapUp,
                 if (delay > mTotalClickDelay) 0 else mTotalClickDelay - delay
             )
@@ -285,12 +283,14 @@ class MonthByWeekAdapter(context: Context?, params: HashMap<String?, Integer?>) 
                     mClickedView = v as MonthWeekEventsView
                     mClickedXLocation = event.getX()
                     mClickTime = System.currentTimeMillis()
-                    mListView.postDelayed(mDoClick, mOnDownDelay)
+                    mListView?.postDelayed(mDoClick, mOnDownDelay.toLong())
                 }
-                MotionEvent.ACTION_UP, MotionEvent.ACTION_SCROLL, MotionEvent.ACTION_CANCEL -> clearClickedView(
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_SCROLL, MotionEvent.ACTION_CANCEL ->
+                    clearClickedView(
                     v as MonthWeekEventsView?
                 )
-                MotionEvent.ACTION_MOVE ->                     // No need to cancel on vertical movement, ACTION_SCROLL will do that.
+                MotionEvent.ACTION_MOVE -> // No need to cancel on vertical movement,
+                    // ACTION_SCROLL will do that.
                     if (Math.abs(event.getX() - mClickedXLocation) > mMovedPixelToCancel) {
                         clearClickedView(v as MonthWeekEventsView?)
                     }
@@ -308,20 +308,20 @@ class MonthByWeekAdapter(context: Context?, params: HashMap<String?, Integer?>) 
      */
     protected inner class CalendarGestureListener : GestureDetector.SimpleOnGestureListener() {
         @Override
-        fun onSingleTapUp(e: MotionEvent?): Boolean {
+        override fun onSingleTapUp(e: MotionEvent?): Boolean {
             return true
         }
 
         @Override
-        fun onLongPress(e: MotionEvent?) {
+        override fun onLongPress(e: MotionEvent?) {
             if (mLongClickedView != null) {
-                val day: Time = mLongClickedView.getDayFromLocation(mClickedXLocation)
+                val day: Time? = mLongClickedView?.getDayFromLocation(mClickedXLocation)
                 if (day != null) {
-                    mLongClickedView.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+                    mLongClickedView?.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
                     val message = Message()
                     message.obj = day
                 }
-                mLongClickedView.clearClickedDay()
+                mLongClickedView?.clearClickedDay()
                 mLongClickedView = null
             }
         }
@@ -329,38 +329,40 @@ class MonthByWeekAdapter(context: Context?, params: HashMap<String?, Integer?>) 
 
     // Clear the visual cues of the click animation and related running code.
     private fun clearClickedView(v: MonthWeekEventsView?) {
-        mListView.removeCallbacks(mDoClick)
-        synchronized(v) { v.clearClickedDay() }
+        mListView?.removeCallbacks(mDoClick)
+        synchronized(v as Any) { v?.clearClickedDay() }
         mClickedView = null
     }
 
     // Perform the tap animation in a runnable to allow a delay before showing the tap color.
     // This is done to prevent a click animation when a fling is done.
-    private val mDoClick: Runnable = object : Runnable() {
+    private val mDoClick: Runnable = object : Runnable {
         @Override
-        fun run() {
+        override fun run() {
             if (mClickedView != null) {
-                synchronized(mClickedView) { mClickedView.setClickedDay(mClickedXLocation) }
+                synchronized(mClickedView as MonthWeekEventsView) {
+                    mClickedView?.setClickedDay(mClickedXLocation) }
                 mLongClickedView = mClickedView
                 mClickedView = null
                 // This is a workaround , sometimes the top item on the listview doesn't refresh on
                 // invalidate, so this forces a re-draw.
-                mListView.invalidate()
+                mListView?.invalidate()
             }
         }
     }
 
     // Performs the single tap operation: go to the tapped day.
     // This is done in a runnable to allow the click animation to finish before switching views
-    private val mDoSingleTapUp: Runnable = object : Runnable() {
+    private val mDoSingleTapUp: Runnable = object : Runnable {
         @Override
-        fun run() {
+        override fun run() {
             if (mSingleTapUpView != null) {
-                val day: Time = mSingleTapUpView.getDayFromLocation(mClickedXLocation)
+                val day: Time? = mSingleTapUpView?.getDayFromLocation(mClickedXLocation)
                 if (Log.isLoggable(TAG, Log.DEBUG)) {
                     Log.d(
                         TAG,
-                        "Touched day at Row=" + mSingleTapUpView.mWeek.toString() + " day=" + day.toString()
+                        "Touched day at Row=" + mSingleTapUpView?.mWeek?.toString() +
+                            " day=" + day?.toString()
                     )
                 }
                 if (day != null) {
@@ -381,23 +383,24 @@ class MonthByWeekAdapter(context: Context?, params: HashMap<String?, Integer?>) 
         // Used to insure minimal time for seeing the click animation before switching views
         private const val mOnTapDelay = 100
 
-        // Minimal time for a down touch action before stating the click animation, this insures that
-        // there is no click animation on flings
-        private var mOnDownDelay: Int
-        private var mTotalClickDelay: Int
+        // Minimal time for a down touch action before stating the click animation, this ensures
+        // that there is no click animation on flings
+        private var mOnDownDelay: Int = 0
+        private var mTotalClickDelay: Int = 0
 
         // Minimal distance to move the finger in order to cancel the click animation
-        private var mMovedPixelToCancel: Float
+        private var mMovedPixelToCancel: Float = 0f
     }
 
     init {
         if (params.containsKey(WEEK_PARAMS_IS_MINI)) {
-            mIsMiniMonth = params.get(WEEK_PARAMS_IS_MINI) !== 0
+            mIsMiniMonth = params.get(WEEK_PARAMS_IS_MINI) != 0
         }
-        mShowAgendaWithMonth = Utils.getConfigBool(context, R.bool.show_agenda_with_month)
+        mShowAgendaWithMonth = Utils.getConfigBool(context as Context,
+            R.bool.show_agenda_with_month)
         val vc: ViewConfiguration = ViewConfiguration.get(context)
         mOnDownDelay = ViewConfiguration.getTapTimeout()
-        mMovedPixelToCancel = vc.getScaledTouchSlop()
+        mMovedPixelToCancel = vc.getScaledTouchSlop().toFloat()
         mTotalClickDelay = mOnDownDelay + mOnTapDelay
     }
 }
