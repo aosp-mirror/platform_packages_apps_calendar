@@ -72,7 +72,7 @@ open class SimpleWeekView(context: Context) : View(context) {
 
     // The position of this week, equivalent to weeks since the week of Jan 1st,
     // 1970
-    @JvmField protected var mWeek = -1
+    @JvmField var mWeek = -1
 
     // Quick reference to the width of this view, matches parent
     @JvmField protected var mWidth = 0
