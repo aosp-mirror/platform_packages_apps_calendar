@@ -53,8 +53,8 @@ import java.util.Calendar
 import java.util.HashMap
 
 class MonthByWeekFragment @JvmOverloads constructor(
-        initialTime: Long = System.currentTimeMillis(),
-        protected var mIsMiniMonth: Boolean = true
+    initialTime: Long = System.currentTimeMillis(),
+    protected var mIsMiniMonth: Boolean = true
 ) : SimpleDayPickerFragment(initialTime), CalendarController.EventHandler,
         LoaderManager.LoaderCallbacks<Cursor?>, OnScrollListener, OnTouchListener {
     protected var mMinimumTwoMonthFlingVelocity = 0f
@@ -221,18 +221,18 @@ class MonthByWeekFragment @JvmOverloads constructor(
     protected override fun setUpAdapter() {
         mFirstDayOfWeek = Utils.getFirstDayOfWeek(mContext)
         mShowWeekNumber = Utils.getShowWeekNumber(mContext)
-        val weekParams: HashMap<String, Int> = HashMap<String, Int>()
-        weekParams.put(SimpleWeeksAdapter.WEEK_PARAMS_NUM_WEEKS, mNumWeeks)
-        weekParams.put(SimpleWeeksAdapter.WEEK_PARAMS_SHOW_WEEK, if (mShowWeekNumber) 1 else 0)
-        weekParams.put(SimpleWeeksAdapter.WEEK_PARAMS_WEEK_START, mFirstDayOfWeek)
-        weekParams.put(MonthByWeekAdapter.WEEK_PARAMS_IS_MINI, if (mIsMiniMonth) 1 else 0)
-        weekParams.put(
+        val weekParams = HashMap<String?, Int?>()
+        weekParams?.put(SimpleWeeksAdapter.WEEK_PARAMS_NUM_WEEKS, mNumWeeks)
+        weekParams?.put(SimpleWeeksAdapter.WEEK_PARAMS_SHOW_WEEK, if (mShowWeekNumber) 1 else 0)
+        weekParams?.put(SimpleWeeksAdapter.WEEK_PARAMS_WEEK_START, mFirstDayOfWeek)
+        weekParams?.put(MonthByWeekAdapter.WEEK_PARAMS_IS_MINI, if (mIsMiniMonth) 1 else 0)
+        weekParams?.put(
                 SimpleWeeksAdapter.WEEK_PARAMS_JULIAN_DAY,
                 Time.getJulianDay(mSelectedDay.toMillis(true), mSelectedDay.gmtoff)
         )
         weekParams.put(SimpleWeeksAdapter.WEEK_PARAMS_DAYS_PER_WEEK, mDaysPerWeek)
         if (mAdapter == null) {
-            mAdapter = MonthByWeekAdapter(getActivity(), weekParams)
+            mAdapter = MonthByWeekAdapter(getActivity(), weekParams) as SimpleWeeksAdapter?
             mAdapter?.registerDataSetObserver(mObserver)
         } else {
             mAdapter?.updateParams(weekParams)
@@ -242,9 +242,9 @@ class MonthByWeekFragment @JvmOverloads constructor(
 
     @Override
     override fun onCreateView(
-            inflater: LayoutInflater,
-            container: ViewGroup?,
-            savedInstanceState: Bundle?
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
     ): View {
         val v: View
         v = if (mIsMiniMonth) {
@@ -338,7 +338,8 @@ class MonthByWeekFragment @JvmOverloads constructor(
             if (Log.isLoggable(TAG, Log.DEBUG)) {
                 Log.d(
                         TAG,
-                        "Found " + data?.getCount()?.toString() + " cursor entries for uri " + mEventUri
+                        "Found " + data?.getCount()?.toString() + " cursor entries for uri " +
+                            mEventUri
                 )
             }
             val cLoader: CursorLoader = loader as CursorLoader
@@ -357,7 +358,7 @@ class MonthByWeekFragment @JvmOverloads constructor(
             )
             (mAdapter as MonthByWeekAdapter).setEvents(
                     mFirstLoadedJulianDay,
-                    mLastLoadedJulianDay - mFirstLoadedJulianDay + 1, events
+                    mLastLoadedJulianDay - mFirstLoadedJulianDay + 1, events as ArrayList<Event>?
             )
         }
     }
@@ -396,7 +397,8 @@ class MonthByWeekFragment @JvmOverloads constructor(
             val animateToday = event?.extraLong and
                     CalendarController.EXTRA_GOTO_TODAY.toLong() != 0L
             val delayAnimation: Boolean =
-                    goTo(event?.selectedTime?.toMillis(true)?.toLong() as Long, animate, true, false)
+                    goTo(event?.selectedTime?.toMillis(true)?.toLong() as Long,
+                        animate, true, false)
             if (animateToday) {
                 // If we need to flash today start the animation after any
                 // movement from listView has ended.
