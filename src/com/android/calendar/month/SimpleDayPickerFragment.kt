@@ -132,9 +132,9 @@ open class SimpleDayPickerFragment(initialTime: Long) : ListFragment(), OnScroll
     @JvmField protected var mObserver: DataSetObserver = object : DataSetObserver() {
         @Override
         override fun onChanged() {
-            val day: Time = mAdapter!!.getSelectedDay()
-            if (day.year !== mSelectedDay.year || day.yearDay !== mSelectedDay.yearDay) {
-                goTo(day.toMillis(true), true, true, false)
+            val day: Time? = mAdapter!!.getSelectedDay()
+            if (day!!.year !== mSelectedDay!!.year || day!!.yearDay !== mSelectedDay.yearDay) {
+                goTo(day!!.toMillis(true), true, true, false)
             }
         }
     }
@@ -178,11 +178,11 @@ open class SimpleDayPickerFragment(initialTime: Long) : ListFragment(), OnScroll
      * this method to provide a custom adapter.
      */
     protected open fun setUpAdapter() {
-        val weekParams: HashMap<String, Int> = HashMap<String, Int>()
-        weekParams.put(SimpleWeeksAdapter.WEEK_PARAMS_NUM_WEEKS, mNumWeeks)
-        weekParams.put(SimpleWeeksAdapter.WEEK_PARAMS_SHOW_WEEK, if (mShowWeekNumber) 1 else 0)
-        weekParams.put(SimpleWeeksAdapter.WEEK_PARAMS_WEEK_START, mFirstDayOfWeek)
-        weekParams.put(SimpleWeeksAdapter.WEEK_PARAMS_JULIAN_DAY,
+        val weekParams = HashMap<String?, Int?>()
+        weekParams?.put(SimpleWeeksAdapter.WEEK_PARAMS_NUM_WEEKS, mNumWeeks)
+        weekParams?.put(SimpleWeeksAdapter.WEEK_PARAMS_SHOW_WEEK, if (mShowWeekNumber) 1 else 0)
+        weekParams?.put(SimpleWeeksAdapter.WEEK_PARAMS_WEEK_START, mFirstDayOfWeek)
+        weekParams?.put(SimpleWeeksAdapter.WEEK_PARAMS_JULIAN_DAY,
                 Time.getJulianDay(mSelectedDay.toMillis(false), mSelectedDay.gmtoff))
         if (mAdapter == null) {
             mAdapter = SimpleWeeksAdapter(getActivity(), weekParams)
@@ -316,8 +316,11 @@ open class SimpleDayPickerFragment(initialTime: Long) : ListFragment(), OnScroll
     }
 
     @Override
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
-                              savedInstanceState: Bundle?): View {
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
         val v: View = inflater.inflate(R.layout.month_by_week,
                 container, false)
         mDayNamesHeader = v.findViewById(R.id.day_names) as ViewGroup
@@ -438,7 +441,11 @@ open class SimpleDayPickerFragment(initialTime: Long) : ListFragment(), OnScroll
      */
     @Override
     override fun onScroll(
-            view: AbsListView, firstVisibleItem: Int, visibleItemCount: Int, totalItemCount: Int) {
+        view: AbsListView,
+        firstVisibleItem: Int,
+        visibleItemCount: Int,
+        totalItemCount: Int
+    ) {
         val child = view.getChildAt(0) as? SimpleWeekView
         if (child == null) {
             return
@@ -569,8 +576,8 @@ open class SimpleDayPickerFragment(initialTime: Long) : ListFragment(), OnScroll
                         "new scroll state: $mNewState old state: $mPreviousScrollState")
             }
             // Fix the position after a scroll or a fling ends
-            if (mNewState == OnScrollListener.SCROLL_STATE_IDLE
-                    && mPreviousScrollState != OnScrollListener.SCROLL_STATE_IDLE) {
+            if (mNewState == OnScrollListener.SCROLL_STATE_IDLE &&
+                    mPreviousScrollState != OnScrollListener.SCROLL_STATE_IDLE) {
                 mPreviousScrollState = mNewState
                 mAdapter?.updateFocusMonth(mCurrentMonthDisplayed)
             } else {
