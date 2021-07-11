@@ -27,7 +27,9 @@ exclude_srcsd = [
     "src/**/calendar/alerts/InitAlarmsService.java",
     "src/**/calendar/alerts/NotificationMgr.java",
     "src/**/calendar/alerts/QuickResponseActivity.java",
+    "src/**/calendar/month/MonthByWeekAdapter.java",
     "src/**/calendar/month/MonthByWeekFragment.java",
+    "src/**/calendar/month/SimpleWeeksAdapter.java",
     "src/**/calendar/widget/CalendarAppWidgetModel.java",
     "src/**/calendar/widget/CalendarAppWidgetProvider.java",
     "src/**/calendar/widget/CalendarAppWidgetService.java",
@@ -37,6 +39,7 @@ exclude_srcsd = [
     "src/**/calendar/DayView.java",
     "src/**/calendar/Event.java",
     "src/**/calendar/EventInfoActivity.java",
+    "src/**/calendar/EventInfoFragment.java",
     "src/**/calendar/StickyHeaderListView.java",
     "src/**/calendar/Utils.java",
 ]
