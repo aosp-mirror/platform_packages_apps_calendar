@@ -16,47 +16,6 @@ license {
 }
 
 // Include res dir from chips
-exclude_srcsd = [
-    "src/**/calendar/alerts/AlarmManagerInterface.java",
-    "src/**/calendar/alerts/AlarmScheduler.java",
-    "src/**/calendar/alerts/AlertReceiver.java",
-    "src/**/calendar/alerts/AlertService.java",
-    "src/**/calendar/alerts/AlertUtils.java",
-    "src/**/calendar/alerts/DismissAlarmsService.java",
-    "src/**/calendar/alerts/GlobalDismissManager.java",
-    "src/**/calendar/alerts/InitAlarmsService.java",
-    "src/**/calendar/alerts/NotificationMgr.java",
-    "src/**/calendar/alerts/QuickResponseActivity.java",
-    "src/**/calendar/month/MonthByWeekFragment.java",
-    "src/**/calendar/widget/CalendarAppWidgetModel.java",
-    "src/**/calendar/widget/CalendarAppWidgetProvider.java",
-    "src/**/calendar/CalendarController.java",
-    "src/**/calendar/DayOfMonthDrawable.java",
-    "src/**/calendar/Event.java",
-    "src/**/calendar/EventInfoActivity.java",
-    "src/**/calendar/StickyHeaderListView.java",
-    "src/**/calendar/Utils.java",
-]
-
-exclude_srcsm = [
-    "src/**/calendar/month/MonthListView.java",
-    "src/**/calendar/month/SimpleWeekView.java",
-    "src/**/calendar/month/SimpleDayPickerFragment.java",
-    "src/**/calendar/AsyncQueryServiceHelper.java",
-    "src/**/calendar/CalendarApplication.java",
-    "src/**/calendar/CalendarBackupAgent.java",
-    "src/**/calendar/CalendarData.java",
-    "src/**/calendar/CalendarUtils.java",
-    "src/**/calendar/CalendarViewAdapter.java",
-    "src/**/calendar/DayFragment.java",
-    "src/**/calendar/EventGeometry.java",
-    "src/**/calendar/EventLoader.java",
-    "src/**/calendar/GeneralPreferences.java",
-    "src/**/calendar/GoogleCalendarUriIntentFilter.java",
-    "src/**/calendar/MultiStateButton.java",
-    "src/**/calendar/OtherPreferences.java",
-    "src/**/calendar/UpgradeReceiver.java",
-]
 
 android_app {
     name: "Calendar",
@@ -66,47 +25,7 @@ android_app {
     },
 
     srcs: [
-        "src/**/*.java",
         "src/**/*.kt",
-    ],
-
-    exclude_srcs: exclude_srcsd + exclude_srcsm,
-
-    // bundled
-    //LOCAL_STATIC_JAVA_LIBRARIES +=
-    //#        android-common
-    //#        libchips
-    //#        calendar-common
-
-    // unbundled
-    static_libs: [
-        "android-common",
-        "libchips",
-        "colorpicker",
-        "android-opt-timezonepicker",
-        "androidx.legacy_legacy-support-v4",
-        "calendar-common",
-    ],
-
-    sdk_version: "current",
-    optimize: {
-        proguard_flags_files: ["proguard.flags"],
-    },
-
-    product_specific: true,
-
-    aaptflags: ["--auto-add-overlay"],
-}
-
-android_app {
-    name: "CalendarJava",
-
-    jacoco: {
-        include_filter: ["com.android.calendar.**"],
-    },
-
-    srcs: [
-        "src/**/*.java",
     ],
 
     // bundled
