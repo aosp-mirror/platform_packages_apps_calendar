@@ -46,6 +46,7 @@ exclude_srcsd = [
 
 exclude_srcsm = [
     "src/**/calendar/month/MonthListView.java",
+    "src/**/calendar/month/MonthWeekEventsView.java",
     "src/**/calendar/month/SimpleWeekView.java",
     "src/**/calendar/month/SimpleDayPickerFragment.java",
     "src/**/calendar/AsyncQueryServiceHelper.java",
