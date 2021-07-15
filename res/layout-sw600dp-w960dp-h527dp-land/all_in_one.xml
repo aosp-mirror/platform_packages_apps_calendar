@@ -55,7 +55,7 @@
             android:textSize="18sp" />
     </LinearLayout>
 
-    <!-- This is a dummy view to make hiding/unhiding easier -->
+    <!-- This is a nonessential view to make hiding/unhiding easier -->
     <View
         android:id="@+id/mini_month_container"
         android:layout_below="@id/date_group"
