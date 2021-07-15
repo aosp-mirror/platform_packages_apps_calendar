@@ -151,7 +151,7 @@ class DayFragment : Fragment, CalendarController.EventHandler, ViewFactory {
         val currentView: DayView? = mViewSwitcher?.getCurrentView() as? DayView
 
         // How does goTo time compared to what's already displaying?
-        val diff: Int = currentView?.compareToVisibleTimeRange(goToTime) as Int
+        val diff: Int = currentView?.compareToVisibleTimeRange(goToTime as Time) as Int
         if (diff == 0) {
             // In visible range. No need to switch view
             currentView?.setSelected(goToTime, ignoreTime, animateToday)
@@ -166,7 +166,7 @@ class DayFragment : Fragment, CalendarController.EventHandler, ViewFactory {
             }
             val next: DayView? = mViewSwitcher?.getNextView() as? DayView
             if (ignoreTime) {
-                next?.setFirstVisibleHour(currentView?.getFirstVisibleHour())
+                next!!.firstVisibleHour = currentView.firstVisibleHour
             }
             next?.setSelected(goToTime, ignoreTime, animateToday)
             next?.reloadEvents()
@@ -190,7 +190,7 @@ class DayFragment : Fragment, CalendarController.EventHandler, ViewFactory {
                 return -1
             }
             val view: DayView = mViewSwitcher?.getCurrentView() as DayView ?: return -1
-            return view.getSelectedTimeInMillis()
+            return view.selectedTimeInMillis
         }
 
     override fun eventsChanged() {
