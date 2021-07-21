@@ -34,6 +34,9 @@ LOCAL_SDK_VERSION := current
 LOCAL_RESOURCE_DIR := $(addprefix $(LOCAL_PATH)/, $(res_dirs))
 
 LOCAL_PACKAGE_NAME := Calendar
+LOCAL_LICENSE_KINDS := SPDX-license-identifier-Apache-2.0
+LOCAL_LICENSE_CONDITIONS := notice
+LOCAL_NOTICE_FILE  := $(LOCAL_PATH)/NOTICE
 
 LOCAL_PROGUARD_FLAG_FILES := proguard.flags
 
