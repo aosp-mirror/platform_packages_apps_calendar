@@ -45,12 +45,6 @@ class AlertReceiver : BroadcastReceiver() {
         if (AlertService.DEBUG) {
             Log.d(TAG, "onReceive: a=" + intent.getAction().toString() + " " + intent.toString())
         }
-        closeNotificationShade(context)
-    }
-
-    private fun closeNotificationShade(context: Context) {
-        val closeNotificationShadeIntent = Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS)
-        context.sendBroadcast(closeNotificationShadeIntent)
     }
 
     companion object {
