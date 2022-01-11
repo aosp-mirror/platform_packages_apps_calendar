@@ -80,7 +80,6 @@ public class AlertReceiver extends BroadcastReceiver {
         if (AlertService.DEBUG) {
             Log.d(TAG, "onReceive: a=" + intent.getAction() + " " + intent.toString());
         }
-        closeNotificationShade(context);
     }
 
     public static NotificationWrapper makeBasicNotification(Context context, String title,
@@ -114,10 +113,5 @@ public class AlertReceiver extends BroadcastReceiver {
             notificationBuilder.setPriority(priority);
         }
         return notificationBuilder.getNotification();
-    }
-
-    private void closeNotificationShade(Context context) {
-        Intent closeNotificationShadeIntent = new Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS);
-        context.sendBroadcast(closeNotificationShadeIntent);
     }
 }
