@@ -542,9 +542,6 @@ public class CalendarAppWidgetService extends RemoteViewsService {
                 }
 
                 AppWidgetManager widgetManager = AppWidgetManager.getInstance(mContext);
-                if (widgetManager == null) {
-                    return;
-                }
                 if (mAppWidgetId == -1) {
                     int[] ids = widgetManager.getAppWidgetIds(CalendarAppWidgetProvider
                             .getComponentName(mContext));

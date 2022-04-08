@@ -58,7 +58,7 @@ public class StickyHeaderListView extends FrameLayout implements OnScrollListene
     protected HeaderIndexer mIndexer = null;
     protected HeaderHeightListener mHeaderHeightListener = null;
     protected View mStickyHeader = null;
-    protected View mNonessentialHeader = null; // A invisible header used when a section has no header
+    protected View mDummyHeader = null; // A invisible header used when a section has no header
     protected ListView mListView = null;
     protected ListView.OnScrollListener mListener = null;
 
@@ -269,11 +269,11 @@ public class StickyHeaderListView extends FrameLayout implements OnScrollListene
             boolean newView = false;
             if (sectionPos != mCurrentSectionPos) {
 
-                // No header for current position , use the nonessential invisible one, hide the separator
+                // No header for current position , use the dummy invisible one, hide the separator
                 if (sectionPos == -1) {
                     sectionSize = 0;
                     this.removeView(mStickyHeader);
-                    mStickyHeader = mNonessentialHeader;
+                    mStickyHeader = mDummyHeader;
                     if (mSeparatorView != null) {
                         mSeparatorView.setVisibility(View.GONE);
                     }
@@ -320,14 +320,14 @@ public class StickyHeaderListView extends FrameLayout implements OnScrollListene
                     }
                 } else if (stickyHeaderHeight != 0) {
                     mStickyHeader.setTranslationY(0);
-                    if (mSeparatorView != null && !mStickyHeader.equals(mNonessentialHeader)) {
+                    if (mSeparatorView != null && !mStickyHeader.equals(mDummyHeader)) {
                         mSeparatorView.setVisibility(View.VISIBLE);
                     }
                 }
                 if (newView) {
                     mStickyHeader.setVisibility(View.INVISIBLE);
                     this.addView(mStickyHeader);
-                    if (mSeparatorView != null && !mStickyHeader.equals(mNonessentialHeader)){
+                    if (mSeparatorView != null && !mStickyHeader.equals(mDummyHeader)){
                         FrameLayout.LayoutParams params =
                                 new FrameLayout.LayoutParams(LayoutParams.MATCH_PARENT,
                                         mSeparatorWidth);
@@ -382,12 +382,12 @@ public class StickyHeaderListView extends FrameLayout implements OnScrollListene
             setListView(new ListView(mContext));
         }
 
-        // Create a nonessential view , it will be used in case a section has no header
-        mNonessentialHeader = new View (mContext);
+        // Create a dummy view , it will be used in case a section has no header
+        mDummyHeader = new View (mContext);
         ViewGroup.LayoutParams params = new LayoutParams(LayoutParams.MATCH_PARENT,
                 1, Gravity.TOP);
-        mNonessentialHeader.setLayoutParams(params);
-        mNonessentialHeader.setBackgroundColor(Color.TRANSPARENT);
+        mDummyHeader.setLayoutParams(params);
+        mDummyHeader.setBackgroundColor(Color.TRANSPARENT);
 
         mChildViewsCreated = true;
     }
