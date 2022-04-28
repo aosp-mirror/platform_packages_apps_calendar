@@ -122,11 +122,11 @@ class AllInOneActivity : Activity(), EventHandler, OnSharedPreferenceChangeListe
     private var mVerticalControlsParams: LinearLayout.LayoutParams? = null
     private val mSlideAnimationDoneListener: AnimatorListener = object : AnimatorListener {
         @Override
-        override fun onAnimationCancel(animation: Animator?) {
+        override fun onAnimationCancel(animation: Animator) {
         }
 
         @Override
-        override fun onAnimationEnd(animation: Animator?) {
+        override fun onAnimationEnd(animation: Animator) {
             val visibility: Int = if (mShowSideViews) View.VISIBLE else View.GONE
             mMiniMonth?.setVisibility(visibility)
             mCalendarsList?.setVisibility(visibility)
@@ -134,11 +134,11 @@ class AllInOneActivity : Activity(), EventHandler, OnSharedPreferenceChangeListe
         }
 
         @Override
-        override fun onAnimationRepeat(animation: Animator?) {
+        override fun onAnimationRepeat(animation: Animator) {
         }
 
         @Override
-        override fun onAnimationStart(animation: Animator?) {
+        override fun onAnimationStart(animation: Animator) {
         }
     }
 
