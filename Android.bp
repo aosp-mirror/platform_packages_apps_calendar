@@ -1,0 +1,56 @@
+package {
+
+    default_applicable_licenses: ["packages_apps_Calendar_license"],
+}
+
+license {
+
+    name: "packages_apps_Calendar_license",
+    visibility: [":__subpackages__"],
+    license_kinds: [
+        "SPDX-license-identifier-Apache-2.0",
+    ],
+    license_text: [
+        "NOTICE",
+    ],
+}
+
+// Include res dir from chips
+
+android_app {
+    name: "Calendar",
+
+    jacoco: {
+        include_filter: ["com.android.calendar.**"],
+    },
+
+    srcs: [
+        "src/**/*.kt",
+    ],
+
+    // bundled
+    //LOCAL_STATIC_JAVA_LIBRARIES +=
+    //#        android-common
+    //#        libchips
+    //#        calendar-common
+
+    // unbundled
+    static_libs: [
+        "android-common",
+        "libchips",
+        "colorpicker",
+        "android-opt-timezonepicker",
+        "androidx.legacy_legacy-support-v4",
+        "calendar-common",
+    ],
+
+    sdk_version: "current",
+    target_sdk_version: "30",
+    optimize: {
+        proguard_flags_files: ["proguard.flags"],
+    },
+
+    product_specific: true,
+
+    aaptflags: ["--auto-add-overlay"],
+}
