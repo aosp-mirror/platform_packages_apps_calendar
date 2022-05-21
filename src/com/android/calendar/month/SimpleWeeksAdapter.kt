@@ -243,7 +243,7 @@ open class SimpleWeeksAdapter(context: Context, params: HashMap<String?, Int?>?)
      */
     protected inner class CalendarGestureListener : GestureDetector.SimpleOnGestureListener() {
         @Override
-        override fun onSingleTapUp(e: MotionEvent?): Boolean {
+        override fun onSingleTapUp(e: MotionEvent): Boolean {
             return true
         }
     }
