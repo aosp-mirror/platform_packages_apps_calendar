@@ -424,7 +424,7 @@ class EventInfoFragment : DialogFragment, OnCheckedChangeListener, CalendarContr
         mAnimateAlpha?.addListener(object : AnimatorListenerAdapter() {
             var defLayerType = 0
             @Override
-            override fun onAnimationStart(animation: Animator?) {
+            override fun onAnimationStart(animation: Animator) {
                 // Use hardware layer for better performance during animation
                 defLayerType = mScrollView?.getLayerType() as Int
                 mScrollView?.setLayerType(View.LAYER_TYPE_HARDWARE, null)
@@ -435,12 +435,12 @@ class EventInfoFragment : DialogFragment, OnCheckedChangeListener, CalendarContr
             }
 
             @Override
-            override fun onAnimationCancel(animation: Animator?) {
+            override fun onAnimationCancel(animation: Animator) {
                 mScrollView?.setLayerType(defLayerType, null)
             }
 
             @Override
-            override fun onAnimationEnd(animation: Animator?) {
+            override fun onAnimationEnd(animation: Animator) {
                 mScrollView?.setLayerType(defLayerType, null)
                 // Do not cross fade after the first time
                 mNoCrossFade = true
