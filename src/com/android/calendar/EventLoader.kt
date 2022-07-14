@@ -128,7 +128,7 @@ class EventLoader(context: Context) {
 
             // Check if we are still the most recent request.
             if (id == eventLoader?.mSequenceNumber?.get()) {
-                eventLoader?.mHandler?.post(successCallback)
+                eventLoader.mHandler.post(successCallback)
             } else {
                 eventLoader?.mHandler?.post(cancelCallback)
             }

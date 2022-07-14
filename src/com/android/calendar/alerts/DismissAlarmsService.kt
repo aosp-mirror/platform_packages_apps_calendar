@@ -84,7 +84,7 @@ class DismissAlarmsService : IntentService("DismissAlarmsService") {
                 getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             nm.cancel(notificationId as Int)
         }
-        if (SHOW_ACTION.equals(intent?.getAction())) {
+        if (SHOW_ACTION.equals(intent.getAction())) {
             // Show event on Calendar app by building an intent and task stack to start
             // EventInfoActivity with AllInOneActivity as the parent activity rooted to home.
             val i: Intent = AlertUtils.buildEventViewIntent(this, eventId as Long,
