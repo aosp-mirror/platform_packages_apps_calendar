@@ -154,7 +154,7 @@ class DayFragment : Fragment, CalendarController.EventHandler, ViewFactory {
         val diff: Int = currentView?.compareToVisibleTimeRange(goToTime as Time) as Int
         if (diff == 0) {
             // In visible range. No need to switch view
-            currentView?.setSelected(goToTime, ignoreTime, animateToday)
+            currentView.setSelected(goToTime, ignoreTime, animateToday)
         } else {
             // Figure out which way to animate
             if (diff > 0) {
@@ -214,8 +214,8 @@ class DayFragment : Fragment, CalendarController.EventHandler, ViewFactory {
 // TODO support a range of time
 // TODO support event_id
 // TODO support select message
-            goTo(msg?.selectedTime, msg?.extraLong and CalendarController.EXTRA_GOTO_DATE != 0L,
-                    msg?.extraLong and CalendarController.EXTRA_GOTO_TODAY != 0L)
+            goTo(msg.selectedTime, msg.extraLong and CalendarController.EXTRA_GOTO_DATE != 0L,
+                    msg.extraLong and CalendarController.EXTRA_GOTO_TODAY != 0L)
         } else if (msg?.eventType == CalendarController.EventType.EVENTS_CHANGED) {
             eventsChanged()
         }
