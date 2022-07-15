@@ -215,7 +215,7 @@ class MonthWeekEventsView
                 effectiveWidth -= SPACING_WEEK_NUMBER
             }
             DNA_ALL_DAY_WIDTH = effectiveWidth / numDays - 2 * DNA_SIDE_PADDING
-            mDNAAllDayPaint?.setStrokeWidth(DNA_ALL_DAY_WIDTH.toFloat())
+            mDNAAllDayPaint.setStrokeWidth(DNA_ALL_DAY_WIDTH.toFloat())
             mDayXs = IntArray(numDays)
             for (day in 0 until numDays) {
                 mDayXs!![day] = computeDayLeftPosition(day) + DNA_WIDTH / 2 + DNA_SIDE_PADDING
@@ -322,20 +322,20 @@ class MonthWeekEventsView
         loadColors(getContext())
         // TODO modify paint properties depending on isMini
         mMonthNumPaint = Paint()
-        mMonthNumPaint?.setFakeBoldText(false)
-        mMonthNumPaint?.setAntiAlias(true)
-        mMonthNumPaint?.setTextSize(TEXT_SIZE_MONTH_NUMBER.toFloat())
-        mMonthNumPaint?.setColor(mMonthNumColor)
-        mMonthNumPaint?.setStyle(Style.FILL)
-        mMonthNumPaint?.setTextAlign(Align.RIGHT)
-        mMonthNumPaint?.setTypeface(Typeface.DEFAULT)
+        mMonthNumPaint.setFakeBoldText(false)
+        mMonthNumPaint.setAntiAlias(true)
+        mMonthNumPaint.setTextSize(TEXT_SIZE_MONTH_NUMBER.toFloat())
+        mMonthNumPaint.setColor(mMonthNumColor)
+        mMonthNumPaint.setStyle(Style.FILL)
+        mMonthNumPaint.setTextAlign(Align.RIGHT)
+        mMonthNumPaint.setTypeface(Typeface.DEFAULT)
         mMonthNumAscentHeight = (-mMonthNumPaint!!.ascent() + 0.5f).toInt()
         mMonthNumHeight = (mMonthNumPaint!!.descent() - mMonthNumPaint!!.ascent() + 0.5f).toInt()
         mEventPaint = TextPaint()
-        mEventPaint?.setFakeBoldText(true)
-        mEventPaint?.setAntiAlias(true)
-        mEventPaint?.setTextSize(TEXT_SIZE_EVENT_TITLE.toFloat())
-        mEventPaint?.setColor(mMonthEventColor)
+        mEventPaint.setFakeBoldText(true)
+        mEventPaint.setAntiAlias(true)
+        mEventPaint.setTextSize(TEXT_SIZE_EVENT_TITLE.toFloat())
+        mEventPaint.setColor(mMonthEventColor)
         mSolidBackgroundEventPaint = TextPaint(mEventPaint)
         mSolidBackgroundEventPaint?.setColor(EVENT_TEXT_COLOR)
         mFramedEventPaint = TextPaint(mSolidBackgroundEventPaint)
@@ -347,13 +347,13 @@ class MonthWeekEventsView
         mEventAscentHeight = (-mEventPaint.ascent() + 0.5f).toInt()
         mEventHeight = (mEventPaint.descent() - mEventPaint.ascent() + 0.5f).toInt()
         mEventExtrasPaint = TextPaint()
-        mEventExtrasPaint?.setFakeBoldText(false)
-        mEventExtrasPaint?.setAntiAlias(true)
-        mEventExtrasPaint?.setStrokeWidth(EVENT_SQUARE_BORDER.toFloat())
-        mEventExtrasPaint?.setTextSize(TEXT_SIZE_EVENT.toFloat())
-        mEventExtrasPaint?.setColor(mMonthEventExtraColor)
-        mEventExtrasPaint?.setStyle(Style.FILL)
-        mEventExtrasPaint?.setTextAlign(Align.LEFT)
+        mEventExtrasPaint.setFakeBoldText(false)
+        mEventExtrasPaint.setAntiAlias(true)
+        mEventExtrasPaint.setStrokeWidth(EVENT_SQUARE_BORDER.toFloat())
+        mEventExtrasPaint.setTextSize(TEXT_SIZE_EVENT.toFloat())
+        mEventExtrasPaint.setColor(mMonthEventExtraColor)
+        mEventExtrasPaint.setStyle(Style.FILL)
+        mEventExtrasPaint.setTextAlign(Align.LEFT)
         mExtrasHeight = (mEventExtrasPaint.descent() - mEventExtrasPaint.ascent() + 0.5f).toInt()
         mExtrasAscentHeight = (-mEventExtrasPaint.ascent() + 0.5f).toInt()
         mExtrasDescent = (mEventExtrasPaint.descent() + 0.5f).toInt()
@@ -388,11 +388,11 @@ class MonthWeekEventsView
         mEventSquarePaint.setAntiAlias(false)
         if (DEBUG_LAYOUT) {
             Log.d("EXTRA", "mScale=$mScale")
-            Log.d("EXTRA", "mMonthNumPaint ascent=" + mMonthNumPaint?.ascent()
-                    ?.toString() + " descent=" + mMonthNumPaint?.descent()?.toString() +
+            Log.d("EXTRA", "mMonthNumPaint ascent=" + mMonthNumPaint.ascent()
+                    .toString() + " descent=" + mMonthNumPaint.descent().toString() +
                     " int height=" + mMonthNumHeight)
-            Log.d("EXTRA", "mEventPaint ascent=" + mEventPaint?.ascent()
-                    ?.toString() + " descent=" + mEventPaint.descent().toString() +
+            Log.d("EXTRA", "mEventPaint ascent=" + mEventPaint.ascent()
+                    .toString() + " descent=" + mEventPaint.descent().toString() +
                     " int height=" + mEventHeight
                     .toString() + " int ascent=" + mEventAscentHeight)
             Log.d("EXTRA", "mEventExtrasPaint ascent=" + mEventExtrasPaint.ascent()
@@ -603,25 +603,25 @@ class MonthWeekEventsView
         y = mMonthNumAscentHeight + TOP_PADDING_MONTH_NUMBER
         var isFocusMonth: Boolean = mFocusDay!!.get(i)
         var isBold = false
-        mMonthNumPaint?.setColor(if (isFocusMonth) mMonthNumColor else mMonthNumOtherColor)
+        mMonthNumPaint.setColor(if (isFocusMonth) mMonthNumColor else mMonthNumOtherColor)
         while (i < numCount) {
             if (mHasToday && todayIndex == i) {
-                mMonthNumPaint?.setColor(mMonthNumTodayColor)
-                mMonthNumPaint?.setFakeBoldText(true.also { isBold = it })
+                mMonthNumPaint.setColor(mMonthNumTodayColor)
+                mMonthNumPaint.setFakeBoldText(true.also { isBold = it })
                 if (i + 1 < numCount) {
                     // Make sure the color will be set back on the next
                     // iteration
                     isFocusMonth = !mFocusDay!!.get(i + 1)
                 }
-            } else if (mFocusDay?.get(i) !== isFocusMonth) {
+            } else if (mFocusDay.get(i) !== isFocusMonth) {
                 isFocusMonth = mFocusDay!!.get(i)
-                mMonthNumPaint?.setColor(if (isFocusMonth) mMonthNumColor else mMonthNumOtherColor)
+                mMonthNumPaint.setColor(if (isFocusMonth) mMonthNumColor else mMonthNumOtherColor)
             }
             x = computeDayLeftPosition(i - offset) - SIDE_PADDING_MONTH_NUMBER
             canvas.drawText(mDayNumbers!!.get(i) as String, x.toFloat(), y.toFloat(),
                     mMonthNumPaint as Paint)
             if (isBold) {
-                mMonthNumPaint?.setFakeBoldText(false.also { isBold = it })
+                mMonthNumPaint.setFakeBoldText(false.also { isBold = it })
             }
             i++
         }
