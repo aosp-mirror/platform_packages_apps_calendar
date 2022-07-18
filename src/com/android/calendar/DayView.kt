@@ -150,7 +150,7 @@ class DayView(
         @Override
         override fun run() {
             if (mClickedEvent != null) {
-                mController?.sendEventRelatedEvent(
+                mController.sendEventRelatedEvent(
                     this as Object?, EventType.VIEW_EVENT, mClickedEvent!!.id,
                     mClickedEvent!!.startMillis, mClickedEvent!!.endMillis,
                     this@DayView.getWidth() / 2, mClickedYLocation,
@@ -836,7 +836,7 @@ class DayView(
                 diff += 7
             }
             time!!.monthDay -= diff
-            time?.normalize(true /* ignore isDst */)
+            time.normalize(true /* ignore isDst */)
         }
     }
 
@@ -2897,15 +2897,15 @@ class DayView(
     }
 
     private fun cancelAnimation() {
-        val `in`: Animation? = mViewSwitcher?.getInAnimation()
+        val `in`: Animation? = mViewSwitcher.getInAnimation()
         if (`in` != null) {
             // cancel() doesn't terminate cleanly.
-            `in`?.scaleCurrentDuration(0f)
+            `in`.scaleCurrentDuration(0f)
         }
-        val out: Animation? = mViewSwitcher?.getOutAnimation()
+        val out: Animation? = mViewSwitcher.getOutAnimation()
         if (out != null) {
             // cancel() doesn't terminate cleanly.
-            out?.scaleCurrentDuration(0f)
+            out.scaleCurrentDuration(0f)
         }
     }
 
@@ -3276,7 +3276,7 @@ class DayView(
             events = mAllDayEvents
             numEvents = events!!.size
             for (i in 0 until numEvents) {
-                val event: Event? = events?.get(i)
+                val event: Event? = events.get(i)
                 if (!event!!.drawAsAllday() ||
                     !mShowAllAllDayEvents && event!!.getColumn() >= maxUnexpandedColumn
                 ) {
@@ -3291,7 +3291,7 @@ class DayView(
                     if (height > MAX_HEIGHT_OF_ONE_ALLDAY_EVENT) {
                         height = MAX_HEIGHT_OF_ONE_ALLDAY_EVENT.toFloat()
                     }
-                    val eventTop: Float = yOffset + height * event?.getColumn()
+                    val eventTop: Float = yOffset + height * event.getColumn()
                     val eventBottom = eventTop + height
                     if (eventTop < y && eventBottom > y) {
                         // If the touch is inside the event rectangle, then
@@ -3328,7 +3328,7 @@ class DayView(
         region.bottom = y + 10
         val geometry: EventGeometry = mEventGeometry
         for (i in 0 until numEvents) {
-            val event: Event? = events?.get(i)
+            val event: Event? = events.get(i)
             // Compute the event rectangle.
             if (!geometry.computeEventRect(date, left, top, cellWidth, event as Event)) {
                 continue
@@ -3348,7 +3348,7 @@ class DayView(
             var closestEvent: Event? = null
             var minDist = (mViewWidth + mViewHeight).toFloat() // some large distance
             for (index in 0 until len) {
-                val ev: Event? = mSelectedEvents?.get(index)
+                val ev: Event? = mSelectedEvents.get(index)
                 val dist: Float = geometry.pointToEvent(x.toFloat(), y.toFloat(), ev as Event)
                 if (dist < minDist) {
                     minDist = dist

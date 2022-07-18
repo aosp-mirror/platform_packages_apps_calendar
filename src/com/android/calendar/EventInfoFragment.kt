@@ -366,7 +366,7 @@ class EventInfoFragment : DialogFragment, OnCheckedChangeListener, CalendarContr
             }
             a!!.gravity = Gravity.LEFT or Gravity.TOP
         }
-        window?.setAttributes(a)
+        window.setAttributes(a)
     }
 
     fun setDialogParams(x: Int, y: Int, minTop: Int) {
@@ -681,7 +681,7 @@ class EventInfoFragment : DialogFragment, OnCheckedChangeListener, CalendarContr
         if (mResponseRadioGroup?.getVisibility() == View.VISIBLE) {
             val id: Int = mResponseRadioGroup!!.getCheckedRadioButtonId()
             if (id != View.NO_ID) {
-                text.add((getView()?.findViewById(R.id.response_label) as TextView)?.getText())
+                text.add((getView()?.findViewById(R.id.response_label) as TextView).getText())
                 text.add(
                     (mResponseRadioGroup?.findViewById(id) as RadioButton)
                         .getText().toString() + PERIOD_SPACE

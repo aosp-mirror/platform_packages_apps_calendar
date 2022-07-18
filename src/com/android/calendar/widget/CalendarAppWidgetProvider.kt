@@ -63,7 +63,7 @@ class CalendarAppWidgetProvider : AppWidgetProvider() {
             action.equals(Utils.getWidgetScheduledUpdateAction(context as Context)))
         ) {
             val service = Intent(context, CalendarAppWidgetService::class.java)
-            context?.startService(service)
+            context.startService(service)
         } else {
             super.onReceive(context, intent)
         }

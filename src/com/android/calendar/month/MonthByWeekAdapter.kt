@@ -330,7 +330,7 @@ class MonthByWeekAdapter(context: Context?, params: HashMap<String?, Int?>) :
     // Clear the visual cues of the click animation and related running code.
     private fun clearClickedView(v: MonthWeekEventsView?) {
         mListView?.removeCallbacks(mDoClick)
-        synchronized(v as Any) { v?.clearClickedDay() }
+        synchronized(v as Any) { v.clearClickedDay() }
         mClickedView = null
     }
 
