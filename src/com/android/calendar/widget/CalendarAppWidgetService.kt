@@ -232,7 +232,7 @@ class CalendarAppWidgetService : RemoteViewsService() {
                 views.setOnClickFillInIntent(R.id.appwidget_loading, intent)
                 return views
             }
-            if (mModel!!.mEventInfos!!.isEmpty() || mModel!!.mRowInfos!!.isEmpty()) {
+            if (mModel!!.mEventInfos.isEmpty() || mModel!!.mRowInfos.isEmpty()) {
                 val views = RemoteViews(
                     mContext?.getPackageName(),
                     R.layout.appwidget_no_events
@@ -248,12 +248,12 @@ class CalendarAppWidgetService : RemoteViewsService() {
                 return views
             }
             val rowInfo: RowInfo? = mModel?.mRowInfos?.get(position)
-            return if (rowInfo!!.mType == RowInfo!!.TYPE_DAY) {
+            return if (rowInfo!!.mType == RowInfo.TYPE_DAY) {
                 val views = RemoteViews(
                     mContext?.getPackageName(),
                     R.layout.appwidget_day
                 )
-                val dayInfo: DayInfo? = mModel?.mDayInfos?.get(rowInfo!!.mIndex)
+                val dayInfo: DayInfo? = mModel?.mDayInfos?.get(rowInfo.mIndex)
                 updateTextView(views, R.id.date, View.VISIBLE, dayInfo!!.mDayLabel)
                 views
             } else {
@@ -267,9 +267,9 @@ class CalendarAppWidgetService : RemoteViewsService() {
                 } else {
                     views = RemoteViews(mContext?.getPackageName(), R.layout.widget_item)
                 }
-                val displayColor: Int = Utils.getDisplayColorFromColor(eventInfo!!.color)
+                val displayColor: Int = Utils.getDisplayColorFromColor(eventInfo.color)
                 val now: Long = System.currentTimeMillis()
-                if (!eventInfo!!.allDay && eventInfo!!.start <= now && now <= eventInfo!!.end) {
+                if (!eventInfo.allDay && eventInfo.start <= now && now <= eventInfo.end) {
                     views.setInt(
                         R.id.widget_row, "setBackgroundResource",
                         R.drawable.agenda_item_bg_secondary
@@ -289,7 +289,7 @@ class CalendarAppWidgetService : RemoteViewsService() {
                 updateTextView(views, R.id.title, eventInfo.visibTitle as Int, eventInfo.title)
                 views.setViewVisibility(R.id.agenda_item_color, View.VISIBLE)
                 val selfAttendeeStatus: Int = eventInfo.selfAttendeeStatus as Int
-                if (eventInfo!!.allDay) {
+                if (eventInfo.allDay) {
                     if (selfAttendeeStatus == Attendees.ATTENDEE_STATUS_INVITED) {
                         views.setInt(
                             R.id.agenda_item_color, "setImageResource",
@@ -345,7 +345,7 @@ class CalendarAppWidgetService : RemoteViewsService() {
                 var start: Long = eventInfo.start as Long
                 var end: Long = eventInfo.end as Long
                 // An element in ListView.
-                if (eventInfo!!.allDay) {
+                if (eventInfo.allDay) {
                     val tz: String? = Utils.getTimeZone(mContext, null)
                     val recycle = Time()
                     start = Utils.convertAlldayLocalToUTC(recycle, start, tz as String)
