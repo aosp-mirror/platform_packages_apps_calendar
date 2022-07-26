@@ -133,7 +133,7 @@ open class SimpleDayPickerFragment(initialTime: Long) : ListFragment(), OnScroll
         @Override
         override fun onChanged() {
             val day: Time? = mAdapter!!.getSelectedDay()
-            if (day!!.year !== mSelectedDay!!.year || day!!.yearDay !== mSelectedDay.yearDay) {
+            if (day!!.year !== mSelectedDay.year || day!!.yearDay !== mSelectedDay.yearDay) {
                 goTo(day!!.toMillis(true), true, true, false)
             }
         }

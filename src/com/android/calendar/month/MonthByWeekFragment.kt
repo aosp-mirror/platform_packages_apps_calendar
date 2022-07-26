@@ -156,8 +156,8 @@ class MonthByWeekFragment @JvmOverloads constructor(
         if (size <= 2) {
             return
         }
-        val first: Long = (pathSegments!![size - 2])?.toLong() as Long
-        val last: Long = (pathSegments!![size - 1])?.toLong() as Long
+        val first: Long = (pathSegments[size - 2])?.toLong() as Long
+        val last: Long = (pathSegments[size - 1])?.toLong() as Long
         mTempTime.set(first)
         mFirstLoadedJulianDay = Time.getJulianDay(first, mTempTime.gmtoff)
         mTempTime.set(last)
