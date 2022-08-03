@@ -262,7 +262,7 @@ class MonthByWeekAdapter(context: Context?, params: HashMap<String?, Int?>) :
         if (v !is MonthWeekEventsView) {
             return super.onTouch(v, event)
         }
-        val action: Int = event!!.getAction()
+        val action: Int = event.getAction()
 
         // Event was tapped - switch to the detailed view making sure the click animation
         // is done first.

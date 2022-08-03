@@ -207,11 +207,11 @@ open class SimpleWeekView(context: Context) : View(context) {
             if (time.monthDay === 1) {
                 firstMonth = time.month
             }
-            mOddMonth!![i] = time.month % 2 === 1
+            mOddMonth[i] = time.month % 2 === 1
             if (time.month === focusMonth) {
-                mFocusDay!![i] = true
+                mFocusDay[i] = true
             } else {
-                mFocusDay!![i] = false
+                mFocusDay[i] = false
             }
             if (time.year === today.year && time.yearDay === today.yearDay) {
                 mHasToday = true
@@ -359,12 +359,12 @@ open class SimpleWeekView(context: Context) : View(context) {
             canvas.drawText(mDayNumbers!![0] as String, x.toFloat(), y.toFloat(), p)
             i++
         }
-        var isFocusMonth = mFocusDay!![i]
+        var isFocusMonth = mFocusDay[i]
         mMonthNumPaint.setColor(if (isFocusMonth) mFocusMonthColor else mOtherMonthColor)
         mMonthNumPaint.setFakeBoldText(false)
         while (i < nDays) {
-            if (mFocusDay!![i] != isFocusMonth) {
-                isFocusMonth = mFocusDay!![i]
+            if (mFocusDay[i] != isFocusMonth) {
+                isFocusMonth = mFocusDay[i]
                 mMonthNumPaint.setColor(if (isFocusMonth) mFocusMonthColor else mOtherMonthColor)
             }
             if (mHasToday && mToday == i) {
