@@ -358,7 +358,7 @@ class AllInOneActivity : Activity(), EventHandler, OnSharedPreferenceChangeListe
         val data: Uri? = intent?.getData()
         if (data != null && data.isHierarchical()) {
             val path = data.getPathSegments()
-            if (path?.size == 2 && path!![0].equals("events")) {
+            if (path?.size == 2 && path[0].equals("events")) {
                 try {
                     mViewEventId = data.getLastPathSegment()?.toLong() as Long
                     if (mViewEventId != -1L) {
