@@ -353,20 +353,20 @@ class EventInfoFragment : DialogFragment, OnCheckedChangeListener, CalendarContr
         window?.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
         val a: WindowManager.LayoutParams? = window?.getAttributes()
         a!!.dimAmount = .4f
-        a!!.width = mDialogWidth
-        a!!.height = mDialogHeight
+        a.width = mDialogWidth
+        a.height = mDialogHeight
 
         // On tablets , do smart positioning of dialog
         // On phones , use the whole screen
         if (mX != -1 || mY != -1) {
-            a!!.x = mX - mDialogWidth / 2
-            a!!.y = mY - mDialogHeight / 2
-            if (a!!.y < mMinTop) {
-                a!!.y = mMinTop + DIALOG_TOP_MARGIN
+            a.x = mX - mDialogWidth / 2
+            a.y = mY - mDialogHeight / 2
+            if (a.y < mMinTop) {
+                a.y = mMinTop + DIALOG_TOP_MARGIN
             }
-            a!!.gravity = Gravity.LEFT or Gravity.TOP
+            a.gravity = Gravity.LEFT or Gravity.TOP
         }
-        window?.setAttributes(a)
+        window.setAttributes(a)
     }
 
     fun setDialogParams(x: Int, y: Int, minTop: Int) {
@@ -637,7 +637,7 @@ class EventInfoFragment : DialogFragment, OnCheckedChangeListener, CalendarContr
                 resources.getColor(R.color.event_info_headline_transparent_color)
             )
             sb.setSpan(
-                transparentColorSpan, timezoneIndex, displayedDatetime!!.length,
+                transparentColorSpan, timezoneIndex, displayedDatetime.length,
                 Spannable.SPAN_INCLUSIVE_INCLUSIVE
             )
             setTextCommon(view, R.id.when_datetime, sb)
@@ -681,7 +681,7 @@ class EventInfoFragment : DialogFragment, OnCheckedChangeListener, CalendarContr
         if (mResponseRadioGroup?.getVisibility() == View.VISIBLE) {
             val id: Int = mResponseRadioGroup!!.getCheckedRadioButtonId()
             if (id != View.NO_ID) {
-                text.add((getView()?.findViewById(R.id.response_label) as TextView)?.getText())
+                text.add((getView()?.findViewById(R.id.response_label) as TextView).getText())
                 text.add(
                     (mResponseRadioGroup?.findViewById(id) as RadioButton)
                         .getText().toString() + PERIOD_SPACE
