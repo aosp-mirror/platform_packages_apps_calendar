@@ -308,12 +308,12 @@ class MonthByWeekAdapter(context: Context?, params: HashMap<String?, Int?>) :
      */
     protected inner class CalendarGestureListener : GestureDetector.SimpleOnGestureListener() {
         @Override
-        override fun onSingleTapUp(e: MotionEvent?): Boolean {
+        override fun onSingleTapUp(e: MotionEvent): Boolean {
             return true
         }
 
         @Override
-        override fun onLongPress(e: MotionEvent?) {
+        override fun onLongPress(e: MotionEvent) {
             if (mLongClickedView != null) {
                 val day: Time? = mLongClickedView?.getDayFromLocation(mClickedXLocation)
                 if (day != null) {
