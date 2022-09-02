@@ -262,7 +262,7 @@ class MonthByWeekAdapter(context: Context?, params: HashMap<String?, Int?>) :
         if (v !is MonthWeekEventsView) {
             return super.onTouch(v, event)
         }
-        val action: Int = event!!.getAction()
+        val action: Int = event.getAction()
 
         // Event was tapped - switch to the detailed view making sure the click animation
         // is done first.
@@ -308,12 +308,12 @@ class MonthByWeekAdapter(context: Context?, params: HashMap<String?, Int?>) :
      */
     protected inner class CalendarGestureListener : GestureDetector.SimpleOnGestureListener() {
         @Override
-        override fun onSingleTapUp(e: MotionEvent?): Boolean {
+        override fun onSingleTapUp(e: MotionEvent): Boolean {
             return true
         }
 
         @Override
-        override fun onLongPress(e: MotionEvent?) {
+        override fun onLongPress(e: MotionEvent) {
             if (mLongClickedView != null) {
                 val day: Time? = mLongClickedView?.getDayFromLocation(mClickedXLocation)
                 if (day != null) {
@@ -330,7 +330,7 @@ class MonthByWeekAdapter(context: Context?, params: HashMap<String?, Int?>) :
     // Clear the visual cues of the click animation and related running code.
     private fun clearClickedView(v: MonthWeekEventsView?) {
         mListView?.removeCallbacks(mDoClick)
-        synchronized(v as Any) { v?.clearClickedDay() }
+        synchronized(v as Any) { v.clearClickedDay() }
         mClickedView = null
     }
 
