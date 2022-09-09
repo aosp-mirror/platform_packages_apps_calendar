@@ -293,7 +293,6 @@ class AllInOneActivity : Activity(), EventHandler, OnSharedPreferenceChangeListe
                 mControlsParams = LayoutParams(mControlsAnimateWidth, 0)
             }
             mControlsParams?.addRule(RelativeLayout.ALIGN_PARENT_RIGHT)
-                as RelativeLayout.LayoutParams
         } else {
             // Make sure width is in between allowed min and max width values
             mControlsAnimateWidth = Math.max(
