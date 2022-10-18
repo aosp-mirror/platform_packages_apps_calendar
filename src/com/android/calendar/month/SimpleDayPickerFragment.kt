@@ -121,7 +121,7 @@ open class SimpleDayPickerFragment(initialTime: Long) : ListFragment(), OnScroll
             midnight.second = 0
             midnight.monthDay++
             val millisToMidnight: Long = midnight.normalize(true) - currentMillis
-            mHandler?.postDelayed(this, millisToMidnight)
+            mHandler.postDelayed(this, millisToMidnight)
             if (mAdapter != null) {
                 mAdapter?.notifyDataSetChanged()
             }
@@ -133,7 +133,7 @@ open class SimpleDayPickerFragment(initialTime: Long) : ListFragment(), OnScroll
         @Override
         override fun onChanged() {
             val day: Time? = mAdapter!!.getSelectedDay()
-            if (day!!.year !== mSelectedDay!!.year || day!!.yearDay !== mSelectedDay.yearDay) {
+            if (day!!.year !== mSelectedDay.year || day!!.yearDay !== mSelectedDay.yearDay) {
                 goTo(day!!.toMillis(true), true, true, false)
             }
         }
@@ -179,10 +179,10 @@ open class SimpleDayPickerFragment(initialTime: Long) : ListFragment(), OnScroll
      */
     protected open fun setUpAdapter() {
         val weekParams = HashMap<String?, Int?>()
-        weekParams?.put(SimpleWeeksAdapter.WEEK_PARAMS_NUM_WEEKS, mNumWeeks)
-        weekParams?.put(SimpleWeeksAdapter.WEEK_PARAMS_SHOW_WEEK, if (mShowWeekNumber) 1 else 0)
-        weekParams?.put(SimpleWeeksAdapter.WEEK_PARAMS_WEEK_START, mFirstDayOfWeek)
-        weekParams?.put(SimpleWeeksAdapter.WEEK_PARAMS_JULIAN_DAY,
+        weekParams.put(SimpleWeeksAdapter.WEEK_PARAMS_NUM_WEEKS, mNumWeeks)
+        weekParams.put(SimpleWeeksAdapter.WEEK_PARAMS_SHOW_WEEK, if (mShowWeekNumber) 1 else 0)
+        weekParams.put(SimpleWeeksAdapter.WEEK_PARAMS_WEEK_START, mFirstDayOfWeek)
+        weekParams.put(SimpleWeeksAdapter.WEEK_PARAMS_JULIAN_DAY,
                 Time.getJulianDay(mSelectedDay.toMillis(false), mSelectedDay.gmtoff))
         if (mAdapter == null) {
             mAdapter = SimpleWeeksAdapter(getActivity(), weekParams)
@@ -482,7 +482,7 @@ open class SimpleDayPickerFragment(initialTime: Long) : ListFragment(), OnScroll
         }
 
         // Figure out where we are
-        val offset = if (child?.getBottom() < WEEK_MIN_VISIBLE_HEIGHT) 1 else 0
+        val offset = if (child.getBottom() < WEEK_MIN_VISIBLE_HEIGHT) 1 else 0
         // Use some hysteresis for checking which month to highlight. This
         // causes the month to transition when two full weeks of a month are
         // visible.
@@ -494,9 +494,9 @@ open class SimpleDayPickerFragment(initialTime: Long) : ListFragment(), OnScroll
         // Find out which month we're moving into
         val month: Int
         month = if (mIsScrollingUp) {
-            child?.getFirstMonth()
+            child.getFirstMonth()
         } else {
-            child?.getLastMonth()
+            child.getLastMonth()
         }
 
         // And how it relates to our current highlighted month
