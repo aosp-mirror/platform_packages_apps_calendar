@@ -211,17 +211,17 @@ class DayView(
 
     var mAnimatorListener: AnimatorListenerAdapter = object : AnimatorListenerAdapter() {
         @Override
-        override fun onAnimationStart(animation: Animator?) {
+        override fun onAnimationStart(animation: Animator) {
             mScrolling = true
         }
 
         @Override
-        override fun onAnimationCancel(animation: Animator?) {
+        override fun onAnimationCancel(animation: Animator) {
             mScrolling = false
         }
 
         @Override
-        override fun onAnimationEnd(animation: Animator?) {
+        override fun onAnimationEnd(animation: Animator) {
             mScrolling = false
             resetSelectedHour()
             invalidate()
@@ -1154,7 +1154,7 @@ class DayView(
         private val mStart: Time
         private val mEnd: Time
         @Override
-        override fun onAnimationEnd(animation: Animation?) {
+        override fun onAnimationEnd(animation: Animation) {
             var view = mViewSwitcher.getCurrentView() as DayView
             view.mViewStartX = 0
             view = mViewSwitcher.getNextView() as DayView
@@ -1168,11 +1168,11 @@ class DayView(
         }
 
         @Override
-        override fun onAnimationRepeat(animation: Animation?) {
+        override fun onAnimationRepeat(animation: Animation) {
         }
 
         @Override
-        override fun onAnimationStart(animation: Animation?) {
+        override fun onAnimationStart(animation: Animation) {
         }
 
         init {
@@ -2682,7 +2682,7 @@ class DayView(
             animator.setDuration(ANIMATION_DURATION)
             animator.addListener(object : AnimatorListenerAdapter() {
                 @Override
-                override fun onAnimationEnd(animation: Animator?) {
+                override fun onAnimationEnd(animation: Animator) {
                     if (!mCancellingAnimations) {
                         // when finished, set this to 0 to signify not animating
                         mAnimateDayHeight = 0
@@ -3038,7 +3038,7 @@ class DayView(
     }
 
     // ScaleGestureDetector.OnScaleGestureListener
-    override fun onScaleEnd(detector: ScaleGestureDetector?) {
+    override fun onScaleEnd(detector: ScaleGestureDetector) {
         mScrollStartY = mViewStartY
         mInitialScrollY = 0f
         mInitialScrollX = 0f
