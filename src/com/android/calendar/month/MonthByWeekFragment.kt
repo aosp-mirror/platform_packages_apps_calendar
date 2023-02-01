@@ -131,7 +131,7 @@ class MonthByWeekFragment @JvmOverloads constructor(
     private fun updateUri(): Uri {
         val child: SimpleWeekView? = mListView?.getChildAt(0) as? SimpleWeekView
         if (child != null) {
-            val julianDay: Int = child?.getFirstJulianDay()
+            val julianDay: Int = child.getFirstJulianDay()
             mFirstLoadedJulianDay = julianDay
         }
         // -1 to ensure we get all day events from any time zone
@@ -156,8 +156,8 @@ class MonthByWeekFragment @JvmOverloads constructor(
         if (size <= 2) {
             return
         }
-        val first: Long = (pathSegments!![size - 2])?.toLong() as Long
-        val last: Long = (pathSegments!![size - 1])?.toLong() as Long
+        val first: Long = (pathSegments[size - 2])?.toLong() as Long
+        val last: Long = (pathSegments[size - 1])?.toLong() as Long
         mTempTime.set(first)
         mFirstLoadedJulianDay = Time.getJulianDay(first, mTempTime.gmtoff)
         mTempTime.set(last)
@@ -222,11 +222,11 @@ class MonthByWeekFragment @JvmOverloads constructor(
         mFirstDayOfWeek = Utils.getFirstDayOfWeek(mContext)
         mShowWeekNumber = Utils.getShowWeekNumber(mContext)
         val weekParams = HashMap<String?, Int?>()
-        weekParams?.put(SimpleWeeksAdapter.WEEK_PARAMS_NUM_WEEKS, mNumWeeks)
-        weekParams?.put(SimpleWeeksAdapter.WEEK_PARAMS_SHOW_WEEK, if (mShowWeekNumber) 1 else 0)
-        weekParams?.put(SimpleWeeksAdapter.WEEK_PARAMS_WEEK_START, mFirstDayOfWeek)
-        weekParams?.put(MonthByWeekAdapter.WEEK_PARAMS_IS_MINI, if (mIsMiniMonth) 1 else 0)
-        weekParams?.put(
+        weekParams.put(SimpleWeeksAdapter.WEEK_PARAMS_NUM_WEEKS, mNumWeeks)
+        weekParams.put(SimpleWeeksAdapter.WEEK_PARAMS_SHOW_WEEK, if (mShowWeekNumber) 1 else 0)
+        weekParams.put(SimpleWeeksAdapter.WEEK_PARAMS_WEEK_START, mFirstDayOfWeek)
+        weekParams.put(MonthByWeekAdapter.WEEK_PARAMS_IS_MINI, if (mIsMiniMonth) 1 else 0)
+        weekParams.put(
                 SimpleWeeksAdapter.WEEK_PARAMS_JULIAN_DAY,
                 Time.getJulianDay(mSelectedDay.toMillis(true), mSelectedDay.gmtoff)
         )
@@ -383,21 +383,21 @@ class MonthByWeekFragment @JvmOverloads constructor(
         if (event?.eventType === EventType.GO_TO) {
             var animate = true
             if (mDaysPerWeek * mNumWeeks * 2 < Math.abs(
-                            Time.getJulianDay(event?.selectedTime?.toMillis(true) as Long,
-                                    event?.selectedTime?.gmtoff as Long) -
-                                    Time.getJulianDay(mFirstVisibleDay?.toMillis(true) as Long,
-                                            mFirstVisibleDay?.gmtoff as Long) -
+                            Time.getJulianDay(event.selectedTime?.toMillis(true) as Long,
+                                    event.selectedTime?.gmtoff as Long) -
+                                    Time.getJulianDay(mFirstVisibleDay.toMillis(true) as Long,
+                                            mFirstVisibleDay.gmtoff as Long) -
                                     mDaysPerWeek * mNumWeeks / 2L
                     )
             ) {
                 animate = false
             }
-            mDesiredDay.set(event?.selectedTime)
+            mDesiredDay.set(event.selectedTime)
             mDesiredDay.normalize(true)
-            val animateToday = event?.extraLong and
+            val animateToday = event.extraLong and
                     CalendarController.EXTRA_GOTO_TODAY.toLong() != 0L
             val delayAnimation: Boolean =
-                    goTo(event?.selectedTime?.toMillis(true)?.toLong() as Long,
+                    goTo(event.selectedTime?.toMillis(true)?.toLong() as Long,
                         animate, true, false)
             if (animateToday) {
                 // If we need to flash today start the animation after any
