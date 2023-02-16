@@ -207,11 +207,11 @@ open class SimpleWeekView(context: Context) : View(context) {
             if (time.monthDay === 1) {
                 firstMonth = time.month
             }
-            mOddMonth!![i] = time.month % 2 === 1
+            mOddMonth[i] = time.month % 2 === 1
             if (time.month === focusMonth) {
-                mFocusDay!![i] = true
+                mFocusDay[i] = true
             } else {
-                mFocusDay!![i] = false
+                mFocusDay[i] = false
             }
             if (time.year === today.year && time.yearDay === today.yearDay) {
                 mHasToday = true
@@ -241,12 +241,12 @@ open class SimpleWeekView(context: Context) : View(context) {
         p.setTextSize(MINI_DAY_NUMBER_TEXT_SIZE.toFloat())
         p.setStyle(Style.FILL)
         mMonthNumPaint = Paint()
-        mMonthNumPaint?.setFakeBoldText(true)
-        mMonthNumPaint?.setAntiAlias(true)
-        mMonthNumPaint?.setTextSize(MINI_DAY_NUMBER_TEXT_SIZE.toFloat())
-        mMonthNumPaint?.setColor(mFocusMonthColor)
-        mMonthNumPaint?.setStyle(Style.FILL)
-        mMonthNumPaint?.setTextAlign(Align.CENTER)
+        mMonthNumPaint.setFakeBoldText(true)
+        mMonthNumPaint.setAntiAlias(true)
+        mMonthNumPaint.setTextSize(MINI_DAY_NUMBER_TEXT_SIZE.toFloat())
+        mMonthNumPaint.setColor(mFocusMonthColor)
+        mMonthNumPaint.setStyle(Style.FILL)
+        mMonthNumPaint.setTextAlign(Align.CENTER)
     }
 
     /**
@@ -359,24 +359,24 @@ open class SimpleWeekView(context: Context) : View(context) {
             canvas.drawText(mDayNumbers!![0] as String, x.toFloat(), y.toFloat(), p)
             i++
         }
-        var isFocusMonth = mFocusDay!![i]
-        mMonthNumPaint?.setColor(if (isFocusMonth) mFocusMonthColor else mOtherMonthColor)
-        mMonthNumPaint?.setFakeBoldText(false)
+        var isFocusMonth = mFocusDay[i]
+        mMonthNumPaint.setColor(if (isFocusMonth) mFocusMonthColor else mOtherMonthColor)
+        mMonthNumPaint.setFakeBoldText(false)
         while (i < nDays) {
-            if (mFocusDay!![i] != isFocusMonth) {
-                isFocusMonth = mFocusDay!![i]
-                mMonthNumPaint?.setColor(if (isFocusMonth) mFocusMonthColor else mOtherMonthColor)
+            if (mFocusDay[i] != isFocusMonth) {
+                isFocusMonth = mFocusDay[i]
+                mMonthNumPaint.setColor(if (isFocusMonth) mFocusMonthColor else mOtherMonthColor)
             }
             if (mHasToday && mToday == i) {
-                mMonthNumPaint?.setTextSize(MINI_TODAY_NUMBER_TEXT_SIZE.toFloat())
-                mMonthNumPaint?.setFakeBoldText(true)
+                mMonthNumPaint.setTextSize(MINI_TODAY_NUMBER_TEXT_SIZE.toFloat())
+                mMonthNumPaint.setFakeBoldText(true)
             }
             val x = (2 * i + 1) * (mWidth - mPadding * 2) / divisor + mPadding
             canvas.drawText(mDayNumbers!![i] as String, x.toFloat(), y.toFloat(),
                     mMonthNumPaint as Paint)
             if (mHasToday && mToday == i) {
-                mMonthNumPaint?.setTextSize(MINI_DAY_NUMBER_TEXT_SIZE.toFloat())
-                mMonthNumPaint?.setFakeBoldText(false)
+                mMonthNumPaint.setTextSize(MINI_DAY_NUMBER_TEXT_SIZE.toFloat())
+                mMonthNumPaint.setFakeBoldText(false)
             }
             i++
         }

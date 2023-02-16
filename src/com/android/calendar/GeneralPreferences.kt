@@ -248,8 +248,8 @@ class GeneralPreferences : PreferenceFragment(), OnSharedPreferenceChangeListene
         mVibrate?.setChecked(Utils.getDefaultVibrate(getActivity(), prefs))
 
         // If needed, migrate the old alerts type settin
-        if (prefs?.contains(KEY_ALERTS) == false && prefs?.contains(KEY_ALERTS_TYPE) == true) {
-            val type: String? = prefs?.getString(KEY_ALERTS_TYPE, ALERT_TYPE_STATUS_BAR)
+        if (prefs?.contains(KEY_ALERTS) == false && prefs.contains(KEY_ALERTS_TYPE) == true) {
+            val type: String? = prefs.getString(KEY_ALERTS_TYPE, ALERT_TYPE_STATUS_BAR)
             if (type.equals(ALERT_TYPE_OFF)) {
                 mAlert?.setChecked(false)
                 mPopup?.setChecked(false)
@@ -264,7 +264,7 @@ class GeneralPreferences : PreferenceFragment(), OnSharedPreferenceChangeListene
                 mPopup?.setEnabled(true)
             }
             // clear out the old setting
-            prefs?.edit().remove(KEY_ALERTS_TYPE).commit()
+            prefs.edit().remove(KEY_ALERTS_TYPE).commit()
         }
     }
 
