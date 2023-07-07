@@ -232,7 +232,7 @@ class CalendarAppWidgetService : RemoteViewsService() {
                 views.setOnClickFillInIntent(R.id.appwidget_loading, intent)
                 return views
             }
-            if (mModel!!.mEventInfos!!.isEmpty() || mModel!!.mRowInfos!!.isEmpty()) {
+            if (mModel!!.mEventInfos.isEmpty() || mModel!!.mRowInfos.isEmpty()) {
                 val views = RemoteViews(
                     mContext?.getPackageName(),
                     R.layout.appwidget_no_events
@@ -248,12 +248,12 @@ class CalendarAppWidgetService : RemoteViewsService() {
                 return views
             }
             val rowInfo: RowInfo? = mModel?.mRowInfos?.get(position)
-            return if (rowInfo!!.mType == RowInfo!!.TYPE_DAY) {
+            return if (rowInfo!!.mType == RowInfo.TYPE_DAY) {
                 val views = RemoteViews(
                     mContext?.getPackageName(),
                     R.layout.appwidget_day
                 )
-                val dayInfo: DayInfo? = mModel?.mDayInfos?.get(rowInfo!!.mIndex)
+                val dayInfo: DayInfo? = mModel?.mDayInfos?.get(rowInfo.mIndex)
                 updateTextView(views, R.id.date, View.VISIBLE, dayInfo!!.mDayLabel)
                 views
             } else {
@@ -267,92 +267,92 @@ class CalendarAppWidgetService : RemoteViewsService() {
                 } else {
                     views = RemoteViews(mContext?.getPackageName(), R.layout.widget_item)
                 }
-                val displayColor: Int = Utils.getDisplayColorFromColor(eventInfo!!.color)
+                val displayColor: Int = Utils.getDisplayColorFromColor(eventInfo.color)
                 val now: Long = System.currentTimeMillis()
-                if (!eventInfo!!.allDay && eventInfo!!.start <= now && now <= eventInfo!!.end) {
-                    views?.setInt(
+                if (!eventInfo.allDay && eventInfo.start <= now && now <= eventInfo.end) {
+                    views.setInt(
                         R.id.widget_row, "setBackgroundResource",
                         R.drawable.agenda_item_bg_secondary
                     )
                 } else {
-                    views?.setInt(
+                    views.setInt(
                         R.id.widget_row, "setBackgroundResource",
                         R.drawable.agenda_item_bg_primary
                     )
                 }
-                if (!eventInfo?.allDay) {
-                    updateTextView(views, R.id.`when`, eventInfo?.visibWhen
-                        as Int, eventInfo?.`when`)
-                    updateTextView(views, R.id.where, eventInfo?.visibWhere
-                        as Int, eventInfo?.where)
+                if (!eventInfo.allDay) {
+                    updateTextView(views, R.id.`when`, eventInfo.visibWhen
+                        as Int, eventInfo.`when`)
+                    updateTextView(views, R.id.where, eventInfo.visibWhere
+                        as Int, eventInfo.where)
                 }
-                updateTextView(views, R.id.title, eventInfo?.visibTitle as Int, eventInfo?.title)
+                updateTextView(views, R.id.title, eventInfo.visibTitle as Int, eventInfo.title)
                 views.setViewVisibility(R.id.agenda_item_color, View.VISIBLE)
-                val selfAttendeeStatus: Int = eventInfo?.selfAttendeeStatus as Int
-                if (eventInfo!!.allDay) {
+                val selfAttendeeStatus: Int = eventInfo.selfAttendeeStatus as Int
+                if (eventInfo.allDay) {
                     if (selfAttendeeStatus == Attendees.ATTENDEE_STATUS_INVITED) {
-                        views?.setInt(
+                        views.setInt(
                             R.id.agenda_item_color, "setImageResource",
                             R.drawable.widget_chip_not_responded_bg
                         )
-                        views?.setInt(R.id.title, "setTextColor", displayColor)
+                        views.setInt(R.id.title, "setTextColor", displayColor)
                     } else {
-                        views?.setInt(
+                        views.setInt(
                             R.id.agenda_item_color, "setImageResource",
                             R.drawable.widget_chip_responded_bg
                         )
-                        views?.setInt(R.id.title, "setTextColor", mAllDayColor)
+                        views.setInt(R.id.title, "setTextColor", mAllDayColor)
                     }
                     if (selfAttendeeStatus == Attendees.ATTENDEE_STATUS_DECLINED) {
                         // 40% opacity
-                        views?.setInt(
+                        views.setInt(
                             R.id.agenda_item_color, "setColorFilter",
                             Utils.getDeclinedColorFromColor(displayColor)
                         )
                     } else {
-                        views?.setInt(R.id.agenda_item_color, "setColorFilter", displayColor)
+                        views.setInt(R.id.agenda_item_color, "setColorFilter", displayColor)
                     }
                 } else if (selfAttendeeStatus == Attendees.ATTENDEE_STATUS_DECLINED) {
-                    views?.setInt(R.id.title, "setTextColor", mDeclinedColor)
-                    views?.setInt(R.id.`when`, "setTextColor", mDeclinedColor)
-                    views?.setInt(R.id.where, "setTextColor", mDeclinedColor)
-                    views?.setInt(
+                    views.setInt(R.id.title, "setTextColor", mDeclinedColor)
+                    views.setInt(R.id.`when`, "setTextColor", mDeclinedColor)
+                    views.setInt(R.id.where, "setTextColor", mDeclinedColor)
+                    views.setInt(
                         R.id.agenda_item_color, "setImageResource",
                         R.drawable.widget_chip_responded_bg
                     )
                     // 40% opacity
-                    views?.setInt(
+                    views.setInt(
                         R.id.agenda_item_color, "setColorFilter",
                         Utils.getDeclinedColorFromColor(displayColor)
                     )
                 } else {
-                    views?.setInt(R.id.title, "setTextColor", mStandardColor)
-                    views?.setInt(R.id.`when`, "setTextColor", mStandardColor)
-                    views?.setInt(R.id.where, "setTextColor", mStandardColor)
+                    views.setInt(R.id.title, "setTextColor", mStandardColor)
+                    views.setInt(R.id.`when`, "setTextColor", mStandardColor)
+                    views.setInt(R.id.where, "setTextColor", mStandardColor)
                     if (selfAttendeeStatus == Attendees.ATTENDEE_STATUS_INVITED) {
-                        views?.setInt(
+                        views.setInt(
                             R.id.agenda_item_color, "setImageResource",
                             R.drawable.widget_chip_not_responded_bg
                         )
                     } else {
-                        views?.setInt(
+                        views.setInt(
                             R.id.agenda_item_color, "setImageResource",
                             R.drawable.widget_chip_responded_bg
                         )
                     }
-                    views?.setInt(R.id.agenda_item_color, "setColorFilter", displayColor)
+                    views.setInt(R.id.agenda_item_color, "setColorFilter", displayColor)
                 }
-                var start: Long = eventInfo?.start as Long
-                var end: Long = eventInfo?.end as Long
+                var start: Long = eventInfo.start as Long
+                var end: Long = eventInfo.end as Long
                 // An element in ListView.
-                if (eventInfo!!.allDay) {
+                if (eventInfo.allDay) {
                     val tz: String? = Utils.getTimeZone(mContext, null)
                     val recycle = Time()
                     start = Utils.convertAlldayLocalToUTC(recycle, start, tz as String)
                     end = Utils.convertAlldayLocalToUTC(recycle, end, tz as String)
                 }
                 val fillInIntent: Intent = CalendarAppWidgetProvider.getLaunchFillInIntent(
-                    mContext, eventInfo?.id, start, end, eventInfo?.allDay
+                    mContext, eventInfo.id, start, end, eventInfo.allDay
                 )
                 views.setOnClickFillInIntent(R.id.widget_row, fillInIntent)
                 views
@@ -502,10 +502,10 @@ class CalendarAppWidgetService : RemoteViewsService() {
                     mModel = buildAppWidgetModel(mContext, matrixCursor, tz)
                 } finally {
                     if (matrixCursor != null) {
-                        matrixCursor?.close()
+                        matrixCursor.close()
                     }
                     if (cursor != null) {
-                        cursor?.close()
+                        cursor.close()
                     }
                 }
 
