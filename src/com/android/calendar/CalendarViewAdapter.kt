@@ -133,7 +133,7 @@ class CalendarViewAdapter(context: Context, viewType: Int, showDate: Boolean) : 
                 v = convertView
             }
             val weekDay: TextView = v?.findViewById(R.id.top_button_weekday) as TextView
-            val date: TextView = v?.findViewById(R.id.top_button_date) as TextView
+            val date: TextView = v.findViewById(R.id.top_button_date) as TextView
             when (mCurrentMainView) {
                 ViewType.DAY -> {
                     weekDay.setVisibility(View.VISIBLE)
