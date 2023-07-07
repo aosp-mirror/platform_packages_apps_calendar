@@ -440,7 +440,7 @@ class CalendarController private constructor(context: Context?) {
 
         // Set mTime if selectedTime is set
         val temp1 = event.selectedTime
-        if (temp1 != null && temp1?.toMillis(false) != 0L) {
+        if (temp1 != null && temp1.toMillis(false) != 0L) {
             mTime?.set(event.selectedTime)
         } else {
             if (startMillis != 0L) {
@@ -450,7 +450,7 @@ class CalendarController private constructor(context: Context?) {
                 val temp2 = event.endTime
                 if (mtimeMillis < startMillis ||
                         temp2 != null && mtimeMillis > temp2.toMillis(false)) {
-                    mTime?.set(event.startTime)
+                    mTime.set(event.startTime)
                 }
             }
             event.selectedTime = mTime
