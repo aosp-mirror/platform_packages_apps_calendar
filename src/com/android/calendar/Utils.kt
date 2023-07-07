@@ -186,13 +186,13 @@ object Utils {
             return ViewType.EDIT
         }
         if (extras != null) {
-            if (extras?.getBoolean(INTENT_KEY_DETAIL_VIEW, false)) {
+            if (extras.getBoolean(INTENT_KEY_DETAIL_VIEW, false)) {
                 // This is the "detail" view which is either agenda or day view
                 return prefs?.getInt(
                     GeneralPreferences.KEY_DETAILED_VIEW,
                     GeneralPreferences.DEFAULT_DETAILED_VIEW
                 ) as Int
-            } else if (INTENT_VALUE_VIEW_TYPE_DAY.equals(extras?.getString(INTENT_KEY_VIEW_TYPE))) {
+            } else if (INTENT_VALUE_VIEW_TYPE_DAY.equals(extras.getString(INTENT_KEY_VIEW_TYPE))) {
                 // Not sure who uses this. This logic came from LaunchActivity
                 return ViewType.DAY
             }
@@ -275,12 +275,12 @@ object Utils {
             //
             // silent and never -> off
             // always -> on
-            val vibrateWhen: String? = prefs?.getString(KEY_ALERTS_VIBRATE_WHEN, null)
+            val vibrateWhen: String? = prefs.getString(KEY_ALERTS_VIBRATE_WHEN, null)
             vibrate = vibrateWhen != null && vibrateWhen.equals(
                 context
                     .getString(R.string.prefDefault_alerts_vibrate_true)
             )
-            prefs?.edit().remove(KEY_ALERTS_VIBRATE_WHEN).commit()
+            prefs.edit().remove(KEY_ALERTS_VIBRATE_WHEN).commit()
             Log.d(
                 TAG, "Migrating KEY_ALERTS_VIBRATE_WHEN(" +
                     vibrateWhen + ") to KEY_ALERTS_VIBRATE = " + vibrate
@@ -302,8 +302,8 @@ object Utils {
         val prefs: SharedPreferences? = GeneralPreferences.getSharedPreferences(context)
         val ss = prefs?.getStringSet(key, null)
         if (ss != null) {
-            val strings = arrayOfNulls<String>(ss?.size)
-            return ss?.toTypedArray()
+            val strings = arrayOfNulls<String>(ss.size)
+            return ss.toTypedArray()
         }
         return defaultValue
     }
@@ -463,11 +463,11 @@ object Utils {
         // time.
         val data: Uri? = intent?.getData()
         var millis: Long? = intent?.getLongExtra(EXTRA_EVENT_BEGIN_TIME, -1)?.toLong()
-        if (millis == -1L && data != null && data?.isHierarchical()) {
-            val path: List<String> = data?.getPathSegments() as List<String>
+        if (millis == -1L && data != null && data.isHierarchical()) {
+            val path: List<String> = data.getPathSegments() as List<String>
             if (path.size == 2 && path[0].equals("time")) {
                 try {
-                    millis = (data?.getLastPathSegment()?.toLong())
+                    millis = (data.getLastPathSegment()?.toLong())
                 } catch (e: NumberFormatException) {
                     Log.i(
                         "Calendar", "timeFromIntentInMillis: Data existed but no valid time " +
@@ -818,8 +818,8 @@ object Utils {
             }
             val res: Resources? = context?.getResources()
             CONFLICT_COLOR = res?.getColor(R.color.month_dna_conflict_time_color) as Int
-            WORK_DAY_START_MINUTES = res?.getInteger(R.integer.work_start_minutes) as Int
-            WORK_DAY_END_MINUTES = res?.getInteger(R.integer.work_end_minutes) as Int
+            WORK_DAY_START_MINUTES = res.getInteger(R.integer.work_start_minutes) as Int
+            WORK_DAY_END_MINUTES = res.getInteger(R.integer.work_end_minutes) as Int
             WORK_DAY_END_LENGTH = DAY_IN_MINUTES - WORK_DAY_END_MINUTES
             WORK_DAY_MINUTES = WORK_DAY_END_MINUTES - WORK_DAY_START_MINUTES
             mMinutesLoaded = true
@@ -1085,7 +1085,7 @@ object Utils {
         val strandIterator = strands.values.iterator()
         while (strandIterator.hasNext()) {
             val strand = strandIterator.next()
-            if (strand?.count < 1 && strand.allDays == null) {
+            if (strand.count < 1 && strand.allDays == null) {
                 strandIterator.remove()
                 continue
             }
@@ -1115,17 +1115,17 @@ object Utils {
                         " for " + dayStartMinute.toString() + " " + dayEndMinute
                 )
             }
-            strand?.points!![strand?.position] = x.toFloat()
-            strand?.position = strand?.position?.inc() as Int
+            strand?.points!![strand.position] = x.toFloat()
+            strand.position = strand.position.inc() as Int
 
-            strand?.points!![strand?.position] = y0.toFloat()
-            strand?.position = strand?.position?.inc() as Int
+            strand.points!![strand.position] = y0.toFloat()
+            strand.position = strand.position.inc() as Int
 
-            strand?.points!![strand?.position] = x.toFloat()
-            strand?.position = strand?.position.inc() as Int
+            strand.points!![strand.position] = x.toFloat()
+            strand.position = strand.position.inc() as Int
 
-            strand?.points!![strand?.position] = y1.toFloat()
-            strand?.position = strand?.position.inc() as Int
+            strand.points!![strand.position] = y1.toFloat()
+            strand.position = strand.position.inc() as Int
         }
     }
 
@@ -1221,9 +1221,9 @@ object Utils {
         var strand: DNAStrand? = strands.get(color)
         if (strand == null) {
             strand = DNAStrand()
-            strand?.color = color
-            strand?.count = 0
-            strands?.put(strand?.color, strand)
+            strand.color = color
+            strand.count = 0
+            strands.put(strand.color, strand)
         }
         return strand
     }
