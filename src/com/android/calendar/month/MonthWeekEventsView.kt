@@ -215,7 +215,7 @@ class MonthWeekEventsView
                 effectiveWidth -= SPACING_WEEK_NUMBER
             }
             DNA_ALL_DAY_WIDTH = effectiveWidth / numDays - 2 * DNA_SIDE_PADDING
-            mDNAAllDayPaint?.setStrokeWidth(DNA_ALL_DAY_WIDTH.toFloat())
+            mDNAAllDayPaint.setStrokeWidth(DNA_ALL_DAY_WIDTH.toFloat())
             mDayXs = IntArray(numDays)
             for (day in 0 until numDays) {
                 mDayXs!![day] = computeDayLeftPosition(day) + DNA_WIDTH / 2 + DNA_SIDE_PADDING
@@ -322,20 +322,20 @@ class MonthWeekEventsView
         loadColors(getContext())
         // TODO modify paint properties depending on isMini
         mMonthNumPaint = Paint()
-        mMonthNumPaint?.setFakeBoldText(false)
-        mMonthNumPaint?.setAntiAlias(true)
-        mMonthNumPaint?.setTextSize(TEXT_SIZE_MONTH_NUMBER.toFloat())
-        mMonthNumPaint?.setColor(mMonthNumColor)
-        mMonthNumPaint?.setStyle(Style.FILL)
-        mMonthNumPaint?.setTextAlign(Align.RIGHT)
-        mMonthNumPaint?.setTypeface(Typeface.DEFAULT)
-        mMonthNumAscentHeight = (-mMonthNumPaint!!.ascent() + 0.5f).toInt()
-        mMonthNumHeight = (mMonthNumPaint!!.descent() - mMonthNumPaint!!.ascent() + 0.5f).toInt()
+        mMonthNumPaint.setFakeBoldText(false)
+        mMonthNumPaint.setAntiAlias(true)
+        mMonthNumPaint.setTextSize(TEXT_SIZE_MONTH_NUMBER.toFloat())
+        mMonthNumPaint.setColor(mMonthNumColor)
+        mMonthNumPaint.setStyle(Style.FILL)
+        mMonthNumPaint.setTextAlign(Align.RIGHT)
+        mMonthNumPaint.setTypeface(Typeface.DEFAULT)
+        mMonthNumAscentHeight = (-mMonthNumPaint.ascent() + 0.5f).toInt()
+        mMonthNumHeight = (mMonthNumPaint.descent() - mMonthNumPaint.ascent() + 0.5f).toInt()
         mEventPaint = TextPaint()
-        mEventPaint?.setFakeBoldText(true)
-        mEventPaint?.setAntiAlias(true)
-        mEventPaint?.setTextSize(TEXT_SIZE_EVENT_TITLE.toFloat())
-        mEventPaint?.setColor(mMonthEventColor)
+        mEventPaint.setFakeBoldText(true)
+        mEventPaint.setAntiAlias(true)
+        mEventPaint.setTextSize(TEXT_SIZE_EVENT_TITLE.toFloat())
+        mEventPaint.setColor(mMonthEventColor)
         mSolidBackgroundEventPaint = TextPaint(mEventPaint)
         mSolidBackgroundEventPaint?.setColor(EVENT_TEXT_COLOR)
         mFramedEventPaint = TextPaint(mSolidBackgroundEventPaint)
@@ -347,13 +347,13 @@ class MonthWeekEventsView
         mEventAscentHeight = (-mEventPaint.ascent() + 0.5f).toInt()
         mEventHeight = (mEventPaint.descent() - mEventPaint.ascent() + 0.5f).toInt()
         mEventExtrasPaint = TextPaint()
-        mEventExtrasPaint?.setFakeBoldText(false)
-        mEventExtrasPaint?.setAntiAlias(true)
-        mEventExtrasPaint?.setStrokeWidth(EVENT_SQUARE_BORDER.toFloat())
-        mEventExtrasPaint?.setTextSize(TEXT_SIZE_EVENT.toFloat())
-        mEventExtrasPaint?.setColor(mMonthEventExtraColor)
-        mEventExtrasPaint?.setStyle(Style.FILL)
-        mEventExtrasPaint?.setTextAlign(Align.LEFT)
+        mEventExtrasPaint.setFakeBoldText(false)
+        mEventExtrasPaint.setAntiAlias(true)
+        mEventExtrasPaint.setStrokeWidth(EVENT_SQUARE_BORDER.toFloat())
+        mEventExtrasPaint.setTextSize(TEXT_SIZE_EVENT.toFloat())
+        mEventExtrasPaint.setColor(mMonthEventExtraColor)
+        mEventExtrasPaint.setStyle(Style.FILL)
+        mEventExtrasPaint.setTextAlign(Align.LEFT)
         mExtrasHeight = (mEventExtrasPaint.descent() - mEventExtrasPaint.ascent() + 0.5f).toInt()
         mExtrasAscentHeight = (-mEventExtrasPaint.ascent() + 0.5f).toInt()
         mExtrasDescent = (mEventExtrasPaint.descent() + 0.5f).toInt()
@@ -388,11 +388,11 @@ class MonthWeekEventsView
         mEventSquarePaint.setAntiAlias(false)
         if (DEBUG_LAYOUT) {
             Log.d("EXTRA", "mScale=$mScale")
-            Log.d("EXTRA", "mMonthNumPaint ascent=" + mMonthNumPaint?.ascent()
-                    ?.toString() + " descent=" + mMonthNumPaint?.descent()?.toString() +
+            Log.d("EXTRA", "mMonthNumPaint ascent=" + mMonthNumPaint.ascent()
+                    .toString() + " descent=" + mMonthNumPaint.descent().toString() +
                     " int height=" + mMonthNumHeight)
-            Log.d("EXTRA", "mEventPaint ascent=" + mEventPaint?.ascent()
-                    ?.toString() + " descent=" + mEventPaint.descent().toString() +
+            Log.d("EXTRA", "mEventPaint ascent=" + mEventPaint.ascent()
+                    .toString() + " descent=" + mEventPaint.descent().toString() +
                     " int height=" + mEventHeight
                     .toString() + " int ascent=" + mEventAscentHeight)
             Log.d("EXTRA", "mEventExtrasPaint ascent=" + mEventExtrasPaint.ascent()
@@ -544,15 +544,15 @@ class MonthWeekEventsView
             i++
             offset++
         }
-        if (!mOddMonth!!.get(i)) {
-            while (++i < mOddMonth!!.size && !mOddMonth!!.get(i));
+        if (!mOddMonth.get(i)) {
+            while (++i < mOddMonth.size && !mOddMonth.get(i));
             r.right = computeDayLeftPosition(i - offset)
             r.left = 0
             p.setColor(mMonthBGOtherColor)
             canvas.drawRect(r, p)
             // compute left edge for i, set up r, draw
-        } else if (!mOddMonth!!.get(mOddMonth!!.size - 1.also { i = it })) {
-            while (--i >= offset && !mOddMonth!!.get(i));
+        } else if (!mOddMonth.get(mOddMonth.size - 1.also { i = it })) {
+            while (--i >= offset && !mOddMonth.get(i));
             i++
             // compute left edge for i, set up r, draw
             r.right = mWidth
@@ -601,27 +601,27 @@ class MonthWeekEventsView
             offset++
         }
         y = mMonthNumAscentHeight + TOP_PADDING_MONTH_NUMBER
-        var isFocusMonth: Boolean = mFocusDay!!.get(i)
+        var isFocusMonth: Boolean = mFocusDay.get(i)
         var isBold = false
-        mMonthNumPaint?.setColor(if (isFocusMonth) mMonthNumColor else mMonthNumOtherColor)
+        mMonthNumPaint.setColor(if (isFocusMonth) mMonthNumColor else mMonthNumOtherColor)
         while (i < numCount) {
             if (mHasToday && todayIndex == i) {
-                mMonthNumPaint?.setColor(mMonthNumTodayColor)
-                mMonthNumPaint?.setFakeBoldText(true.also { isBold = it })
+                mMonthNumPaint.setColor(mMonthNumTodayColor)
+                mMonthNumPaint.setFakeBoldText(true.also { isBold = it })
                 if (i + 1 < numCount) {
                     // Make sure the color will be set back on the next
                     // iteration
-                    isFocusMonth = !mFocusDay!!.get(i + 1)
+                    isFocusMonth = !mFocusDay.get(i + 1)
                 }
-            } else if (mFocusDay?.get(i) !== isFocusMonth) {
-                isFocusMonth = mFocusDay!!.get(i)
-                mMonthNumPaint?.setColor(if (isFocusMonth) mMonthNumColor else mMonthNumOtherColor)
+            } else if (mFocusDay.get(i) !== isFocusMonth) {
+                isFocusMonth = mFocusDay.get(i)
+                mMonthNumPaint.setColor(if (isFocusMonth) mMonthNumColor else mMonthNumOtherColor)
             }
             x = computeDayLeftPosition(i - offset) - SIDE_PADDING_MONTH_NUMBER
             canvas.drawText(mDayNumbers!!.get(i) as String, x.toFloat(), y.toFloat(),
                     mMonthNumPaint as Paint)
             if (isBold) {
-                mMonthNumPaint?.setFakeBoldText(false.also { isBold = it })
+                mMonthNumPaint.setFakeBoldText(false.also { isBold = it })
             }
             i++
         }
@@ -857,7 +857,7 @@ class MonthWeekEventsView
         mEventExtrasPaint.setFakeBoldText(true)
         canvas.drawText(String.format(text, remainingEvents), x.toFloat(), y.toFloat(),
                 mEventExtrasPaint as Paint)
-        mEventExtrasPaint!!.setFakeBoldText(false)
+        mEventExtrasPaint.setFakeBoldText(false)
     }
 
     /**
@@ -875,13 +875,13 @@ class MonthWeekEventsView
                         (strand.points as FloatArray).size === 0) {
                     continue
                 }
-                mDNATimePaint!!.setColor(strand.color)
+                mDNATimePaint.setColor(strand.color)
                 canvas.drawLines(strand.points as FloatArray, mDNATimePaint as Paint)
             }
             // Draw black last to make sure it's on top
             val strand: Utils.DNAStrand? = mDna?.get(CONFLICT_COLOR)
-            if (strand != null && strand!!.points != null && strand!!.points?.size !== 0) {
-                mDNATimePaint!!.setColor(strand.color)
+            if (strand != null && strand.points != null && strand.points?.size !== 0) {
+                mDNATimePaint.setColor(strand.color)
                 canvas.drawLines(strand.points as FloatArray, mDNATimePaint as Paint)
             }
             if (mDayXs == null) {
@@ -889,12 +889,12 @@ class MonthWeekEventsView
             }
             val numDays = mDayXs!!.size
             val xOffset = (DNA_ALL_DAY_WIDTH - DNA_WIDTH) / 2
-            if (strand != null && strand!!.allDays != null && strand!!.allDays?.size === numDays) {
+            if (strand != null && strand.allDays != null && strand.allDays?.size === numDays) {
                 for (i in 0 until numDays) {
                     // this adds at most 7 draws. We could sort it by color and
                     // build an array instead but this is easier.
-                    if (strand!!.allDays?.get(i) !== 0) {
-                        mDNAAllDayPaint!!.setColor(strand!!.allDays!!.get(i))
+                    if (strand.allDays?.get(i) !== 0) {
+                        mDNAAllDayPaint.setColor(strand.allDays!!.get(i))
                         canvas.drawLine(mDayXs!![i].toFloat() + xOffset.toFloat(),
                                 DNA_MARGIN.toFloat(), mDayXs!![i].toFloat() + xOffset.toFloat(),
                                 DNA_MARGIN.toFloat() + DNA_ALL_DAY_HEIGHT.toFloat(),
@@ -966,7 +966,7 @@ class MonthWeekEventsView
             if (hover != null
                     && (mLastHoverTime == null || Time.compare(hover, mLastHoverTime) !== 0)) {
                 val millis: Long = hover.toMillis(true)
-                val date: String = Utils!!.formatDateRange(context, millis, millis,
+                val date: String = Utils.formatDateRange(context, millis, millis,
                         DateUtils.FORMAT_SHOW_DATE) as String
                 val accessEvent: AccessibilityEvent = AccessibilityEvent
                         .obtain(AccessibilityEvent.TYPE_NOTIFICATION_STATE_CHANGED)
@@ -980,7 +980,7 @@ class MonthWeekEventsView
                     for (e in events) {
                         text.add(e!!.titleAndLocation.toString() + ". ")
                         var flags: Int = DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_SHOW_YEAR
-                        if (!e!!.allDay) {
+                        if (!e.allDay) {
                             flags = flags or DateUtils.FORMAT_SHOW_TIME
                             if (DateFormat.is24HourFormat(context)) {
                                 flags = flags or DateUtils.FORMAT_24HOUR
@@ -988,7 +988,7 @@ class MonthWeekEventsView
                         } else {
                             flags = flags or DateUtils.FORMAT_UTC
                         }
-                        text.add(Utils.formatDateRange(context, e!!.startMillis, e!!.endMillis,
+                        text.add(Utils.formatDateRange(context, e.startMillis, e.endMillis,
                                 flags).toString() + ". ")
                     }
                 }

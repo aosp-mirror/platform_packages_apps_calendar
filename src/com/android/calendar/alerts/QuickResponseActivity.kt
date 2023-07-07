@@ -43,7 +43,7 @@ class QuickResponseActivity : ListActivity(), OnItemClickListener {
             finish()
             return
         }
-        mEventId = intent?.getLongExtra(EXTRA_EVENT_ID, -1) as Long
+        mEventId = intent.getLongExtra(EXTRA_EVENT_ID, -1) as Long
         if (mEventId == -1L) {
             finish()
             return
