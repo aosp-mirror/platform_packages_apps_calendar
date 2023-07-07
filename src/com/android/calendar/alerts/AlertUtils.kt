@@ -53,9 +53,9 @@ object AlertUtils {
         return object : AlarmManagerInterface {
             override operator fun set(type: Int, triggerAtMillis: Long, operation: PendingIntent?) {
                 if (com.android.calendar.Utils.isKeyLimePieOrLater()) {
-                    mgr.setExact(type, triggerAtMillis, operation)
+                    mgr.setExact(type, triggerAtMillis, operation!!)
                 } else {
-                    mgr.set(type, triggerAtMillis, operation)
+                    mgr.set(type, triggerAtMillis, operation!!)
                 }
             }
         }
