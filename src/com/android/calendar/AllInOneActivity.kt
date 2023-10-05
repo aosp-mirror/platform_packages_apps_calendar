@@ -683,7 +683,7 @@ class AllInOneActivity : Activity(), EventHandler, OnSharedPreferenceChangeListe
     }
 
     @Override
-    override fun onSharedPreferenceChanged(prefs: SharedPreferences?, key: String) {
+    override fun onSharedPreferenceChanged(prefs: SharedPreferences, key: String?) {
         if (key.equals(GeneralPreferences.KEY_WEEK_START_DAY)) {
             if (mPaused) {
                 mUpdateOnResume = true

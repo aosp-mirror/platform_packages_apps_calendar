@@ -172,7 +172,7 @@ class GeneralPreferences : PreferenceFragment(), OnSharedPreferenceChangeListene
     }
 
     @Override
-    override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String) {
+    override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String?) {
         val a: Activity = getActivity()
         if (key.equals(KEY_ALERTS)) {
             updateChildPreferences()

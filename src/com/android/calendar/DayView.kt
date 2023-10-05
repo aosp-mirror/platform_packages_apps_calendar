@@ -2796,7 +2796,7 @@ class DayView(
         performLongClick()
     }
 
-    private fun doScroll(e1: MotionEvent, e2: MotionEvent, deltaX: Float, deltaY: Float) {
+    private fun doScroll(e1: MotionEvent?, e2: MotionEvent, deltaX: Float, deltaY: Float) {
         cancelAnimation()
         if (mStartingScroll) {
             mInitialScrollX = 0f
@@ -2909,7 +2909,7 @@ class DayView(
         }
     }
 
-    private fun doFling(e1: MotionEvent, e2: MotionEvent, velocityX: Float, velocityY: Float) {
+    private fun doFling(e1: MotionEvent?, e2: MotionEvent, velocityX: Float, velocityY: Float) {
         cancelAnimation()
         mSelectionMode = SELECTION_HIDDEN
         eventClickCleanup()
@@ -2919,7 +2919,7 @@ class DayView(
             // initNextView(deltaX);
             mTouchMode = TOUCH_MODE_INITIAL_STATE
             if (DEBUG) Log.d(TAG, "doFling: velocityX $velocityX")
-            val deltaX = e2.getX().toInt() - e1.getX().toInt()
+            val deltaX = e2.getX().toInt() - e1!!.getX().toInt()
             switchViews(deltaX < 0, mViewStartX.toFloat(), mViewWidth.toFloat(), velocityX)
             mViewStartX = 0
             return
@@ -3526,7 +3526,7 @@ class DayView(
 
         @Override
         override fun onScroll(
-            e1: MotionEvent,
+            e1: MotionEvent?,
             e2: MotionEvent,
             distanceX: Float,
             distanceY: Float
@@ -3550,7 +3550,7 @@ class DayView(
 
         @Override
         override fun onFling(
-            e1: MotionEvent,
+            e1: MotionEvent?,
             e2: MotionEvent,
             velocityX: Float,
             velocityY: Float
