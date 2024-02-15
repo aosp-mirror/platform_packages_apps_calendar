@@ -504,9 +504,7 @@ class CalendarAppWidgetService : RemoteViewsService() {
                     if (matrixCursor != null) {
                         matrixCursor.close()
                     }
-                    if (cursor != null) {
-                        cursor.close()
-                    }
+                    cursor.close()
                 }
 
                 // Schedule an alarm to wake ourselves up for the next update.
