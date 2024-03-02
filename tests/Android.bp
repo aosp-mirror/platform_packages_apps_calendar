@@ -27,8 +27,11 @@ android_test {
     srcs: ["src/**/*.java"],
     instrumentation_for: "Calendar",
     // unbundled
-    static_libs: ["android-common"],
-    sdk_version: "16",
+    static_libs: [
+        "android-common",
+        "androidx.test.rules",
+    ],
+    sdk_version: "19",
     // Test needed artifacts
     data: [
         ":Calendar",
