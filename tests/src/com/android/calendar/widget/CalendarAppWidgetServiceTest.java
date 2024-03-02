@@ -17,19 +17,19 @@
 
 package com.android.calendar.widget;
 
-import com.android.calendar.widget.CalendarAppWidgetModel.EventInfo;
-import com.android.calendar.widget.CalendarAppWidgetService.CalendarFactory;
-import com.android.calendar.Utils;
-
 import android.content.Context;
 import android.database.MatrixCursor;
 import android.test.AndroidTestCase;
-import android.test.suitebuilder.annotation.SmallTest;
-import android.test.suitebuilder.annotation.Suppress;
 import android.text.format.DateUtils;
 import android.text.format.Time;
 import android.util.Log;
 import android.view.View;
+
+import androidx.test.filters.SmallTest;
+
+import com.android.calendar.Utils;
+import com.android.calendar.widget.CalendarAppWidgetModel.EventInfo;
+import com.android.calendar.widget.CalendarAppWidgetService.CalendarFactory;
 
 import java.util.TimeZone;
 
