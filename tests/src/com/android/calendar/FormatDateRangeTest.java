@@ -17,10 +17,11 @@
 package com.android.calendar;
 
 import android.test.AndroidTestCase;
-import android.test.suitebuilder.annotation.MediumTest;
 import android.text.format.DateUtils;
 import android.text.format.Time;
 import android.util.Log;
+
+import androidx.test.filters.MediumTest;
 
 import java.util.Calendar;
 
