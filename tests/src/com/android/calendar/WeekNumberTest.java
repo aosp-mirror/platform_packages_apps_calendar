@@ -17,12 +17,12 @@
 package com.android.calendar;
 
 import android.test.AndroidTestCase;
-import android.test.suitebuilder.annotation.SmallTest;
 import android.test.suitebuilder.annotation.Smoke;
 import android.text.format.DateUtils;
 import android.text.format.Time;
 import android.util.Log;
 
+import androidx.test.filters.SmallTest;
 
 /**
  * Unit tests for {@link android.text.format.Time#getWeekNumber}.
