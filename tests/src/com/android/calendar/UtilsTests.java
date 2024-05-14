@@ -20,7 +20,6 @@ import android.content.res.Configuration;
 import android.database.MatrixCursor;
 import android.provider.CalendarContract.CalendarCache;
 import android.test.mock.MockResources;
-import android.test.suitebuilder.annotation.Smoke;
 import android.text.format.Time;
 import android.util.DisplayMetrics;
 
@@ -173,7 +172,6 @@ public class UtilsTests extends TestCase {
         setTimezone(Time.getCurrentTimezone());
     }
 
-    @Smoke
     @SmallTest
     public void testGetWeeksSinceEpochFromJulianDay() {
         for (int i = 0; i < JULIAN_DAYS.length; i++) {
@@ -186,7 +184,6 @@ public class UtilsTests extends TestCase {
         }
     }
 
-    @Smoke
     @SmallTest
     public void testGetJulianMondayFromWeeksSinceEpoch() {
         for (int i = 0; i < WEEKS_FOR_JULIAN_MONDAYS.length; i++) {
