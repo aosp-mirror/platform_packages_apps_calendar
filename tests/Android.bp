@@ -13,6 +13,7 @@
 // limitations under the License.
 
 package {
+    default_team: "trendy_team_aosp",
     // See: http://go/android-license-faq
     default_applicable_licenses: [
         "packages_apps_Calendar_license",
@@ -31,7 +32,7 @@ android_test {
         "android-common",
         "androidx.test.rules",
     ],
-    sdk_version: "19",
+    sdk_version: "21",
     // Test needed artifacts
     data: [
         ":Calendar",
