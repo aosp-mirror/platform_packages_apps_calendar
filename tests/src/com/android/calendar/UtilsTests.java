@@ -16,37 +16,21 @@
 
 package com.android.calendar;
 
-import com.android.calendar.Utils;
-import com.android.calendar.CalendarUtils.TimeZoneUtils;
-
-import android.content.Context;
 import android.content.res.Configuration;
-import android.content.res.Resources;
-import android.content.res.Resources.NotFoundException;
 import android.database.MatrixCursor;
 import android.provider.CalendarContract.CalendarCache;
 import android.test.mock.MockResources;
-import android.test.suitebuilder.annotation.SmallTest;
-import android.test.suitebuilder.annotation.Smoke;
-import android.text.Spannable;
-import android.text.SpannableString;
 import android.text.format.Time;
-import android.text.style.URLSpan;
 import android.util.DisplayMetrics;
-import android.util.Log;
-import android.view.Display;
-import android.view.View;
-import android.view.WindowManager;
-import android.view.ViewGroup.LayoutParams;
-import android.widget.TextView;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Locale;
+import androidx.test.filters.SmallTest;
+
+import com.android.calendar.CalendarUtils.TimeZoneUtils;
 
 import junit.framework.TestCase;
+
+import java.util.HashMap;
+import java.util.Locale;
 
 /**
  * Test class for verifying helper functions in Calendar's Utils
@@ -188,7 +172,6 @@ public class UtilsTests extends TestCase {
         setTimezone(Time.getCurrentTimezone());
     }
 
-    @Smoke
     @SmallTest
     public void testGetWeeksSinceEpochFromJulianDay() {
         for (int i = 0; i < JULIAN_DAYS.length; i++) {
@@ -201,7 +184,6 @@ public class UtilsTests extends TestCase {
         }
     }
 
-    @Smoke
     @SmallTest
     public void testGetJulianMondayFromWeeksSinceEpoch() {
         for (int i = 0; i < WEEKS_FOR_JULIAN_MONDAYS.length; i++) {
