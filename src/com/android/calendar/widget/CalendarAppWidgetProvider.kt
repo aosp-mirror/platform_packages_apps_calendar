@@ -187,7 +187,7 @@ class CalendarAppWidgetProvider : AppWidgetProvider() {
             intent.setDataAndType(CalendarContract.CONTENT_URI, Utils.APPWIDGET_DATA_TYPE)
             return PendingIntent.getBroadcast(
                 context, 0 /* no requestCode */, intent,
-                0 /* no flags */
+                PendingIntent.FLAG_IMMUTABLE
             )
         }
 
