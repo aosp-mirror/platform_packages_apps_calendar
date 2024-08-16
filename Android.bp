@@ -45,7 +45,7 @@ android_app {
     ],
 
     sdk_version: "current",
-    target_sdk_version: "30",
+    target_sdk_version: "34",
     optimize: {
         proguard_flags_files: ["proguard.flags"],
     },
