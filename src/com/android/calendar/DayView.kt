@@ -469,11 +469,11 @@ class DayView(
             val index: Int = i - Calendar.SUNDAY
             // e.g. Tue for Tuesday
             mDayStrs!![index] = DateUtils.getDayOfWeekString(i, DateUtils.LENGTH_MEDIUM)
-                .toUpperCase()
+                .uppercase()
             mDayStrs!![index + 7] = mDayStrs!![index]
             // e.g. Tu for Tuesday
             mDayStrs2Letter!![index] = DateUtils.getDayOfWeekString(i, DateUtils.LENGTH_SHORT)
-                .toUpperCase()
+                .uppercase()
 
             // If we don't have 2-letter day strings, fall back to 1-letter.
             if (mDayStrs2Letter!![index]!!.equals(mDayStrs!![index])) {
@@ -494,8 +494,8 @@ class DayView(
         p.setTextSize(HOURS_TEXT_SIZE)
         p.setTypeface(null)
         handleOnResume()
-        mAmString = DateUtils.getAMPMString(Calendar.AM).toUpperCase()
-        mPmString = DateUtils.getAMPMString(Calendar.PM).toUpperCase()
+        mAmString = DateUtils.getAMPMString(Calendar.AM).uppercase()
+        mPmString = DateUtils.getAMPMString(Calendar.PM).uppercase()
         val ampm = arrayOf(mAmString, mPmString)
         p.setTextSize(AMPM_TEXT_SIZE)
         mHoursWidth = Math.max(

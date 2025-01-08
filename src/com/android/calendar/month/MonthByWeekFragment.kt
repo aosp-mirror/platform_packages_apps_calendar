@@ -286,7 +286,7 @@ class MonthByWeekFragment @JvmOverloads constructor(
             mDayLabels[i - Calendar.SUNDAY] = DateUtils.getDayOfWeekString(
                     i,
                     DateUtils.LENGTH_MEDIUM
-            ).toUpperCase()
+            ).uppercase()
         }
     }
 
