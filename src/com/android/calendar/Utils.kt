@@ -1310,7 +1310,7 @@ object Utils {
             mTZUtils?.formatDateRange(context, millis, millis, flags)
                 .toString()
         }
-        dayViewText = dayViewText.toUpperCase()
+        dayViewText = dayViewText.uppercase()
         return dayViewText
     }
 
