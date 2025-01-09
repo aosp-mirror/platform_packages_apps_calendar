@@ -260,7 +260,7 @@ class CalendarViewAdapter(context: Context, viewType: Int, showDate: Boolean) : 
             DateUtils.formatDateRange(mContext, mFormatter, mMilliTime, mMilliTime,
                     DateUtils.FORMAT_SHOW_WEEKDAY, mTimeZone).toString()
         }
-        return dayOfWeek.toUpperCase()
+        return dayOfWeek.uppercase()
     }
 
     // Builds strings with different formats:

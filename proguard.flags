@@ -1,5 +1,11 @@
--keep class com.android.calendar.OtherPreferences
--keep class com.android.calendar.GeneralPreferences
+# TODO(b/373579455): Evaluate if <init> needs to be kept.
+-keep class com.android.calendar.OtherPreferences {
+  void <init>();
+}
+# TODO(b/373579455): Evaluate if <init> needs to be kept.
+-keep class com.android.calendar.GeneralPreferences {
+  void <init>();
+}
 -keepclassmembers class com.android.calendar.AllInOneActivity {
   *** setControlsOffset(...);
 }
