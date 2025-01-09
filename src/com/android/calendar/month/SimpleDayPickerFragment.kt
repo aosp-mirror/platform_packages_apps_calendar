@@ -224,7 +224,7 @@ open class SimpleDayPickerFragment(initialTime: Long) : ListFragment(), OnScroll
         mDayLabels = arrayOfNulls(7)
         for (i in Calendar.SUNDAY..Calendar.SATURDAY) {
             mDayLabels[i - Calendar.SUNDAY] = DateUtils.getDayOfWeekString(i,
-                    DateUtils.LENGTH_SHORTEST).toUpperCase()
+                    DateUtils.LENGTH_SHORTEST).uppercase()
         }
     }
 
