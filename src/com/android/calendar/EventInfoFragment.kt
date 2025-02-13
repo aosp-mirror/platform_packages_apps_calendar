@@ -377,7 +377,7 @@ class EventInfoFragment : DialogFragment, OnCheckedChangeListener, CalendarContr
 
     // Implements OnCheckedChangeListener
     @Override
-    override fun onCheckedChanged(group: RadioGroup?, checkedId: Int) {
+    override fun onCheckedChanged(group: RadioGroup, checkedId: Int) {
     }
 
     fun onNothingSelected(parent: AdapterView<*>?) {}
