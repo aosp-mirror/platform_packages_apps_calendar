@@ -146,7 +146,8 @@ class CalendarAppWidgetProvider : AppWidgetProvider() {
             launchCalendarIntent
                 .setData(Uri.parse("content://com.android.calendar/time/$millis"))
             val launchCalendarPendingIntent: PendingIntent = PendingIntent.getActivity(
-                context, 0 /* no requestCode */, launchCalendarIntent, 0 /* no flags */
+                context, 0 /* no requestCode */, launchCalendarIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
             views.setOnClickPendingIntent(R.id.header, launchCalendarPendingIntent)
 
@@ -187,7 +188,7 @@ class CalendarAppWidgetProvider : AppWidgetProvider() {
             intent.setDataAndType(CalendarContract.CONTENT_URI, Utils.APPWIDGET_DATA_TYPE)
             return PendingIntent.getBroadcast(
                 context, 0 /* no requestCode */, intent,
-                PendingIntent.FLAG_IMMUTABLE
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
         }
 
@@ -205,7 +206,7 @@ class CalendarAppWidgetProvider : AppWidgetProvider() {
             launchIntent.setClass(context as Context, AllInOneActivity::class.java)
             return PendingIntent.getActivity(
                 context, 0 /* no requestCode */, launchIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
         }
 
